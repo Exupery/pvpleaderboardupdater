@@ -1,38 +1,66 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 )
 
+type Leaderboard struct {
+	Rows []LeaderboardEntry
+}
+
+type LeaderboardEntry struct {
+	Name string
+	Ranking int
+	Rating int
+	RealmId int
+	RealmName string
+	RealmSlug string
+	RaceId int
+	ClassId int
+	SpecId int
+	FactionId int
+	GenderId int
+	SeasonWins int
+	SeasonLosses int
+	WeeklyWins int
+	WeeklyLosses int
+}
+
 var logger *log.Logger = log.New(os.Stdout, "main|", log.Ltime|log.Lmicroseconds)
-const uriBase string = "https://us.battle.net/api/wow/"
+const errPrefix string = "[ERROR]"
+
+var uriBase string = "https://us.battle.net/api/wow/"
 
 func main() {
 	logger.Println("PvPLeaderBoard Starting")
-	getLeaderboard()
+	if len(os.Args) > 1 {
+		uriBase = os.Args[1]
+	}
+	logger.Printf("WoW API URIs using '%s'", uriBase)
+	getLeaderboard("2v2")
 	logger.Println("PvPLeaderBoard Complete")
 }
 
 func get(path string) *string {
-	const errPrefix string = "[ERROR] GET failed: "
 	resp, err := http.Get(uriBase + path)
 
 	if err != nil {
-		logger.Println(errPrefix + err.Error())
+		logger.Printf("%s GET failed: %s", errPrefix, err)
 		return nil
 	}
 	if resp.StatusCode != 200 {
-		logger.Println(errPrefix + resp.Status)
+		logger.Printf("%s non-200 status code: %s", errPrefix, err)
 		return nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
-		logger.Println(errPrefix + err.Error())
+		logger.Printf("%s reading body failed: %s", errPrefix, err)
 		return nil
 	}
 
@@ -41,7 +69,18 @@ func get(path string) *string {
 	return &str
 }
 
-func getLeaderboard() {
-	s := get("leaderboard/2v2")
-	logger.Println(len(*s))	// TODO DELME
+func parseLeaderboard(data *string) []LeaderboardEntry {
+	var leaderboard Leaderboard
+	err := json.Unmarshal([]byte(*data), &leaderboard)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return make([]LeaderboardEntry, 0)
+	}
+	return leaderboard.Rows
+}
+
+func getLeaderboard(bracket string) {
+	var leaderboardJson *string = get("leaderboard/" + bracket)
+	var entries []LeaderboardEntry = parseLeaderboard(leaderboardJson)
+	logger.Printf("Parsed %v %s entries", len(entries), bracket)
 }
