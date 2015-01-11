@@ -45,7 +45,7 @@ func main() {
 	logger.Println("PvPLeaderBoard Complete")
 }
 
-func get(path string) *string {
+func get(path string) *[]byte {
 	resp, err := http.Get(uriBase + path)
 
 	if err != nil {
@@ -65,13 +65,12 @@ func get(path string) *string {
 	}
 
 	logger.Printf("%s returned %v bytes", path, len(body))
-	str := string(body[:])
-	return &str
+	return &body
 }
 
-func parseLeaderboard(data *string) []LeaderboardEntry {
+func parseLeaderboard(data *[]byte) []LeaderboardEntry {
 	var leaderboard Leaderboard
-	err := json.Unmarshal([]byte(*data), &leaderboard)
+	err := json.Unmarshal(*data, &leaderboard)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return make([]LeaderboardEntry, 0)
@@ -80,7 +79,7 @@ func parseLeaderboard(data *string) []LeaderboardEntry {
 }
 
 func getLeaderboard(bracket string) {
-	var leaderboardJson *string = get("leaderboard/" + bracket)
+	var leaderboardJson *[]byte = get("leaderboard/" + bracket)
 	var entries []LeaderboardEntry = parseLeaderboard(leaderboardJson)
 	logger.Printf("Parsed %v %s entries", len(entries), bracket)
 }
