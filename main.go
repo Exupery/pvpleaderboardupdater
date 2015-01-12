@@ -30,8 +30,9 @@ type LeaderboardEntry struct {
 	WeeklyLosses int
 }
 
-var logger *log.Logger = log.New(os.Stdout, "main|", log.Ltime|log.Lmicroseconds)
+var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
 const errPrefix string = "[ERROR]"
+const fatalPrefix string = "[FATAL]"
 
 var uriBase string = "https://us.battle.net/api/wow/"
 
@@ -82,4 +83,5 @@ func getLeaderboard(bracket string) {
 	var leaderboardJson *[]byte = get("leaderboard/" + bracket)
 	var entries []LeaderboardEntry = parseLeaderboard(leaderboardJson)
 	logger.Printf("Parsed %v %s entries", len(entries), bracket)
+	upsertEntries(bracket, &entries)
 }
