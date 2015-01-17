@@ -1,6 +1,6 @@
 CREATE TABLE realms (
   id INTEGER PRIMARY KEY,
-  name VARCHAR(128),
+  name VARCHAR(128) NOT NULL,
   slug VARCHAR(128),
   UNIQUE (name)
 );
@@ -67,8 +67,57 @@ CREATE TABLE players (
   race_id INTEGER REFERENCES races (id),
   realm_id INTEGER NOT NULL REFERENCES realms (id),
   gender SMALLINT,
+  last_update TIMESTAMP,
   UNIQUE (name, realm_id)
 );
 
 CREATE INDEX ON players (class_id, spec_id);
 CREATE INDEX ON players (faction_id, race_id);
+
+CREATE TABLE bracket_2v2 (
+  ranking INTEGER PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  rating SMALLINT NOT NULL,
+  season_wins SMALLINT,
+  season_losses SMALLINT,
+  last_update TIMESTAMP DEFAULT NOW(),
+  UNIQUE (player_id)
+);
+
+CREATE INDEX ON bracket_2v2 (rating);
+
+CREATE TABLE bracket_3v3 (
+  ranking INTEGER PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  rating SMALLINT NOT NULL,
+  season_wins SMALLINT,
+  season_losses SMALLINT,
+  last_update TIMESTAMP DEFAULT NOW(),
+  UNIQUE (player_id)
+);
+
+CREATE INDEX ON bracket_3v3 (rating);
+
+CREATE TABLE bracket_5v5 (
+  ranking INTEGER PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  rating SMALLINT NOT NULL,
+  season_wins SMALLINT,
+  season_losses SMALLINT,
+  last_update TIMESTAMP DEFAULT NOW(),
+  UNIQUE (player_id)
+);
+
+CREATE INDEX ON bracket_5v5 (rating);
+
+CREATE TABLE bracket_rbgs (
+  ranking INTEGER PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  rating SMALLINT NOT NULL,
+  season_wins SMALLINT,
+  season_losses SMALLINT,
+  last_update TIMESTAMP DEFAULT NOW(),
+  UNIQUE (player_id)
+);
+
+CREATE INDEX ON bracket_rbgs (rating);
