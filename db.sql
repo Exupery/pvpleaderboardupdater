@@ -85,6 +85,7 @@ CREATE TABLE bracket_2v2 (
 );
 
 CREATE INDEX ON bracket_2v2 (rating);
+CREATE INDEX ON bracket_2v2 (last_update DESC);
 
 CREATE TABLE bracket_3v3 (
   ranking INTEGER PRIMARY KEY,
@@ -97,6 +98,7 @@ CREATE TABLE bracket_3v3 (
 );
 
 CREATE INDEX ON bracket_3v3 (rating);
+CREATE INDEX ON bracket_3v3 (last_update DESC);
 
 CREATE TABLE bracket_5v5 (
   ranking INTEGER PRIMARY KEY,
@@ -109,6 +111,7 @@ CREATE TABLE bracket_5v5 (
 );
 
 CREATE INDEX ON bracket_5v5 (rating);
+CREATE INDEX ON bracket_5v5 (last_update DESC);
 
 CREATE TABLE bracket_rbgs (
   ranking INTEGER PRIMARY KEY,
@@ -121,3 +124,4 @@ CREATE TABLE bracket_rbgs (
 );
 
 CREATE INDEX ON bracket_rbgs (rating);
+CREATE INDEX ON bracket_rbgs (last_update DESC);
