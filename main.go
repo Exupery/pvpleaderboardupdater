@@ -9,28 +9,6 @@ import (
 	"os"
 )
 
-type Leaderboard struct {
-	Rows []LeaderboardEntry
-}
-
-type LeaderboardEntry struct {
-	Name string
-	Ranking int
-	Rating int
-	RealmId int
-	RealmName string
-	RealmSlug string
-	RaceId int
-	ClassId int
-	SpecId int
-	FactionId int
-	GenderId int
-	SeasonWins int
-	SeasonLosses int
-	WeeklyWins int
-	WeeklyLosses int
-}
-
 var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
 const errPrefix string = "[ERROR]"
 const fatalPrefix string = "[FATAL]"
@@ -75,6 +53,9 @@ func get(path string) *[]byte {
 }
 
 func parseLeaderboard(data *[]byte) []LeaderboardEntry {
+	type Leaderboard struct {
+		Rows []LeaderboardEntry
+	}
 	var leaderboard Leaderboard
 	err := json.Unmarshal(*data, &leaderboard)
 	if err != nil {
