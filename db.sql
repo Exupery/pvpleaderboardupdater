@@ -1,7 +1,9 @@
 CREATE TABLE realms (
-  id INTEGER PRIMARY KEY,
-  name VARCHAR(128) NOT NULL,
-  slug VARCHAR(128),
+  slug VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(64) NOT NULL,
+  battlegroup VARCHAR(64),
+  timezone VARCHAR(64),
+  type VARCHAR(16),
   UNIQUE (name)
 );
 
@@ -65,10 +67,10 @@ CREATE TABLE players (
   spec_id INTEGER REFERENCES specs (id),
   faction_id INTEGER REFERENCES factions (id),
   race_id INTEGER REFERENCES races (id),
-  realm_id INTEGER NOT NULL REFERENCES realms (id),
+  realm_slug VARCHAR(64) NOT NULL REFERENCES realms (slug),
   gender SMALLINT,
   last_update TIMESTAMP,
-  UNIQUE (name, realm_id)
+  UNIQUE (name, realm_slug)
 );
 
 CREATE INDEX ON players (class_id, spec_id);
