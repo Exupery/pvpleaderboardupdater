@@ -45,9 +45,7 @@ func main() {
 	logger.Printf("WoW API URIs using '%s'", uriBase)
 
 	if *importStatic {
-		logger.Println("Beginning import of static data")
-
-		logger.Println("Static data import complete")
+		importStaticData()
 	}
 	// TODO IMPORT LEADERBOARD DATA
 	logger.Println("PvPLeaderBoard Complete")
