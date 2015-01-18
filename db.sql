@@ -125,3 +125,19 @@ CREATE TABLE bracket_rbgs (
 
 CREATE INDEX ON bracket_rbgs (rating);
 CREATE INDEX ON bracket_rbgs (last_update DESC);
+
+CREATE TABLE achievements (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(128),
+  description VARCHAR(1024),
+  icon VARCHAR(128),
+  points SMALLINT,
+  UNIQUE (name)
+);
+
+CREATE TABLE players_achievements (
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  achievement_id INTEGER NOT NULL REFERENCES achievements (id),
+  achieved_at TIMESTAMP,
+  PRIMARY KEY (player_id, achievement_id)
+);
