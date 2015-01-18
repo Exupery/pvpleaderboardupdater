@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -34,15 +35,21 @@ var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
 const errPrefix string = "[ERROR]"
 const fatalPrefix string = "[FATAL]"
 
-var uriBase string = "https://us.battle.net/api/wow/"
+var uriBase string
 
 func main() {
 	logger.Println("PvPLeaderBoard Starting")
-	if len(os.Args) > 1 {
-		uriBase = os.Args[1]
-	}
+	flag.StringVar(&uriBase, "base", "https://us.battle.net/api/wow/", "WoW API base URI")
+	var importStatic *bool = flag.Bool("static", false, "Import static data (e.g. races, classes, realms, etc)")
+	flag.Parse()
 	logger.Printf("WoW API URIs using '%s'", uriBase)
-	getLeaderboard("2v2")
+
+	if *importStatic {
+		logger.Println("Beginning import of static data")
+
+		logger.Println("Static data import complete")
+	}
+	// TODO IMPORT LEADERBOARD DATA
 	logger.Println("PvPLeaderBoard Complete")
 }
 
