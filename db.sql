@@ -68,6 +68,7 @@ CREATE TABLE players (
   faction_id INTEGER REFERENCES factions (id),
   race_id INTEGER REFERENCES races (id),
   realm_slug VARCHAR(64) NOT NULL REFERENCES realms (slug),
+  guild VARCHAR(64),
   gender SMALLINT,
   last_update TIMESTAMP,
   UNIQUE (name, realm_slug)
@@ -75,6 +76,7 @@ CREATE TABLE players (
 
 CREATE INDEX ON players (class_id, spec_id);
 CREATE INDEX ON players (faction_id, race_id);
+CREATE INDEX ON players (guild);
 
 CREATE TABLE bracket_2v2 (
   ranking INTEGER PRIMARY KEY,
