@@ -35,7 +35,7 @@ type Spec struct {
 
 type Talent struct {
 	Id int
-	ClassId int
+	Class string
 	Name string
 	Description string
 	Icon string

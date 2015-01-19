@@ -16,8 +16,11 @@ func importStaticData() {
 	var glyphs *[]Glyph
 	specs, talents, glyphs = retrieveSpecsTalentsGlyphs()
 	println(*specs, *talents, *glyphs) // TODO DELME
+	logger.Printf("Parsed %v specs", len(*specs))
 	importSpecs(specs)
+	logger.Printf("Parsed %v talents", len(*talents))
 	importTalents(talents)
+	logger.Printf("Parsed %v glyphs", len(*glyphs))
 	importGlyphs(glyphs)
 
 	logger.Println("Static data import complete")
@@ -125,9 +128,20 @@ func retrieveSpecsTalentsGlyphs() (*[]Spec, *[]Talent, *[]Glyph) {
 		logger.Println(v.Class)	// TODO DELME
 		specs = append(specs, v.Specs...)
 		glyphs = append(glyphs, v.Glyphs...)
-		for t := range v.Talents {
-			// TODO FLATTEN TALENTS AND APPEND TO SLICE
-			logger.Println(t)	// TODO DELME
+		for _, t := range v.Talents {
+			for _, t1 := range t {
+				for _, t2 := range t1 {
+					var talent Talent = Talent{
+						t2.Spell.Id,
+						v.Class,
+						t2.Spell.Name,
+						t2.Spell.Description,
+						t2.Spell.Icon,
+						t2.Tier,
+						t2.Column}
+					talents = append(talents, talent)
+				}
+			}
 		}
 	}
 
@@ -135,17 +149,14 @@ func retrieveSpecsTalentsGlyphs() (*[]Spec, *[]Talent, *[]Glyph) {
 }
 
 func importSpecs(specs *[]Spec) {
-	logger.Printf("Parsed %v specs", len(*specs))
 	// TODO WRITE SPECS TO DB
 }
 
 func importTalents(talents *[]Talent) {
-	logger.Printf("Parsed %v talents", len(*talents))
 	// TODO WRITE TALENTS TO DB
 }
 
 func importGlyphs(glyphs *[]Glyph) {
-	logger.Printf("Parsed %v glyphs", len(*glyphs))
 	// TODO WRITE GLYPHS TO DB
 }
 
