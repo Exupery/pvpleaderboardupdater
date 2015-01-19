@@ -8,6 +8,50 @@ type Realm struct {
 	Type string
 }
 
+type Race struct {
+	Id int
+	Name string
+	Side string
+}
+
+type Faction struct {
+	Id int
+	Name string
+}
+
+type Class struct {
+	Id int
+	Name string
+}
+
+type Spec struct {
+	ClassId int
+	Name string
+	Role string
+	Description string
+	BackgroundImage string
+	Icon string
+}
+
+type Talent struct {
+	Id int
+	ClassId int
+	Name string
+	Description string
+	Icon string
+	Tier int
+	Column int
+}
+
+type Glyph struct {
+	Glyph int
+	ClassId int
+	Name string
+	Icon string
+	Item int
+	TypeId int
+}
+
 type LeaderboardEntry struct {
 	Name string
 	Ranking int
