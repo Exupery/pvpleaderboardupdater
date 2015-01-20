@@ -37,7 +37,7 @@ func get(path string) *[]byte {
 		return nil
 	}
 	if resp.StatusCode != 200 {
-		logger.Printf("%s non-200 status code: %s", errPrefix, err)
+		logger.Printf("%s non-200 status code: %v", errPrefix, resp.StatusCode)
 		return nil
 	}
 
