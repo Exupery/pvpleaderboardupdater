@@ -187,7 +187,40 @@ func importGlyphs(glyphs *[]Glyph) {
 	// TODO WRITE GLYPHS TO DB
 }
 
+func parseAchievements(data *[]byte) []Achievement {
+	var pvpAchievements []Achievement = make([]Achievement, 0)
+	type AchievementCategory struct  {
+		Id int
+		Name string
+		Achievements []Achievement
+		Categories []AchievementCategory
+	}
+	type Achievements struct  {
+		Achievements []AchievementCategory
+	}
+
+	var achievements Achievements
+	err := json.Unmarshal(*data, &achievements)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return pvpAchievements
+	}
+
+	for _, ac := range achievements.Achievements {
+		if ac.Name == "Player vs. Player" {
+			pvpAchievements = append(pvpAchievements, ac.Achievements...)
+			for _, acc := range ac.Categories {
+				pvpAchievements = append(pvpAchievements, acc.Achievements...)
+			}
+		}
+	}
+
+	return pvpAchievements
+}
+
 func importAchievements() {
-	// TODO IMPORT ACHIEVEMENTS
+	var achievementsJson *[]byte = get("data/character/achievements")
+	var achievements []Achievement = parseAchievements(achievementsJson)
+	logger.Printf("Parsed %v achievements", len(achievements))
 	// TODO WRITE ACHIEVEMENTS TO DB
 }

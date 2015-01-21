@@ -20,7 +20,7 @@ func TestParseRealms(t *testing.T) {
 }
 
 func TestParseRaces(t *testing.T) {
-	var racesJson *[]byte = get("character/races")
+	var racesJson *[]byte = get("data/character/races")
 	var races []Race = parseRaces(racesJson)
 
 	if races == nil || len(races) == 0 {
@@ -29,7 +29,7 @@ func TestParseRaces(t *testing.T) {
 }
 
 func TestParseClasses(t *testing.T) {
-	var classesJson *[]byte = get("character/classes")
+	var classesJson *[]byte = get("data/character/classes")
 	var classes []Class = parseClasses(classesJson)
 
 	if classes == nil || len(classes) == 0 {
@@ -66,5 +66,14 @@ func TestClassSlugToIdMap(t *testing.T) {
 	var slugIdMap map[string]int = classSlugToIdMap(classes)
 	if slugIdMap == nil || len(slugIdMap) != len(*classes) {
 		t.Error(msg)
+	}
+}
+
+func TestParseAchievements(t *testing.T) {
+	var achievementsJson *[]byte = get("data/character/achievements")
+	var achievements []Achievement = parseAchievements(achievementsJson)
+
+	if achievements == nil || len(achievements) == 0 {
+		t.Error("Parsing achievements failed")
 	}
 }

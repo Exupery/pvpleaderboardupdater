@@ -52,6 +52,14 @@ type Glyph struct {
 	TypeId int
 }
 
+type Achievement struct {
+	Id int
+	Title string
+	Points int
+	Description string
+	Icon string
+}
+
 type LeaderboardEntry struct {
 	Name string
 	Ranking int
