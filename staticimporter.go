@@ -48,7 +48,7 @@ func importRealms() {
 	var realmJson *[]byte = get("realm/status")
 	var realms []Realm = parseRealms(realmJson)
 	logger.Printf("Parsed %v realms", len(realms))
-	// TODO WRITE REALMS TO DB
+	addRealms(&realms)
 }
 
 func parseRaces(data *[]byte) []Race {
