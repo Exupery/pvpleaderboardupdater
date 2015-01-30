@@ -98,7 +98,7 @@ func retrieveClasses() *[]Class {
 }
 
 func importClasses(classes *[]Class) {
-	// TODO WRITE CLASSES TO DB
+	addClasses(classes)
 }
 
 func retrieveSpecsTalentsGlyphs(classes *[]Class) (*[]Spec, *[]Talent, *[]Glyph) {

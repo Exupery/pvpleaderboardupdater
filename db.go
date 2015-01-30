@@ -89,3 +89,18 @@ func addFactions(factions *[]Faction) {
 	numInserted := insert(qry, args)
 	logger.Printf("Inserted %v faction", numInserted)
 }
+
+func addClasses(classes *[]Class) {
+	const qry string =
+		`INSERT INTO classes (id, name) SELECT $1, $2
+		WHERE NOT EXISTS (SELECT 1 FROM classes WHERE id=$3)`
+	args := make([][]interface{}, 0)
+
+	for _, class := range *classes {
+		params := []interface{}{class.Id, class.Name, class.Id}
+		args = append(args, params)
+	}
+
+	numInserted := insert(qry, args)
+	logger.Printf("Inserted %v classes", numInserted)
+}
