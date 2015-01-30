@@ -68,7 +68,7 @@ func importRaces() {
 	var racesJson *[]byte = get("data/character/races")
 	var races []Race = parseRaces(racesJson)
 	logger.Printf("Parsed %v races", len(races))
-	// TODO WRITE RACES TO DB
+	addRaces(&races)
 }
 
 func importFactions() {

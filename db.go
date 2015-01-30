@@ -21,31 +21,56 @@ func dbConnect() sql.DB {
 	return *db
 }
 
-func upsertEntries(bracket string, entries *[]LeaderboardEntry) {
-	logger.Println(db)	// TODO DELME
-	// TODO UPSERT ENTRIES
-}
-
-func addRealms(realms *[]Realm) {
+func insert(qry string, args [][]interface{}) int64 {
 	var numInserted int64 = 0
-	const qry string =
-		`INSERT INTO realms (slug, name, battlegroup, timezone, type)
-		SELECT $1, $2, $3, $4, $5
-		WHERE NOT EXISTS (SELECT 1 FROM realms WHERE slug=$6)`
 	txn, _ := db.Begin()
 	stmt, _ := txn.Prepare(qry)
 
-	for _, realm := range *realms {
-		res, err :=
-			stmt.Exec(realm.Slug, realm.Name, realm.Battlegroup, realm.Timezone, realm.Type, realm.Slug)
+	for _, params := range args {
+		res, err := stmt.Exec(params...)
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
-			return
+			return 0
 		}
 		affected, _ := res.RowsAffected()
 		numInserted += affected
 	}
 
 	txn.Commit()
+	return numInserted
+}
+
+func upsertEntries(bracket string, entries *[]LeaderboardEntry) {
+	// TODO UPSERT ENTRIES
+}
+
+func addRealms(realms *[]Realm) {
+	const qry string =
+		`INSERT INTO realms (slug, name, battlegroup, timezone, type)
+		SELECT $1, $2, $3, $4, $5
+		WHERE NOT EXISTS (SELECT 1 FROM realms WHERE slug=$6)`
+	args := make([][]interface{}, 0)
+
+	for _, realm := range *realms {
+		params := []interface{}{realm.Slug, realm.Name, realm.Battlegroup, realm.Timezone, realm.Type, realm.Slug}
+		args = append(args, params)
+	}
+
+	numInserted := insert(qry, args)
 	logger.Printf("Inserted %v realms", numInserted)
+}
+
+func addRaces(races *[]Race) {
+	const qry string =
+		`INSERT INTO races (id, name, side) SELECT $1, $2, $3
+		WHERE NOT EXISTS (SELECT 1 FROM races WHERE id=$4)`
+	args := make([][]interface{}, 0)
+
+	for _, race := range *races {
+		params := []interface{}{race.Id, race.Name, race.Side, race.Id}
+		args = append(args, params)
+	}
+
+	numInserted := insert(qry, args)
+	logger.Printf("Inserted %v races", numInserted)
 }
