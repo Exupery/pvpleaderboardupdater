@@ -73,9 +73,9 @@ func importRaces() {
 
 func importFactions() {
 	// No faction data via API
-	factions := [2]Faction{Faction{0, "Alliance"}, Faction{1, "Horde"}}
+	factions := []Faction{Faction{0, "Alliance"}, Faction{1, "Horde"}}
 	logger.Printf("Parsed %v factions", len(factions))
-	// TODO WRITE FACTIONS TO DB
+	addFactions(&factions)
 }
 
 func parseClasses(data *[]byte) []Class {
