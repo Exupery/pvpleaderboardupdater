@@ -16,7 +16,7 @@ const fatalPrefix string = "[FATAL]"
 var uriBase string
 
 func main() {
-	logger.Println("PvPLeaderBoard Starting")
+	logger.Println("Updating PvPLeaderBoard")
 	flag.StringVar(&uriBase, "base", "https://us.battle.net/api/wow/", "WoW API base URI")
 	var importStatic *bool = flag.Bool("static", false, "Import static data (e.g. races, classes, realms, etc)")
 	flag.Parse()
@@ -25,8 +25,14 @@ func main() {
 	if *importStatic {
 		importStaticData()
 	}
-	// TODO IMPORT LEADERBOARD DATA
-	logger.Println("PvPLeaderBoard Complete")
+
+	// brackets := []string{"2v2", "3v3", "5v5", "rbg"}
+	brackets := []string{"2v2"}
+	for _, bracket := range brackets {
+		updateLeaderboard(bracket)
+	}
+	
+	logger.Println("PvPLeaderBoard Updated")
 }
 
 func get(path string) *[]byte {
@@ -65,9 +71,9 @@ func parseLeaderboard(data *[]byte) []LeaderboardEntry {
 	return leaderboard.Rows
 }
 
-func getLeaderboard(bracket string) {
+func updateLeaderboard(bracket string) {
 	var leaderboardJson *[]byte = get("leaderboard/" + bracket)
 	var entries []LeaderboardEntry = parseLeaderboard(leaderboardJson)
 	logger.Printf("Parsed %v %s entries", len(entries), bracket)
-	upsertEntries(bracket, &entries)
+	setLeaderboard(bracket, &entries)
 }

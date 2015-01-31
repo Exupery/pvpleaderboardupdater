@@ -1,5 +1,11 @@
 package main
 
+type Query struct {
+	Sql string
+	Args [][]interface{}
+	Truncate bool
+}
+
 type Realm struct {
 	Slug string
 	Name string

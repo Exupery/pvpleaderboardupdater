@@ -21,12 +21,12 @@ func dbConnect() sql.DB {
 	return *db
 }
 
-func insert(qry string, args [][]interface{}) int64 {
+func insert(qry Query) int64 {
 	var numInserted int64 = 0
 	txn, _ := db.Begin()
-	stmt, _ := txn.Prepare(qry)
+	stmt, _ := txn.Prepare(qry.Sql)
 
-	for _, params := range args {
+	for _, params := range qry.Args {
 		res, err := stmt.Exec(params...)
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
@@ -40,8 +40,8 @@ func insert(qry string, args [][]interface{}) int64 {
 	return numInserted
 }
 
-func upsertEntries(bracket string, entries *[]LeaderboardEntry) {
-	// TODO UPSERT ENTRIES
+func setLeaderboard(bracket string, entries *[]LeaderboardEntry) {
+	println(bracket, len(*entries))	// TODO DELME
 }
 
 func addRealms(realms *[]Realm) {
@@ -56,7 +56,7 @@ func addRealms(realms *[]Realm) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v realms", numInserted)
 }
 
@@ -71,7 +71,7 @@ func addRaces(races *[]Race) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v races", numInserted)
 }
 
@@ -86,7 +86,7 @@ func addFactions(factions *[]Faction) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v faction", numInserted)
 }
 
@@ -101,7 +101,7 @@ func addClasses(classes *[]Class) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v classes", numInserted)
 }
 
@@ -118,7 +118,7 @@ func addSpecs(specs *[]Spec) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v specs", numInserted)
 }
 
@@ -135,7 +135,7 @@ func addTalents(talents *[]Talent) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v talents", numInserted)
 }
 
@@ -152,7 +152,7 @@ func addGlyphs(glyphs *[]Glyph) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v glyphs", numInserted)
 }
 
@@ -169,6 +169,6 @@ func addAchievements(achievements *[]Achievement) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(qry, args)
+	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v achievements", numInserted)
 }
