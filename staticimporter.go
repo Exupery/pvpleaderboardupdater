@@ -180,7 +180,7 @@ func importSpecs(specs *[]Spec) {
 }
 
 func importTalents(talents *[]Talent) {
-	// TODO WRITE TALENTS TO DB
+	addTalents(talents)
 }
 
 func importGlyphs(glyphs *[]Glyph) {

@@ -31,7 +31,7 @@ CREATE TABLE specs (
   class_id INTEGER NOT NULL REFERENCES classes (id),
   name VARCHAR(32) NOT NULL,
   role VARCHAR(32),
-  description VARCHAR(256),
+  description VARCHAR(1024),
   background_image VARCHAR(128),
   icon VARCHAR(128),
   UNIQUE (class_id, name)
@@ -41,14 +41,14 @@ CREATE TABLE talents (
   id INTEGER PRIMARY KEY,
   class_id INTEGER NOT NULL REFERENCES classes (id),
   name VARCHAR(128) NOT NULL,
-  description VARCHAR(256),
+  description VARCHAR(1024),
   icon VARCHAR(128),
   tier SMALLINT,
-  col SMALLINT,
-  UNIQUE (class_id, name)
+  col SMALLINT
 );
 
 CREATE INDEX ON talents (tier, col);
+CREATE INDEX ON talents (class_id, name);
 
 CREATE TABLE glyphs (
   id INTEGER PRIMARY KEY,
