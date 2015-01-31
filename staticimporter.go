@@ -184,7 +184,7 @@ func importTalents(talents *[]Talent) {
 }
 
 func importGlyphs(glyphs *[]Glyph) {
-	// TODO WRITE GLYPHS TO DB
+	addGlyphs(glyphs)
 }
 
 func parseAchievements(data *[]byte) []Achievement {

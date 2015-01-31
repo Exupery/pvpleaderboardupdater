@@ -130,11 +130,28 @@ func addTalents(talents *[]Talent) {
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
-		params := []interface{}{talent.Id, talent.ClassId, talent.Name, talent.Description, 
+		params := []interface{}{talent.Id, talent.ClassId, talent.Name, talent.Description,
 			talent.Icon, talent.Tier, talent.Column, talent.Id}
 		args = append(args, params)
 	}
 
 	numInserted := insert(qry, args)
 	logger.Printf("Inserted %v talents", numInserted)
+}
+
+func addGlyphs(glyphs *[]Glyph) {
+	const qry string =
+		`INSERT INTO glyphs (id, class_id, name, icon, item_id, type_id)
+		SELECT $1, $2, $3, $4, $5, $6
+		WHERE NOT EXISTS (SELECT 1 FROM glyphs WHERE id=$7)`
+	args := make([][]interface{}, 0)
+
+	for _, glyph := range *glyphs {
+		params := []interface{}{glyph.Glyph, glyph.ClassId, glyph.Name, glyph.Icon,
+			glyph.Item, glyph.TypeId, glyph.Glyph}
+		args = append(args, params)
+	}
+
+	numInserted := insert(qry, args)
+	logger.Printf("Inserted %v glyphs", numInserted)
 }
