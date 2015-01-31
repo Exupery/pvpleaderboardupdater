@@ -26,6 +26,14 @@ func insert(qry Query) int64 {
 	txn, _ := db.Begin()
 	stmt, _ := txn.Prepare(qry.Sql)
 
+	if qry.Before != "" {
+		_, err := txn.Exec(qry.Before)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+			return 0
+		}
+	}
+
 	for _, params := range qry.Args {
 		res, err := stmt.Exec(params...)
 		if err != nil {
@@ -42,6 +50,36 @@ func insert(qry Query) int64 {
 
 func setLeaderboard(bracket string, entries *[]LeaderboardEntry) {
 	println(bracket, len(*entries))	// TODO DELME
+	const qry string =
+		`INSERT INTO bracket_2v2 (ranking, player_id, rating, season_wins, season_losses, last_update)
+		SELECT $1, $2, $3, $4, $5, $6
+		WHERE NOT EXISTS (SELECT 1 FROM bracket_2v2 WHERE player_id=$7)`
+	args := make([][]interface{}, 0)
+
+	/*for _, entry := range *entries {
+		params := []interface{}{}
+		args = append(args, params)
+	}*/
+
+	numInserted := insert(Query{Sql: qry, Args: args, Before: "TRUNCATE TABLE bracket_2v2"})
+	logger.Printf("%s leaderboard set with %v entries", bracket, numInserted)
+}
+
+func addPlayers(players *[]Player) {
+	const qry string =
+		`INSERT INTO players (name, class_id, faction_id, race_id, realm_slug, gender, last_update)
+		SELECT $1, $2, $3, $4, $5, $6, NOW()
+		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$7 AND realm_slug=$8)`
+	args := make([][]interface{}, 0)
+
+	for _, player := range *players {
+		params := []interface{}{player.Name, player.ClassId, player.FactionId, player.RaceId,
+			player.RealmSlug, player.Gender, player.Name, player.RealmSlug}
+		args = append(args, params)
+	}
+
+	numInserted := insert(Query{Sql: qry, Args: args})
+	logger.Printf("Added %v players", numInserted)
 }
 
 func addRealms(realms *[]Realm) {

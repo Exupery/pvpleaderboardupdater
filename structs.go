@@ -3,7 +3,7 @@ package main
 type Query struct {
 	Sql string
 	Args [][]interface{}
-	Truncate bool
+	Before string
 }
 
 type Realm struct {
@@ -82,4 +82,15 @@ type LeaderboardEntry struct {
 	SeasonLosses int
 	WeeklyWins int
 	WeeklyLosses int
+}
+
+type Player struct {
+	Name string
+	ClassId int
+	SpecId int
+	FactionId int
+	RaceId int
+	RealmSlug string
+	Guild string
+	Gender int
 }

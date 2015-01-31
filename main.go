@@ -75,5 +75,25 @@ func updateLeaderboard(bracket string) {
 	var leaderboardJson *[]byte = get("leaderboard/" + bracket)
 	var entries []LeaderboardEntry = parseLeaderboard(leaderboardJson)
 	logger.Printf("Parsed %v %s entries", len(entries), bracket)
-	setLeaderboard(bracket, &entries)
+
+	var players []Player = getPlayersFromLeaderboard(&entries)
+	addPlayers(&players)
+	//setLeaderboard(bracket, &entries)
+}
+
+func getPlayersFromLeaderboard(entries *[]LeaderboardEntry) []Player {
+	players := make([]Player, 0)
+
+	for _, entry := range *entries {
+		player := Player{
+			Name: entry.Name,
+			ClassId: entry.ClassId,
+			FactionId: entry.FactionId,
+			RaceId: entry.RaceId,
+			RealmSlug: entry.RealmSlug,
+			Gender: entry.GenderId}
+		players = append(players, player)
+	}
+
+	return players
 }
