@@ -222,5 +222,5 @@ func importAchievements() {
 	var achievementsJson *[]byte = get("data/character/achievements")
 	var achievements []Achievement = parseAchievements(achievementsJson)
 	logger.Printf("Parsed %v achievements", len(achievements))
-	// TODO WRITE ACHIEVEMENTS TO DB
+	addAchievements(&achievements)
 }

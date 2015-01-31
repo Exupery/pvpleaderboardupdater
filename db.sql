@@ -135,9 +135,10 @@ CREATE TABLE achievements (
   name VARCHAR(128),
   description VARCHAR(1024),
   icon VARCHAR(128),
-  points SMALLINT,
-  UNIQUE (name)
+  points SMALLINT
 );
+
+CREATE INDEX ON achievements (name);
 
 CREATE TABLE players_achievements (
   player_id INTEGER NOT NULL REFERENCES players (id),

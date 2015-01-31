@@ -155,3 +155,20 @@ func addGlyphs(glyphs *[]Glyph) {
 	numInserted := insert(qry, args)
 	logger.Printf("Inserted %v glyphs", numInserted)
 }
+
+func addAchievements(achievements *[]Achievement) {
+	const qry string =
+		`INSERT INTO achievements (id, name, description, icon, points)
+		SELECT $1, $2, $3, $4, $5
+		WHERE NOT EXISTS (SELECT 1 FROM achievements WHERE id=$6)`
+	args := make([][]interface{}, 0)
+
+	for _, achiev := range *achievements {
+		params := []interface{}{achiev.Id, achiev.Title, achiev.Description, achiev.Icon,
+			achiev.Points, achiev.Id}
+		args = append(args, params)
+	}
+
+	numInserted := insert(qry, args)
+	logger.Printf("Inserted %v achievements", numInserted)
+}
