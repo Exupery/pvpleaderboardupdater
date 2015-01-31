@@ -176,7 +176,7 @@ func classSlugToIdMap(classes *[]Class) map[string]int {
 }
 
 func importSpecs(specs *[]Spec) {
-	// TODO WRITE SPECS TO DB
+	addSpecs(specs)
 }
 
 func importTalents(talents *[]Talent) {

@@ -104,3 +104,20 @@ func addClasses(classes *[]Class) {
 	numInserted := insert(qry, args)
 	logger.Printf("Inserted %v classes", numInserted)
 }
+
+func addSpecs(specs *[]Spec) {
+	const qry string =
+		`INSERT INTO specs (class_id, name, role, description, background_image, icon)
+		SELECT $1, $2, $3, $4, $5, $6
+		WHERE NOT EXISTS (SELECT 1 FROM specs WHERE class_id=$7 AND name=$8)`
+	args := make([][]interface{}, 0)
+
+	for _, spec := range *specs {
+		params := []interface{}{spec.ClassId, spec.Name, spec.Role, spec.Description, 
+			spec.BackgroundImage, spec.Icon, spec.ClassId, spec.Name}
+		args = append(args, params)
+	}
+
+	numInserted := insert(qry, args)
+	logger.Printf("Inserted %v specs", numInserted)
+}
