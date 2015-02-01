@@ -70,7 +70,9 @@ CREATE TABLE players (
   realm_slug VARCHAR(64) NOT NULL REFERENCES realms (slug),
   guild VARCHAR(64),
   gender SMALLINT,
-  last_update TIMESTAMP,
+  achievement_points INTEGER,
+  honorable_kills INTEGER,
+  last_update TIMESTAMP NOT NULL DEFAULT NOW(),
   UNIQUE (name, realm_slug)
 );
 

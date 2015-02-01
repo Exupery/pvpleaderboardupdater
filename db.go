@@ -65,21 +65,47 @@ func setLeaderboard(bracket string, entries *[]LeaderboardEntry) {
 	logger.Printf("%s leaderboard set with %v entries", bracket, numInserted)
 }
 
+func upsertPlayers(players *[]Player) {
+	// postgres doesn't have an upsert mechanism so add new players then update all
+	addPlayers(players)
+	updatePlayerDetails(players)
+	// TODO UPDATE PLAYER SPECS TALENTS GLYPHS
+	// TODO UPDATE PLAYER ACHIEVEMENTS
+}
+
 func addPlayers(players *[]Player) {
 	const qry string =
-		`INSERT INTO players (name, class_id, faction_id, race_id, realm_slug, gender, last_update)
-		SELECT $1, $2, $3, $4, $5, $6, NOW()
-		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$7 AND realm_slug=$8)`
+		`INSERT INTO players (name, realm_slug) SELECT $1, $2
+		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
 	args := make([][]interface{}, 0)
 
 	for _, player := range *players {
-		params := []interface{}{player.Name, player.ClassId, player.FactionId, player.RaceId,
-			player.RealmSlug, player.Gender, player.Name, player.RealmSlug}
-		args = append(args, params)
+		// realm may be empty if character is transferring
+		if player.RealmSlug != "" {
+			params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
+			args = append(args, params)
+		}
 	}
 
 	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Added %v players", numInserted)
+}
+
+func updatePlayerDetails(players *[]Player) {
+	const qry string =
+		`UPDATE players SET class_id=$1, spec_id=$2, faction_id=$3, race_id=$4, guild=$5,
+		gender=$6, achievement_points=$7, honorable_kills=$8, last_update=NOW()
+		WHERE name=$9 AND realm_slug=$10`
+	args := make([][]interface{}, 0)
+
+	for _, player := range *players {
+		params := []interface{}{player.ClassId, player.SpecId, player.FactionId, player.RaceId, player.Guild,
+			player.Gender, player.AchievementPoints, player.HonorableKills, player.Name, player.RealmSlug}
+		args = append(args, params)
+	}
+
+	numInserted := insert(Query{Sql: qry, Args: args})
+	logger.Printf("Updated %v players", numInserted)
 }
 
 func addRealms(realms *[]Realm) {

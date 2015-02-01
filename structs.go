@@ -93,4 +93,7 @@ type Player struct {
 	RealmSlug string
 	Guild string
 	Gender int
+	AchievementIds []int
+	AchievementPoints int
+	HonorableKills int
 }
