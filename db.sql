@@ -27,7 +27,7 @@ CREATE TABLE classes (
 );
 
 CREATE TABLE specs (
-  id SERIAL PRIMARY KEY,
+  id INTEGER PRIMARY KEY,
   class_id INTEGER NOT NULL REFERENCES classes (id),
   name VARCHAR(32) NOT NULL,
   role VARCHAR(32),

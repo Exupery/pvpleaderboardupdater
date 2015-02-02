@@ -171,13 +171,13 @@ func addClasses(classes *[]Class) {
 
 func addSpecs(specs *[]Spec) {
 	const qry string =
-		`INSERT INTO specs (class_id, name, role, description, background_image, icon)
-		SELECT $1, $2, $3, $4, $5, $6
-		WHERE NOT EXISTS (SELECT 1 FROM specs WHERE class_id=$7 AND name=$8)`
+		`INSERT INTO specs (id, class_id, name, role, description, background_image, icon)
+		SELECT $1, $2, $3, $4, $5, $6, $7
+		WHERE NOT EXISTS (SELECT 1 FROM specs WHERE class_id=$8 AND name=$9)`
 	args := make([][]interface{}, 0)
 
 	for _, spec := range *specs {
-		params := []interface{}{spec.ClassId, spec.Name, spec.Role, spec.Description, 
+		params := []interface{}{spec.Id, spec.ClassId, spec.Name, spec.Role, spec.Description, 
 			spec.BackgroundImage, spec.Icon, spec.ClassId, spec.Name}
 		args = append(args, params)
 	}

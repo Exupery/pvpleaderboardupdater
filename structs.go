@@ -31,6 +31,7 @@ type Class struct {
 }
 
 type Spec struct {
+	Id int
 	ClassId int
 	Name string
 	Role string

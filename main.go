@@ -166,7 +166,7 @@ func parsePlayerDetails(data *[]byte) Player {
 	return Player{
 		Name: player.Name,
 		ClassId: player.Class,
-		SpecId: 1, //player.,	// TODO MAP SPEC IDS
+		SpecId: 1, //player.,	// TODO GET SPEC ID
 		RaceId: player.Race,
 		Guild: player.Guild.Name,
 		Gender: player.Gender,
