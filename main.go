@@ -119,7 +119,7 @@ func getPlayersFromLeaderboard(entries []LeaderboardEntry) []Player {
 	return players
 }
 
-func parsePlayerDetails(data *[]byte) Player {
+func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 	type Guild struct {
 		Name string
 	}
@@ -161,13 +161,13 @@ func parsePlayerDetails(data *[]byte) Player {
 		return Player{}
 	}
 
-	var specId int = 1
+	var specId int
 	var glyphIds []int = make([]int, 0)
 	var talentIds []int = make([]int, 0)
 
 	for _, t := range player.Talents {
 		if t.Selected {
-			logger.Println(t.Spec.Name)	// TODO DELME
+			specId = (*classSpecMap)[strconv.Itoa(player.Class) + t.Spec.Name]
 			for _, glyph := range t.Glyphs.Major {
 				glyphIds = append(glyphIds, glyph.Glyph)
 			}
@@ -183,27 +183,27 @@ func parsePlayerDetails(data *[]byte) Player {
 	return Player{
 		Name: player.Name,
 		ClassId: player.Class,
-		SpecId: specId, //player.,	// TODO GET SPEC ID
+		SpecId: specId,
 		RaceId: player.Race,
 		Guild: player.Guild.Name,
 		Gender: player.Gender,
-		GlyphIds: glyphIds,	// TODO PLAYER=>GLYPH RELATION
+		GlyphIds: glyphIds,		// TODO PLAYER=>GLYPH RELATION
 		TalentIds: talentIds,	// TODO PLAYER=>TALENT RELATION
-		//AchievementIds: player.Achievements.AchievementsCompleted,	// TODO PLAYER=>ACHIEV RELATION
+		AchievementIds: player.Achievements.AchievementsCompleted,	// TODO PLAYER=>ACHIEV RELATION
 		AchievementPoints: player.AchievementPoints,
 		HonorableKills: player.TotalHonorableKills}
 }
 
 func getPlayerDetails(playerMap map[string]Player) []Player {
 	players := make([]Player, 0)
+	classSpecMap := classIdSpecNameToSpecIdMap()
 	const path string = "character/%s/%s?fields=talents,guild,achievements"
 	for _, player := range playerMap {
 		var playerJson *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
 		if playerJson != nil {
-			var p Player = parsePlayerDetails(playerJson)
+			var p Player = parsePlayerDetails(playerJson, classSpecMap)
 			p.RealmSlug = player.RealmSlug
 			p.FactionId = player.FactionId
-			logger.Println(p)	// TODO DELME
 			players = append(players, p)
 		}
 	}

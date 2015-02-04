@@ -4,6 +4,7 @@ import (
 	_ "github.com/lib/pq"
 	"database/sql"
 	"os"
+	"strconv"
 )
 
 var db sql.DB = dbConnect()
@@ -19,6 +20,24 @@ func dbConnect() sql.DB {
 		logger.Printf("%s Unable to connect to database: %s", errPrefix, err)	
 	}
 	return *db
+}
+
+// retrieving results isn't as easily abstracted as inserts/updates
+// so (for now) use this template as a base in appropriate methods
+func queryTemplate() {
+	rows, err := db.Query("")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+		}
+
+	}
 }
 
 func insert(qry Query) int64 {
@@ -235,4 +254,24 @@ func addAchievements(achievements *[]Achievement) {
 
 	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v achievements", numInserted)
+}
+
+func classIdSpecNameToSpecIdMap() *map[string]int {
+	var m map[string]int = make(map[string]int)
+	rows, err := db.Query("SELECT id, class_id, name FROM specs")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var classId int
+		var name string
+		err := rows.Scan(&id, &classId, &name)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+		}
+		m[strconv.Itoa(classId) + name] = id
+	}
+	return &m
 }
