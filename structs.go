@@ -95,6 +95,8 @@ type Player struct {
 	Guild string
 	Gender int
 	AchievementIds []int
+	GlyphIds []int
+	TalentIds []int
 	AchievementPoints int
 	HonorableKills int
 }

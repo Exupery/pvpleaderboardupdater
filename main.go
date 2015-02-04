@@ -126,23 +126,21 @@ func parsePlayerDetails(data *[]byte) Player {
 	type Achievements struct {
 		AchievementsCompleted []int
 	}
+	type GlyphJson struct {
+		Major []Glyph
+		Minor []Glyph
+	}
 	type Spell struct {
 		Id int
 	}
 	type TalentJson struct {
 		Spell Spell
 	}
-	type GlyphSpell struct {
-		Glyph int
-	}
-	type GlyphJson struct {
-		Major []GlyphSpell
-		Minor []GlyphSpell
-	}
-	type Talents struct {
+	type TalentsJson struct {
 		Talents []TalentJson
 		Glyphs GlyphJson
 		Spec Spec
+		Selected bool
 	}
 	type PlayerJson struct {
 		Name string
@@ -153,7 +151,7 @@ func parsePlayerDetails(data *[]byte) Player {
 		TotalHonorableKills int
 		Guild Guild
 		Achievements Achievements
-		Talents []Talents
+		Talents []TalentsJson
 	}
 
 	var player PlayerJson
@@ -163,13 +161,34 @@ func parsePlayerDetails(data *[]byte) Player {
 		return Player{}
 	}
 
+	var specId int = 1
+	var glyphIds []int = make([]int, 0)
+	var talentIds []int = make([]int, 0)
+
+	for _, t := range player.Talents {
+		if t.Selected {
+			logger.Println(t.Spec.Name)	// TODO DELME
+			for _, glyph := range t.Glyphs.Major {
+				glyphIds = append(glyphIds, glyph.Glyph)
+			}
+			for _, glyph := range t.Glyphs.Minor {
+				glyphIds = append(glyphIds, glyph.Glyph)
+			}
+			for _, talent := range t.Talents {
+				talentIds = append(talentIds, talent.Spell.Id)
+			}
+		}
+	}
+
 	return Player{
 		Name: player.Name,
 		ClassId: player.Class,
-		SpecId: 1, //player.,	// TODO GET SPEC ID
+		SpecId: specId, //player.,	// TODO GET SPEC ID
 		RaceId: player.Race,
 		Guild: player.Guild.Name,
 		Gender: player.Gender,
+		GlyphIds: glyphIds,	// TODO PLAYER=>GLYPH RELATION
+		TalentIds: talentIds,	// TODO PLAYER=>TALENT RELATION
 		//AchievementIds: player.Achievements.AchievementsCompleted,	// TODO PLAYER=>ACHIEV RELATION
 		AchievementPoints: player.AchievementPoints,
 		HonorableKills: player.TotalHonorableKills}
@@ -184,6 +203,7 @@ func getPlayerDetails(playerMap map[string]Player) []Player {
 			var p Player = parsePlayerDetails(playerJson)
 			p.RealmSlug = player.RealmSlug
 			p.FactionId = player.FactionId
+			logger.Println(p)	// TODO DELME
 			players = append(players, p)
 		}
 	}
