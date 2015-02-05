@@ -199,12 +199,14 @@ func getPlayerDetails(playerMap map[string]Player) []Player {
 	classSpecMap := classIdSpecNameToSpecIdMap()
 	const path string = "character/%s/%s?fields=talents,guild,achievements"
 	for _, player := range playerMap {
-		var playerJson *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
-		if playerJson != nil {
-			var p Player = parsePlayerDetails(playerJson, classSpecMap)
-			p.RealmSlug = player.RealmSlug
-			p.FactionId = player.FactionId
-			players = append(players, p)
+		if player.RealmSlug != "" {
+			var playerJson *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
+			if playerJson != nil {
+				var p Player = parsePlayerDetails(playerJson, classSpecMap)
+				p.RealmSlug = player.RealmSlug
+				p.FactionId = player.FactionId
+				players = append(players, p)
+			}
 		}
 	}
 

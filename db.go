@@ -3,8 +3,10 @@ package main
 import (
 	_ "github.com/lib/pq"
 	"database/sql"
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var db sql.DB = dbConnect()
@@ -46,7 +48,15 @@ func insert(qry Query) int64 {
 	stmt, _ := txn.Prepare(qry.Sql)
 
 	if qry.Before != "" {
-		_, err := txn.Exec(qry.Before)
+		bStmt, _ := txn.Prepare(qry.Before)
+		var err error = nil
+		if len(qry.BeforeArgs) == 0 {
+			_, err = bStmt.Exec()
+		} else {
+			for _, params := range qry.BeforeArgs {
+				_, err = bStmt.Exec(params...)
+			}
+		}
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
 			return 0
@@ -88,8 +98,42 @@ func upsertPlayers(players *[]Player) {
 	// postgres doesn't have an upsert mechanism so add new players then update all
 	addPlayers(players)
 	updatePlayerDetails(players)
-	// TODO UPDATE PLAYER SPECS TALENTS GLYPHS
-	// TODO UPDATE PLAYER ACHIEVEMENTS
+	var playerIdMap *map[int]Player = getPlayerIdMap(players)
+	if len(*playerIdMap) > 0 {
+		updatePlayerTalents(playerIdMap)
+		// TODO UPDATE PLAYER GLYPHS
+		// TODO UPDATE PLAYER ACHIEVEMENTS
+	} else {
+		logger.Printf("Player ID map empty (%d expected)", len(*players))
+	}
+}
+
+func getPlayerIdMap(players *[]Player) *map[int]Player {
+	var m map[int]Player = make(map[int]Player)
+	rows, err := db.Query("SELECT id, name, realm_slug FROM players")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+	var t map[string]int = make(map[string]int)
+	for rows.Next() {
+		var id int
+		var name string
+		var realm_slug string
+		err := rows.Scan(&id, &name, &realm_slug)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+		}
+		t[name + realm_slug] = id
+	}
+
+	for _, player := range *players {
+		var id int = t[player.Name + player.RealmSlug]
+		if id > 0 {
+			m[id] = player
+		}
+	}
+	return &m
 }
 
 func addPlayers(players *[]Player) {
@@ -124,7 +168,25 @@ func updatePlayerDetails(players *[]Player) {
 	}
 
 	numInserted := insert(Query{Sql: qry, Args: args})
-	logger.Printf("Updated %v players", numInserted)
+	logger.Printf("Updated %v player details", numInserted)
+}
+
+func updatePlayerTalents(players *map[int]Player) {
+	var before string = "DELETE FROM players_talents WHERE player_id IN ("
+	const qry string = "INSERT INTO players_talents (player_id, talent_id) VALUES ($1, $2)"
+	args := make([][]interface{}, 0)
+
+	for id, player := range *players {
+		before += fmt.Sprintf("%d,", id)
+		for _, talent := range player.TalentIds {
+			args = append(args, []interface{}{id, talent})
+		}
+	}
+
+	before = strings.TrimRight(before, ",")
+	before += ")"
+	numInserted := insert(Query{Sql: qry, Args: args, Before: before})
+	logger.Printf("Mapped %v players=>talents", numInserted)
 }
 
 func addRealms(realms *[]Realm) {

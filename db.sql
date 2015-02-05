@@ -148,3 +148,9 @@ CREATE TABLE players_achievements (
   achieved_at TIMESTAMP,
   PRIMARY KEY (player_id, achievement_id)
 );
+
+CREATE TABLE players_talents (
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  talent_id INTEGER NOT NULL REFERENCES talents (id),
+  PRIMARY KEY (player_id, talent_id)
+);

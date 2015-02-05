@@ -4,6 +4,7 @@ type Query struct {
 	Sql string
 	Args [][]interface{}
 	Before string
+	BeforeArgs [][]interface{}
 }
 
 type Realm struct {
