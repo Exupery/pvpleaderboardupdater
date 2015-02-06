@@ -101,7 +101,7 @@ func upsertPlayers(players *[]Player) {
 	var playerIdMap *map[int]Player = getPlayerIdMap(players)
 	if len(*playerIdMap) > 0 {
 		updatePlayerTalents(playerIdMap)
-		// TODO UPDATE PLAYER GLYPHS
+		updatePlayerGlyphs(playerIdMap)
 		// TODO UPDATE PLAYER ACHIEVEMENTS
 	} else {
 		logger.Printf("Player ID map empty (%d expected)", len(*players))
@@ -187,6 +187,24 @@ func updatePlayerTalents(players *map[int]Player) {
 	before += ")"
 	numInserted := insert(Query{Sql: qry, Args: args, Before: before})
 	logger.Printf("Mapped %v players=>talents", numInserted)
+}
+
+func updatePlayerGlyphs(players *map[int]Player) {
+	var before string = "DELETE FROM players_glyphs WHERE player_id IN ("
+	const qry string = "INSERT INTO players_glyphs (player_id, glyph_id) VALUES ($1, $2)"
+	args := make([][]interface{}, 0)
+
+	for id, player := range *players {
+		before += fmt.Sprintf("%d,", id)
+		for _, glyph := range player.GlyphIds {
+			args = append(args, []interface{}{id, glyph})
+		}
+	}
+
+	before = strings.TrimRight(before, ",")
+	before += ")"
+	numInserted := insert(Query{Sql: qry, Args: args, Before: before})
+	logger.Printf("Mapped %v players=>glyphs", numInserted)
 }
 
 func addRealms(realms *[]Realm) {

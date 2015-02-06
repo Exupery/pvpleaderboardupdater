@@ -154,3 +154,9 @@ CREATE TABLE players_talents (
   talent_id INTEGER NOT NULL REFERENCES talents (id),
   PRIMARY KEY (player_id, talent_id)
 );
+
+CREATE TABLE players_glyphs (
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  glyph_id INTEGER NOT NULL REFERENCES glyphs (id),
+  PRIMARY KEY (player_id, glyph_id)
+);

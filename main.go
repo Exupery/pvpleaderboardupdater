@@ -187,8 +187,8 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 		RaceId: player.Race,
 		Guild: player.Guild.Name,
 		Gender: player.Gender,
-		GlyphIds: glyphIds,		// TODO PLAYER=>GLYPH RELATION
-		TalentIds: talentIds,	// TODO PLAYER=>TALENT RELATION
+		GlyphIds: glyphIds,
+		TalentIds: talentIds,
 		AchievementIds: player.Achievements.AchievementsCompleted,	// TODO PLAYER=>ACHIEV RELATION
 		AchievementPoints: player.AchievementPoints,
 		HonorableKills: player.TotalHonorableKills}
