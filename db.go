@@ -53,9 +53,7 @@ func insert(qry Query) int64 {
 		if len(qry.BeforeArgs) == 0 {
 			_, err = bStmt.Exec()
 		} else {
-			for _, params := range qry.BeforeArgs {
-				_, err = bStmt.Exec(params...)
-			}
+			_, err = bStmt.Exec(qry.BeforeArgs...)
 		}
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
@@ -175,17 +173,21 @@ func updatePlayerTalents(players *map[int]Player) {
 	var before string = "DELETE FROM players_talents WHERE player_id IN ("
 	const qry string = "INSERT INTO players_talents (player_id, talent_id) VALUES ($1, $2)"
 	args := make([][]interface{}, 0)
+	beforeArgs := make([]interface{}, 0)
 
+	var ctr int = 1
 	for id, player := range *players {
-		before += fmt.Sprintf("%d,", id)
+		before += fmt.Sprintf("$%d,", ctr)
+		beforeArgs = append(beforeArgs, id)
 		for _, talent := range player.TalentIds {
 			args = append(args, []interface{}{id, talent})
 		}
+		ctr++
 	}
 
 	before = strings.TrimRight(before, ",")
 	before += ")"
-	numInserted := insert(Query{Sql: qry, Args: args, Before: before})
+	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>talents", numInserted)
 }
 
@@ -193,17 +195,21 @@ func updatePlayerGlyphs(players *map[int]Player) {
 	var before string = "DELETE FROM players_glyphs WHERE player_id IN ("
 	const qry string = "INSERT INTO players_glyphs (player_id, glyph_id) VALUES ($1, $2)"
 	args := make([][]interface{}, 0)
+	beforeArgs := make([]interface{}, 0)
 
+	var ctr int = 1
 	for id, player := range *players {
-		before += fmt.Sprintf("%d,", id)
+		before += fmt.Sprintf("$%d,", ctr)
+		beforeArgs = append(beforeArgs, id)
 		for _, glyph := range player.GlyphIds {
 			args = append(args, []interface{}{id, glyph})
 		}
+		ctr++
 	}
 
 	before = strings.TrimRight(before, ",")
 	before += ")"
-	numInserted := insert(Query{Sql: qry, Args: args, Before: before})
+	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>glyphs", numInserted)
 }
 
