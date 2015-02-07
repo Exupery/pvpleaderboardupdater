@@ -160,3 +160,21 @@ CREATE TABLE players_glyphs (
   glyph_id INTEGER NOT NULL REFERENCES glyphs (id),
   PRIMARY KEY (player_id, glyph_id)
 );
+
+CREATE TABLE players_stats (
+  player_id INTEGER PRIMARY KEY REFERENCES players (id),
+  strength INTEGER,
+  agility INTEGER,
+  intellect INTEGER,
+  stamina INTEGER,
+  spirit INTEGER,
+  critical_strike INTEGER,
+  haste INTEGER,
+  attack_power INTEGER,
+  mastery INTEGER,
+  multistrike INTEGER,
+  versatility INTEGER,
+  leech INTEGER,
+  dodge INTEGER,
+  parry INTEGER
+);

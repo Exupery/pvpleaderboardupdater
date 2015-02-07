@@ -68,6 +68,23 @@ type Achievement struct {
 	Icon string
 }
 
+type Stats struct {
+	Str int
+	Agi int
+	Int int
+	Sta int
+	Spr int
+	CritRating int
+	HasteRating int
+	AttackPower int
+	MasteryRating float64
+	MultistrikeRating float64
+	Versatility float64
+	LeechRating float64
+	DodgeRating float64
+	ParryRating float64
+}
+
 type LeaderboardEntry struct {
 	Name string
 	Ranking int
@@ -95,6 +112,7 @@ type Player struct {
 	RealmSlug string
 	Guild string
 	Gender int
+	Stats Stats
 	AchievementIds []int
 	AchievementTimestamps []int64
 	GlyphIds []int

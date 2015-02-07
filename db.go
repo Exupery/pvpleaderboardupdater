@@ -97,10 +97,12 @@ func upsertPlayers(players *[]Player) {
 	// postgres doesn't have an upsert mechanism so add new players then update all
 	addPlayers(players)
 	updatePlayerDetails(players)
+
 	var playerIdMap *map[int]Player = getPlayerIdMap(players)
 	if len(*playerIdMap) > 0 {
 		updatePlayerTalents(playerIdMap)
 		updatePlayerGlyphs(playerIdMap)
+		updatePlayerStats(playerIdMap)
 		updatePlayerAchievements(playerIdMap)
 	} else {
 		logger.Printf("Player ID map empty (%d expected)", len(*players))
@@ -142,8 +144,7 @@ func addPlayers(players *[]Player) {
 	args := make([][]interface{}, 0)
 
 	for _, player := range *players {
-		// realm may be empty if character is transferring
-		if player.RealmSlug != "" {
+		if player.RealmSlug != "" && player.Name != "" {
 			params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
 			args = append(args, params)
 		}
@@ -232,6 +233,46 @@ func updatePlayerAchievements(players *map[int]Player) {
 
 	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Mapped %v players=>achievements", numInserted)
+}
+
+func updatePlayerStats(players *map[int]Player) {
+	var before string = "DELETE FROM players_stats WHERE player_id IN ("
+	const qry string = `INSERT INTO players_stats 
+		(player_id, strength, agility, intellect, stamina, spirit, critical_strike, haste,
+		attack_power, mastery, multistrike, versatility, leech, dodge, parry)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
+	args := make([][]interface{}, 0)
+	beforeArgs := make([]interface{}, 0)
+
+	var ctr int = 1
+	for id, player := range *players {
+		before += fmt.Sprintf("$%d,", ctr)
+		beforeArgs = append(beforeArgs, id)
+		ps := player.Stats
+		stats := []interface{}{
+			id,
+			ps.Str,
+			ps.Agi,
+			ps.Int,
+			ps.Sta,
+			ps.Spr,
+			ps.CritRating,
+			ps.HasteRating,
+			ps.AttackPower,
+			int(ps.MasteryRating),
+			int(ps.MultistrikeRating),
+			int(ps.Versatility),
+			int(ps.LeechRating),
+			int(ps.DodgeRating),
+			int(ps.ParryRating)}
+		args = append(args, stats)
+		ctr++
+	}
+
+	before = strings.TrimRight(before, ",")
+	before += ")"
+	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
+	logger.Printf("Mapped %v players=>stats", numInserted)
 }
 
 func addRealms(realms *[]Realm) {

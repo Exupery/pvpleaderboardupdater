@@ -153,6 +153,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 		Guild Guild
 		Achievements Achievements
 		Talents []TalentsJson
+		Stats Stats
 	}
 
 	var player PlayerJson
@@ -188,6 +189,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 		RaceId: player.Race,
 		Guild: player.Guild.Name,
 		Gender: player.Gender,
+		Stats: player.Stats,
 		GlyphIds: glyphIds,
 		TalentIds: talentIds,
 		AchievementIds: player.Achievements.AchievementsCompleted,
@@ -199,8 +201,9 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 func getPlayerDetails(playerMap map[string]Player) []Player {
 	players := make([]Player, 0)
 	classSpecMap := classIdSpecNameToSpecIdMap()
-	const path string = "character/%s/%s?fields=talents,guild,achievements"
+	const path string = "character/%s/%s?fields=talents,guild,achievements,stats"
 	for _, player := range playerMap {
+		// realm may be empty if character is transferring
 		if player.RealmSlug != "" {
 			var playerJson *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
 			if playerJson != nil {
