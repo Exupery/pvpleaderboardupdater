@@ -96,6 +96,7 @@ type Player struct {
 	Guild string
 	Gender int
 	AchievementIds []int
+	AchievementTimestamps []int64
 	GlyphIds []int
 	TalentIds []int
 	AchievementPoints int

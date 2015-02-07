@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var db sql.DB = dbConnect()
@@ -100,7 +101,7 @@ func upsertPlayers(players *[]Player) {
 	if len(*playerIdMap) > 0 {
 		updatePlayerTalents(playerIdMap)
 		updatePlayerGlyphs(playerIdMap)
-		// TODO UPDATE PLAYER ACHIEVEMENTS
+		updatePlayerAchievements(playerIdMap)
 	} else {
 		logger.Printf("Player ID map empty (%d expected)", len(*players))
 	}
@@ -211,6 +212,26 @@ func updatePlayerGlyphs(players *map[int]Player) {
 	before += ")"
 	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>glyphs", numInserted)
+}
+
+func updatePlayerAchievements(players *map[int]Player) {
+	const qry string =
+		`INSERT INTO players_achievements (player_id, achievement_id, achieved_at) SELECT $1, $2, $3
+		WHERE NOT EXISTS (SELECT 1 FROM players_achievements WHERE player_id=$4 AND achievement_id=$5)`
+	args := make([][]interface{}, 0)
+
+	validIds := getAchievementIds()
+	for id, player := range *players {
+		for idx, achievId := range player.AchievementIds {
+			if (*validIds)[achievId] {
+				achievedAt := time.Unix(player.AchievementTimestamps[idx] / 1000, 0)
+				args = append(args, []interface{}{id, achievId, achievedAt, id, achievId})
+			}
+		}
+	}
+
+	numInserted := insert(Query{Sql: qry, Args: args})
+	logger.Printf("Mapped %v players=>achievements", numInserted)
 }
 
 func addRealms(realms *[]Realm) {
@@ -358,6 +379,24 @@ func classIdSpecNameToSpecIdMap() *map[string]int {
 			logger.Printf("%s %s", errPrefix, err)
 		}
 		m[strconv.Itoa(classId) + name] = id
+	}
+	return &m
+}
+
+func getAchievementIds() *map[int]bool {
+	var m map[int]bool = make(map[int]bool)
+	rows, err := db.Query("SELECT id FROM achievements")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+		}
+		m[id] = true
 	}
 	return &m
 }

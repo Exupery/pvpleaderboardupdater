@@ -125,6 +125,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 	}
 	type Achievements struct {
 		AchievementsCompleted []int
+		AchievementsCompletedTimestamp []int64
 	}
 	type GlyphJson struct {
 		Major []Glyph
@@ -189,7 +190,8 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 		Gender: player.Gender,
 		GlyphIds: glyphIds,
 		TalentIds: talentIds,
-		AchievementIds: player.Achievements.AchievementsCompleted,	// TODO PLAYER=>ACHIEV RELATION
+		AchievementIds: player.Achievements.AchievementsCompleted,
+		AchievementTimestamps: player.Achievements.AchievementsCompletedTimestamp,
 		AchievementPoints: player.AchievementPoints,
 		HonorableKills: player.TotalHonorableKills}
 }
