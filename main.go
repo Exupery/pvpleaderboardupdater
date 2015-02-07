@@ -56,8 +56,7 @@ func get(path string) *[]byte {
 }
 
 func updateLeaderboards() {
-	//brackets := []string{"2v2", "3v3", "5v5", "rbg"}
-	brackets := []string{"2v2"}	// TODO DELME
+	brackets := []string{"2v2", "3v3", "5v5", "rbg"}
 	leaderboards := make(map[string][]LeaderboardEntry)
 	playerMap := make(map[string]Player)
 
@@ -77,8 +76,22 @@ func updateLeaderboards() {
 	logger.Printf("Found %v unique players across %v brackets", len(playerMap), len(leaderboards))
 
 	players := getPlayerDetails(playerMap)
-	upsertPlayers(&players)
-	// TODO SET LEADERBOARDS
+	addPlayers(&players)
+	var playerIdMap *map[int]Player = getPlayerIdMap(&players)
+	if len(*playerIdMap) > 0 {
+		updatePlayers(playerIdMap)
+
+		var playerSlugIdMap map[string]int = make(map[string]int)
+		for id, player := range *playerIdMap {
+			playerSlugIdMap[player.Name + player.RealmSlug] = id
+		}
+
+		for bracket, leaderboard := range leaderboards {
+			setLeaderboard(bracket, &leaderboard, &playerSlugIdMap)
+		}
+	} else {
+		logger.Printf("%s Player ID map empty (%d expected)", errPrefix, len(players))
+	}
 }
 
 func parseLeaderboard(data *[]byte) []LeaderboardEntry {

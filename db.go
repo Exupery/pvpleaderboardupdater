@@ -76,37 +76,53 @@ func insert(qry Query) int64 {
 	return numInserted
 }
 
-func setLeaderboard(bracket string, entries *[]LeaderboardEntry) {
-	println(bracket, len(*entries))	// TODO DELME
-	const qry string =
-		`INSERT INTO bracket_2v2 (ranking, player_id, rating, season_wins, season_losses, last_update)
-		SELECT $1, $2, $3, $4, $5, $6
-		WHERE NOT EXISTS (SELECT 1 FROM bracket_2v2 WHERE player_id=$7)`
+func setLeaderboard(bracket string, entries *[]LeaderboardEntry, playerSlugIdMap *map[string]int) {
+	before := fmt.Sprintf("TRUNCATE TABLE bracket_%s", bracket)
+	qry := fmt.Sprintf(`INSERT INTO bracket_%s 
+		(ranking, player_id, rating, season_wins, season_losses, last_update)
+		VALUES ($1, $2, $3, $4, $5, NOW())`, bracket)
 	args := make([][]interface{}, 0)
 
-	/*for _, entry := range *entries {
-		params := []interface{}{}
-		args = append(args, params)
-	}*/
+	for _, entry := range *entries {
+		id := (*playerSlugIdMap)[entry.Name + entry.RealmSlug]
+		if id > 0 {
+			params := []interface{}{
+				entry.Ranking,
+				id,
+				entry.Rating,
+				entry.SeasonWins,
+				entry.SeasonLosses}
+			args = append(args, params)
+		}
+	}
 
-	numInserted := insert(Query{Sql: qry, Args: args, Before: "TRUNCATE TABLE bracket_2v2"})
-	logger.Printf("%s leaderboard set with %v entries", bracket, numInserted)
+	numInserted := insert(Query{Sql: qry, Args: args, Before: before})
+	logger.Printf("%s leaderboard set with %d entries", bracket, numInserted)
 }
 
-func upsertPlayers(players *[]Player) {
-	// postgres doesn't have an upsert mechanism so add new players then update all
-	addPlayers(players)
-	updatePlayerDetails(players)
+func addPlayers(players *[]Player) {
+	const qry string =
+		`INSERT INTO players (name, realm_slug) SELECT $1, $2
+		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
+	args := make([][]interface{}, 0)
 
-	var playerIdMap *map[int]Player = getPlayerIdMap(players)
-	if len(*playerIdMap) > 0 {
-		updatePlayerTalents(playerIdMap)
-		updatePlayerGlyphs(playerIdMap)
-		updatePlayerStats(playerIdMap)
-		updatePlayerAchievements(playerIdMap)
-	} else {
-		logger.Printf("Player ID map empty (%d expected)", len(*players))
+	for _, player := range *players {
+		if player.RealmSlug != "" && player.Name != "" {
+			params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
+			args = append(args, params)
+		}
 	}
+
+	numInserted := insert(Query{Sql: qry, Args: args})
+	logger.Printf("Added %v players", numInserted)
+}
+
+func updatePlayers(players *map[int]Player) {
+	updatePlayerDetails(players)
+	updatePlayerTalents(players)
+	updatePlayerGlyphs(players)
+	updatePlayerStats(players)
+	updatePlayerAchievements(players)
 }
 
 func getPlayerIdMap(players *[]Player) *map[int]Player {
@@ -137,33 +153,15 @@ func getPlayerIdMap(players *[]Player) *map[int]Player {
 	return &m
 }
 
-func addPlayers(players *[]Player) {
-	const qry string =
-		`INSERT INTO players (name, realm_slug) SELECT $1, $2
-		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
-	args := make([][]interface{}, 0)
-
-	for _, player := range *players {
-		if player.RealmSlug != "" && player.Name != "" {
-			params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
-			args = append(args, params)
-		}
-	}
-
-	numInserted := insert(Query{Sql: qry, Args: args})
-	logger.Printf("Added %v players", numInserted)
-}
-
-func updatePlayerDetails(players *[]Player) {
+func updatePlayerDetails(players *map[int]Player) {
 	const qry string =
 		`UPDATE players SET class_id=$1, spec_id=$2, faction_id=$3, race_id=$4, guild=$5,
-		gender=$6, achievement_points=$7, honorable_kills=$8, last_update=NOW()
-		WHERE name=$9 AND realm_slug=$10`
+		gender=$6, achievement_points=$7, honorable_kills=$8, last_update=NOW() WHERE id=$9`
 	args := make([][]interface{}, 0)
 
-	for _, player := range *players {
+	for id, player := range *players {
 		params := []interface{}{player.ClassId, player.SpecId, player.FactionId, player.RaceId, player.Guild,
-			player.Gender, player.AchievementPoints, player.HonorableKills, player.Name, player.RealmSlug}
+			player.Gender, player.AchievementPoints, player.HonorableKills, id}
 		args = append(args, params)
 	}
 
