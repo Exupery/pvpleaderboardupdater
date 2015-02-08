@@ -27,10 +27,10 @@ func main() {
 	if *importStatic {
 		importStaticData()
 	} else {
-		updateLeaderboards()
+		updatePlayersAndLeaderboards()
 	}
 	
-	logger.Println("PvPLeaderBoard Updated")
+	logger.Println("Updating PvPLeaderBoard Complete")
 }
 
 func get(path string) *[]byte {
@@ -55,7 +55,7 @@ func get(path string) *[]byte {
 	return &body
 }
 
-func updateLeaderboards() {
+func updatePlayersAndLeaderboards() {
 	brackets := []string{"2v2", "3v3", "5v5", "rbg"}
 	leaderboards := make(map[string][]LeaderboardEntry)
 	playerMap := make(map[string]Player)
@@ -79,18 +79,25 @@ func updateLeaderboards() {
 	addPlayers(&players)
 	var playerIdMap *map[int]Player = getPlayerIdMap(&players)
 	if len(*playerIdMap) > 0 {
-		updatePlayers(playerIdMap)
-
-		var playerSlugIdMap map[string]int = make(map[string]int)
-		for id, player := range *playerIdMap {
-			playerSlugIdMap[player.Name + player.RealmSlug] = id
-		}
-
-		for bracket, leaderboard := range leaderboards {
-			setLeaderboard(bracket, &leaderboard, &playerSlugIdMap)
+		updated := updatePlayers(playerIdMap)
+		if updated {
+			updateLeaderboards(playerIdMap, &leaderboards)
+		} else {
+			logger.Printf("%s Updating player details failed, NOT updating leaderboards", errPrefix)
 		}
 	} else {
 		logger.Printf("%s Player ID map empty (%d expected)", errPrefix, len(players))
+	}
+}
+
+func updateLeaderboards(playerIdMap *map[int]Player, leaderboards *map[string][]LeaderboardEntry) {
+	var playerSlugIdMap map[string]int = make(map[string]int)
+	for id, player := range *playerIdMap {
+		playerSlugIdMap[player.Name + player.RealmSlug] = id
+	}
+
+	for bracket, leaderboard := range *leaderboards {
+		setLeaderboard(bracket, &leaderboard, &playerSlugIdMap)
 	}
 }
 

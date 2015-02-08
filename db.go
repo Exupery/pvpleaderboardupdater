@@ -117,12 +117,18 @@ func addPlayers(players *[]Player) {
 	logger.Printf("Added %v players", numInserted)
 }
 
-func updatePlayers(players *map[int]Player) {
-	updatePlayerDetails(players)
-	updatePlayerTalents(players)
-	updatePlayerGlyphs(players)
-	updatePlayerStats(players)
-	updatePlayerAchievements(players)
+func updatePlayers(players *map[int]Player) bool {
+	updated := updatePlayerDetails(players)
+	if updated > 0 {
+		updatePlayerTalents(players)
+		updatePlayerGlyphs(players)
+		updatePlayerStats(players)
+		updatePlayerAchievements(players)
+		return true
+	} else {
+		logger.Printf("%s Updated NO player details (%d expected)", errPrefix, len(*players))
+		return false
+	}
 }
 
 func getPlayerIdMap(players *[]Player) *map[int]Player {
@@ -153,7 +159,7 @@ func getPlayerIdMap(players *[]Player) *map[int]Player {
 	return &m
 }
 
-func updatePlayerDetails(players *map[int]Player) {
+func updatePlayerDetails(players *map[int]Player) int {
 	const qry string =
 		`UPDATE players SET class_id=$1, spec_id=$2, faction_id=$3, race_id=$4, guild=$5,
 		gender=$6, achievement_points=$7, honorable_kills=$8, last_update=NOW() WHERE id=$9`
@@ -167,6 +173,7 @@ func updatePlayerDetails(players *map[int]Player) {
 
 	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Updated %v player details", numInserted)
+	return int(numInserted)
 }
 
 func updatePlayerTalents(players *map[int]Player) {
