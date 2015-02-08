@@ -14,6 +14,7 @@ import (
 var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
 const errPrefix string = "[ERROR]"
 const fatalPrefix string = "[FATAL]"
+const warnPrefix string = "[WARN]"
 
 var uriBase string
 
@@ -76,8 +77,8 @@ func updatePlayersAndLeaderboards() {
 	logger.Printf("Found %v unique players across %v brackets", len(playerMap), len(leaderboards))
 
 	players := getPlayerDetails(playerMap)
-	addPlayers(&players)
-	var playerIdMap *map[int]Player = getPlayerIdMap(&players)
+	addPlayers(players)
+	var playerIdMap *map[int]Player = getPlayerIdMap(players)
 	if len(*playerIdMap) > 0 {
 		updated := updatePlayers(playerIdMap)
 		if updated {
@@ -139,7 +140,7 @@ func getPlayersFromLeaderboard(entries []LeaderboardEntry) []Player {
 	return players
 }
 
-func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
+func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 	type Guild struct {
 		Name string
 	}
@@ -180,7 +181,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 	err := json.Unmarshal(*data, &player)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return Player{}
+		return nil
 	}
 
 	var specId int
@@ -202,7 +203,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 		}
 	}
 
-	return Player{
+	p := Player{
 		Name: player.Name,
 		ClassId: player.Class,
 		SpecId: specId,
@@ -216,10 +217,12 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) Player {
 		AchievementTimestamps: player.Achievements.AchievementsCompletedTimestamp,
 		AchievementPoints: player.AchievementPoints,
 		HonorableKills: player.TotalHonorableKills}
+
+	return &p
 }
 
-func getPlayerDetails(playerMap map[string]Player) []Player {
-	players := make([]Player, 0)
+func getPlayerDetails(playerMap map[string]Player) []*Player {
+	players := make([]*Player, 0)
 	classSpecMap := classIdSpecNameToSpecIdMap()
 	const path string = "character/%s/%s?fields=talents,guild,achievements,stats"
 	for _, player := range playerMap {
@@ -227,13 +230,37 @@ func getPlayerDetails(playerMap map[string]Player) []Player {
 		if player.RealmSlug != "" {
 			var playerJson *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
 			if playerJson != nil {
-				var p Player = parsePlayerDetails(playerJson, classSpecMap)
-				p.RealmSlug = player.RealmSlug
-				p.FactionId = player.FactionId
-				players = append(players, p)
+				var p *Player = parsePlayerDetails(playerJson, classSpecMap)
+				if p != nil {
+					p.RealmSlug = player.RealmSlug
+					p.FactionId = player.FactionId
+					if playerIsValid(p) {
+						players = append(players, p)
+					}
+				}
 			}
 		}
 	}
 
 	return players
+}
+
+func playerIsValid(player *Player) bool {
+	if player.Name == "" || player.RealmSlug == "" {
+		return false
+	}
+	const msg string = "%s %s-%s has no %s"
+	if player.ClassId == 0 {
+		logger.Printf(msg, warnPrefix, player.Name, player.RealmSlug, "ClassId")
+		return false
+	}
+	if player.SpecId == 0 {
+		logger.Printf(msg, warnPrefix, player.Name, player.RealmSlug, "SpecId")
+		return false
+	}
+	if player.RaceId == 0 {
+		logger.Printf(msg, warnPrefix, player.Name, player.RealmSlug, "RaceId")
+		return false
+	}
+	return true
 }

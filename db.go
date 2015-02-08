@@ -100,13 +100,14 @@ func setLeaderboard(bracket string, entries *[]LeaderboardEntry, playerSlugIdMap
 	logger.Printf("%s leaderboard set with %d entries", bracket, numInserted)
 }
 
-func addPlayers(players *[]Player) {
+func addPlayers(players []*Player) {
 	const qry string =
 		`INSERT INTO players (name, realm_slug) SELECT $1, $2
 		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
 	args := make([][]interface{}, 0)
 
-	for _, player := range *players {
+	for _, p := range players {
+		player := *p
 		if player.RealmSlug != "" && player.Name != "" {
 			params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
 			args = append(args, params)
@@ -131,7 +132,7 @@ func updatePlayers(players *map[int]Player) bool {
 	}
 }
 
-func getPlayerIdMap(players *[]Player) *map[int]Player {
+func getPlayerIdMap(players []*Player) *map[int]Player {
 	var m map[int]Player = make(map[int]Player)
 	rows, err := db.Query("SELECT id, name, realm_slug FROM players")
 	if err != nil {
@@ -150,10 +151,10 @@ func getPlayerIdMap(players *[]Player) *map[int]Player {
 		t[name + realm_slug] = id
 	}
 
-	for _, player := range *players {
+	for _, player := range players {
 		var id int = t[player.Name + player.RealmSlug]
 		if id > 0 {
-			m[id] = player
+			m[id] = *player
 		}
 	}
 	return &m
