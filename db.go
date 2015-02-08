@@ -106,8 +106,7 @@ func addPlayers(players []*Player) {
 		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
 	args := make([][]interface{}, 0)
 
-	for _, p := range players {
-		player := *p
+	for _, player := range players {
 		if player.RealmSlug != "" && player.Name != "" {
 			params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
 			args = append(args, params)
@@ -118,7 +117,7 @@ func addPlayers(players []*Player) {
 	logger.Printf("Added %v players", numInserted)
 }
 
-func updatePlayers(players *map[int]Player) bool {
+func updatePlayers(players *map[int]*Player) bool {
 	updated := updatePlayerDetails(players)
 	if updated > 0 {
 		updatePlayerTalents(players)
@@ -132,8 +131,8 @@ func updatePlayers(players *map[int]Player) bool {
 	}
 }
 
-func getPlayerIdMap(players []*Player) *map[int]Player {
-	var m map[int]Player = make(map[int]Player)
+func getPlayerIdMap(players []*Player) *map[int]*Player {
+	var m map[int]*Player = make(map[int]*Player)
 	rows, err := db.Query("SELECT id, name, realm_slug FROM players")
 	if err != nil {
 		logger.Printf("%s %s", errPrefix, err)
@@ -154,13 +153,13 @@ func getPlayerIdMap(players []*Player) *map[int]Player {
 	for _, player := range players {
 		var id int = t[player.Name + player.RealmSlug]
 		if id > 0 {
-			m[id] = *player
+			m[id] = player
 		}
 	}
 	return &m
 }
 
-func updatePlayerDetails(players *map[int]Player) int {
+func updatePlayerDetails(players *map[int]*Player) int {
 	const qry string =
 		`UPDATE players SET class_id=$1, spec_id=$2, faction_id=$3, race_id=$4, guild=$5,
 		gender=$6, achievement_points=$7, honorable_kills=$8, last_update=NOW() WHERE id=$9`
@@ -177,7 +176,7 @@ func updatePlayerDetails(players *map[int]Player) int {
 	return int(numInserted)
 }
 
-func updatePlayerTalents(players *map[int]Player) {
+func updatePlayerTalents(players *map[int]*Player) {
 	var before string = "DELETE FROM players_talents WHERE player_id IN ("
 	const qry string = "INSERT INTO players_talents (player_id, talent_id) VALUES ($1, $2)"
 	args := make([][]interface{}, 0)
@@ -199,7 +198,7 @@ func updatePlayerTalents(players *map[int]Player) {
 	logger.Printf("Mapped %v players=>talents", numInserted)
 }
 
-func updatePlayerGlyphs(players *map[int]Player) {
+func updatePlayerGlyphs(players *map[int]*Player) {
 	var before string = "DELETE FROM players_glyphs WHERE player_id IN ("
 	const qry string = "INSERT INTO players_glyphs (player_id, glyph_id) VALUES ($1, $2)"
 	args := make([][]interface{}, 0)
@@ -221,7 +220,7 @@ func updatePlayerGlyphs(players *map[int]Player) {
 	logger.Printf("Mapped %v players=>glyphs", numInserted)
 }
 
-func updatePlayerAchievements(players *map[int]Player) {
+func updatePlayerAchievements(players *map[int]*Player) {
 	const qry string =
 		`INSERT INTO players_achievements (player_id, achievement_id, achieved_at) SELECT $1, $2, $3
 		WHERE NOT EXISTS (SELECT 1 FROM players_achievements WHERE player_id=$4 AND achievement_id=$5)`
@@ -241,7 +240,7 @@ func updatePlayerAchievements(players *map[int]Player) {
 	logger.Printf("Mapped %v players=>achievements", numInserted)
 }
 
-func updatePlayerStats(players *map[int]Player) {
+func updatePlayerStats(players *map[int]*Player) {
 	var before string = "DELETE FROM players_stats WHERE player_id IN ("
 	const qry string = `INSERT INTO players_stats 
 		(player_id, strength, agility, intellect, stamina, spirit, critical_strike, haste,

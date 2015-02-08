@@ -57,9 +57,9 @@ func get(path string) *[]byte {
 }
 
 func updatePlayersAndLeaderboards() {
-	brackets := []string{"2v2", "3v3", "5v5", "rbg"}
+	brackets := [4]string{"2v2", "3v3", "5v5", "rbg"}
 	leaderboards := make(map[string][]LeaderboardEntry)
-	playerMap := make(map[string]Player)
+	playerMap := make(map[string]*Player)
 
 	for _, bracket := range brackets {
 		leaderboards[bracket] = getLeaderboard(bracket)
@@ -76,9 +76,9 @@ func updatePlayersAndLeaderboards() {
 
 	logger.Printf("Found %v unique players across %v brackets", len(playerMap), len(leaderboards))
 
-	players := getPlayerDetails(playerMap)
+	players := getPlayerDetails(&playerMap)
 	addPlayers(players)
-	var playerIdMap *map[int]Player = getPlayerIdMap(players)
+	var playerIdMap *map[int]*Player = getPlayerIdMap(players)
 	if len(*playerIdMap) > 0 {
 		updated := updatePlayers(playerIdMap)
 		if updated {
@@ -91,7 +91,7 @@ func updatePlayersAndLeaderboards() {
 	}
 }
 
-func updateLeaderboards(playerIdMap *map[int]Player, leaderboards *map[string][]LeaderboardEntry) {
+func updateLeaderboards(playerIdMap *map[int]*Player, leaderboards *map[string][]LeaderboardEntry) {
 	var playerSlugIdMap map[string]int = make(map[string]int)
 	for id, player := range *playerIdMap {
 		playerSlugIdMap[player.Name + player.RealmSlug] = id
@@ -123,8 +123,8 @@ func getLeaderboard(bracket string) []LeaderboardEntry {
 	return entries
 }
 
-func getPlayersFromLeaderboard(entries []LeaderboardEntry) []Player {
-	players := make([]Player, 0)
+func getPlayersFromLeaderboard(entries []LeaderboardEntry) []*Player {
+	players := make([]*Player, 0)
 
 	for _, entry := range entries {
 		player := Player{
@@ -134,7 +134,7 @@ func getPlayersFromLeaderboard(entries []LeaderboardEntry) []Player {
 			RaceId: entry.RaceId,
 			RealmSlug: entry.RealmSlug,
 			Gender: entry.GenderId}
-		players = append(players, player)
+		players = append(players, &player)
 	}
 
 	return players
@@ -221,11 +221,11 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 	return &p
 }
 
-func getPlayerDetails(playerMap map[string]Player) []*Player {
+func getPlayerDetails(playerMap *map[string]*Player) []*Player {
 	players := make([]*Player, 0)
 	classSpecMap := classIdSpecNameToSpecIdMap()
 	const path string = "character/%s/%s?fields=talents,guild,achievements,stats"
-	for _, player := range playerMap {
+	for _, player := range *playerMap {
 		// realm may be empty if character is transferring
 		if player.RealmSlug != "" {
 			var playerJson *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
