@@ -119,7 +119,7 @@ CREATE TABLE bracket_5v5 (
 CREATE INDEX ON bracket_5v5 (rating);
 CREATE INDEX ON bracket_5v5 (last_update DESC);
 
-CREATE TABLE bracket_rbgs (
+CREATE TABLE bracket_rbg (
   ranking INTEGER PRIMARY KEY,
   player_id INTEGER NOT NULL REFERENCES players (id),
   rating SMALLINT NOT NULL,
@@ -129,8 +129,8 @@ CREATE TABLE bracket_rbgs (
   UNIQUE (player_id)
 );
 
-CREATE INDEX ON bracket_rbgs (rating);
-CREATE INDEX ON bracket_rbgs (last_update DESC);
+CREATE INDEX ON bracket_rbg (rating);
+CREATE INDEX ON bracket_rbg (last_update DESC);
 
 CREATE TABLE achievements (
   id INTEGER PRIMARY KEY,
