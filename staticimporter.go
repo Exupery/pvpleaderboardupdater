@@ -253,9 +253,10 @@ func parseAchievements(data *[]byte) []Achievement {
 
 	for _, ac := range achievements.Achievements {
 		if ac.Name == "Player vs. Player" {
-			pvpAchievements = append(pvpAchievements, ac.Achievements...)
 			for _, acc := range ac.Categories {
-				pvpAchievements = append(pvpAchievements, acc.Achievements...)
+				if acc.Name == "Rated Battleground" || acc.Name == "Arena" {
+					pvpAchievements = append(pvpAchievements, acc.Achievements...)
+				}
 			}
 		}
 	}
