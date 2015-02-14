@@ -45,7 +45,10 @@ func queryTemplate() {
 
 func insert(qry Query) int64 {
 	var numInserted int64 = 0
-	txn, _ := db.Begin()
+	txn, err := db.Begin()
+	if err != nil {
+		logger.Fatalf("%s %s", fatalPrefix, err)
+	}
 	stmt, _ := txn.Prepare(qry.Sql)
 
 	if qry.Before != "" {
