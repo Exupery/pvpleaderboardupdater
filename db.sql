@@ -178,3 +178,9 @@ CREATE TABLE players_stats (
   dodge INTEGER,
   parry INTEGER
 );
+
+CREATE VIEW player_ids_all_brackets AS
+  SELECT player_id FROM bracket_2v2 UNION
+  SELECT player_id FROM bracket_3v3 UNION
+  SELECT player_id FROM bracket_5v5 UNION
+  SELECT player_id FROM bracket_rbg;
