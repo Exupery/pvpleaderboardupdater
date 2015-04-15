@@ -30,7 +30,7 @@ func main() {
 	} else {
 		updatePlayersAndLeaderboards()
 	}
-	
+
 	logger.Println("Updating PvPLeaderBoard Complete")
 }
 
@@ -42,7 +42,7 @@ func get(path string) *[]byte {
 		return nil
 	}
 	if resp.StatusCode != 200 {
-		logger.Printf("%s non-200 status code for '%s': %v", errPrefix, path, resp.StatusCode)
+		logger.Printf("%s non-200 status code for '%s': %v", warnPrefix, path, resp.StatusCode)
 		return nil
 	}
 
@@ -119,7 +119,7 @@ func getLeaderboard(bracket string) []LeaderboardEntry {
 	var leaderboardJson *[]byte = get("leaderboard/" + bracket)
 	var entries []LeaderboardEntry = parseLeaderboard(leaderboardJson)
 	logger.Printf("Parsed %v %s entries", len(entries), bracket)
-	
+
 	return entries
 }
 
