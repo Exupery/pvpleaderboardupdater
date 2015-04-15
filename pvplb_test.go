@@ -77,3 +77,21 @@ func TestParseAchievements(t *testing.T) {
 		t.Error("Parsing achievements failed")
 	}
 }
+
+func TestGlyphSpellIdsMap(t *testing.T) {
+	const msg = "Creating Glyph Spell IDs map failed"
+	var glyphs *[]Glyph
+	var classes *[]Class = retrieveClasses()
+	_, _, glyphs = retrieveSpecsTalentsGlyphs(classes)
+
+	var glyphSpellIds map[string]int = glyphSpellIdsMap()
+	if glyphSpellIds == nil || len(glyphSpellIds) < len(*glyphs) {
+		t.Error(msg)
+	}
+
+	for _, glyph := range *glyphs {
+		if glyphSpellIds[glyph.Name] == 0 {
+			t.Error(glyph.Name + " missing from glyphSpellIds")
+		}
+	}
+}

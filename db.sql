@@ -57,6 +57,7 @@ CREATE TABLE glyphs (
   icon VARCHAR(128),
   item_id INTEGER,
   type_id SMALLINT,
+  spell_id INTEGER,
   UNIQUE (class_id, name)
 );
 

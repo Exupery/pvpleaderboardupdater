@@ -134,6 +134,7 @@ func retrieveSpecsTalentsGlyphs(classes *[]Class) (*[]Spec, *[]Talent, *[]Glyph)
 
 	var classIds map[string]int = classSlugToIdMap(classes)
 	var specIds map[string]int = specSlugToIdMap()
+	var glyphSpellIds map[string]int = glyphSpellIdsMap()
 
 	for _, v := range m {
 		var classId int = classIds[v.Class]
@@ -148,6 +149,10 @@ func retrieveSpecsTalentsGlyphs(classes *[]Class) (*[]Spec, *[]Talent, *[]Glyph)
 		}
 		for _, glyph := range v.Glyphs {
 			glyph.ClassId = classId
+			glyph.SpellId = glyphSpellIds[glyph.Name]
+			if glyph.SpellId == 0 {
+				logger.Printf("%s SpellID not found for '%s'", errPrefix, glyph.Name)
+			}
 			glyphs = append(glyphs, glyph)
 		}
 		for _, t := range v.Talents {

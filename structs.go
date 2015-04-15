@@ -58,6 +58,7 @@ type Glyph struct {
 	Icon string
 	Item int
 	TypeId int
+	SpellId int
 }
 
 type Achievement struct {

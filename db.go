@@ -20,7 +20,7 @@ func dbConnect() sql.DB {
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
-		logger.Printf("%s Unable to connect to database: %s", errPrefix, err)	
+		logger.Printf("%s Unable to connect to database: %s", errPrefix, err)
 	}
 	return *db
 }
@@ -81,7 +81,7 @@ func insert(qry Query) int64 {
 
 func setLeaderboard(bracket string, entries *[]LeaderboardEntry, playerSlugIdMap *map[string]int) {
 	before := fmt.Sprintf("TRUNCATE TABLE bracket_%s", bracket)
-	qry := fmt.Sprintf(`INSERT INTO bracket_%s 
+	qry := fmt.Sprintf(`INSERT INTO bracket_%s
 		(ranking, player_id, rating, season_wins, season_losses, last_update)
 		VALUES ($1, $2, $3, $4, $5, NOW())`, bracket)
 	args := make([][]interface{}, 0)
@@ -245,7 +245,7 @@ func updatePlayerAchievements(players *map[int]*Player) {
 
 func updatePlayerStats(players *map[int]*Player) {
 	var before string = "DELETE FROM players_stats WHERE player_id IN ("
-	const qry string = `INSERT INTO players_stats 
+	const qry string = `INSERT INTO players_stats
 		(player_id, strength, agility, intellect, stamina, spirit, critical_strike, haste,
 		attack_power, mastery, multistrike, versatility, leech, dodge, parry)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
@@ -352,7 +352,7 @@ func addSpecs(specs *[]Spec) {
 	args := make([][]interface{}, 0)
 
 	for _, spec := range *specs {
-		params := []interface{}{spec.Id, spec.ClassId, spec.Name, spec.Role, spec.Description, 
+		params := []interface{}{spec.Id, spec.ClassId, spec.Name, spec.Role, spec.Description,
 			spec.BackgroundImage, spec.Icon, spec.ClassId, spec.Name}
 		args = append(args, params)
 	}
@@ -380,14 +380,14 @@ func addTalents(talents *[]Talent) {
 
 func addGlyphs(glyphs *[]Glyph) {
 	const qry string =
-		`INSERT INTO glyphs (id, class_id, name, icon, item_id, type_id)
-		SELECT $1, $2, $3, $4, $5, $6
-		WHERE NOT EXISTS (SELECT 1 FROM glyphs WHERE id=$7)`
+		`INSERT INTO glyphs (id, class_id, name, icon, item_id, type_id, spell_id)
+		SELECT $1, $2, $3, $4, $5, $6, $7
+		WHERE NOT EXISTS (SELECT 1 FROM glyphs WHERE id=$8)`
 	args := make([][]interface{}, 0)
 
 	for _, glyph := range *glyphs {
 		params := []interface{}{glyph.Glyph, glyph.ClassId, glyph.Name, glyph.Icon,
-			glyph.Item, glyph.TypeId, glyph.Glyph}
+			glyph.Item, glyph.TypeId, glyph.SpellId, glyph.Glyph}
 		args = append(args, params)
 	}
 
