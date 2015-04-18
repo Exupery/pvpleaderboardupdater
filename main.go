@@ -58,7 +58,7 @@ func get(path string) *[]byte {
 
 func updatePlayersAndLeaderboards() {
 	brackets := [4]string{"2v2", "3v3", "5v5", "rbg"}
-	leaderboards := make(map[string][]LeaderboardEntry)
+	leaderboards := make(map[string]*map[string]LeaderboardEntry)
 	playerMap := make(map[string]*Player)
 
 	for _, bracket := range brackets {
@@ -91,18 +91,19 @@ func updatePlayersAndLeaderboards() {
 	}
 }
 
-func updateLeaderboards(playerIdMap *map[int]*Player, leaderboards *map[string][]LeaderboardEntry) {
+func updateLeaderboards(playerIdMap *map[int]*Player, leaderboards *map[string]*map[string]LeaderboardEntry) {
 	var playerSlugIdMap map[string]int = make(map[string]int)
 	for id, player := range *playerIdMap {
 		playerSlugIdMap[player.Name + player.RealmSlug] = id
 	}
 
 	for bracket, leaderboard := range *leaderboards {
-		setLeaderboard(bracket, &leaderboard, &playerSlugIdMap)
+		setLeaderboard(bracket, leaderboard, &playerSlugIdMap)
 	}
 }
 
-func parseLeaderboard(data *[]byte) []LeaderboardEntry {
+func parseLeaderboard(data *[]byte) *map[string]LeaderboardEntry {
+	var entries map[string]LeaderboardEntry = make(map[string]LeaderboardEntry)
 	type Leaderboard struct {
 		Rows []LeaderboardEntry
 	}
@@ -110,23 +111,27 @@ func parseLeaderboard(data *[]byte) []LeaderboardEntry {
 	err := json.Unmarshal(*data, &leaderboard)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return make([]LeaderboardEntry, 0)
+		return &entries
 	}
-	return leaderboard.Rows
+
+	for _, entry := range leaderboard.Rows {
+		entries[entry.Name + entry.RealmSlug] = entry
+	}
+	return &entries
 }
 
-func getLeaderboard(bracket string) []LeaderboardEntry {
+func getLeaderboard(bracket string) *map[string]LeaderboardEntry {
 	var leaderboardJson *[]byte = get("leaderboard/" + bracket)
-	var entries []LeaderboardEntry = parseLeaderboard(leaderboardJson)
-	logger.Printf("Parsed %v %s entries", len(entries), bracket)
+	var entries *map[string]LeaderboardEntry = parseLeaderboard(leaderboardJson)
+	logger.Printf("Parsed %v %s entries", len(*entries), bracket)
 
 	return entries
 }
 
-func getPlayersFromLeaderboard(entries []LeaderboardEntry) []*Player {
+func getPlayersFromLeaderboard(entries *map[string]LeaderboardEntry) []*Player {
 	players := make([]*Player, 0)
 
-	for _, entry := range entries {
+	for _, entry := range *entries {
 		player := Player{
 			Name: entry.Name,
 			ClassId: entry.ClassId,

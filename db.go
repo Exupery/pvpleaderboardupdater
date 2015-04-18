@@ -79,15 +79,15 @@ func insert(qry Query) int64 {
 	return numInserted
 }
 
-func setLeaderboard(bracket string, entries *[]LeaderboardEntry, playerSlugIdMap *map[string]int) {
+func setLeaderboard(bracket string, entries *map[string]LeaderboardEntry, playerSlugIdMap *map[string]int) {
 	before := fmt.Sprintf("TRUNCATE TABLE bracket_%s", bracket)
 	qry := fmt.Sprintf(`INSERT INTO bracket_%s
 		(ranking, player_id, rating, season_wins, season_losses, last_update)
 		VALUES ($1, $2, $3, $4, $5, NOW())`, bracket)
 	args := make([][]interface{}, 0)
 
-	for _, entry := range *entries {
-		id := (*playerSlugIdMap)[entry.Name + entry.RealmSlug]
+	for slug, entry := range *entries {
+		id := (*playerSlugIdMap)[slug]
 		if id > 0 {
 			params := []interface{}{
 				entry.Ranking,
