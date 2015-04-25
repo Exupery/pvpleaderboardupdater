@@ -231,7 +231,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 func getPlayerDetails(playerMap *map[string]*Player) []*Player {
 	players := make([]*Player, 0)
 	classSpecMap := classIdSpecNameToSpecIdMap()
-	const path string = "character/%s/%s?fields=talents,guild,achievements,stats"
+	const path string = "character/%s/%s?fields=talents,guild,achievements,stats,items"
 	for _, player := range *playerMap {
 		// realm may be empty if character is transferring
 		if player.RealmSlug != "" {

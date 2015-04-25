@@ -185,3 +185,34 @@ CREATE VIEW player_ids_all_brackets AS
   SELECT player_id FROM bracket_3v3 UNION
   SELECT player_id FROM bracket_5v5 UNION
   SELECT player_id FROM bracket_rbg;
+
+CREATE TABLE items (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(128),
+  icon VARCHAR(128),
+  item_level INTEGER
+);
+
+CREATE TABLE players_items (
+  player_id INTEGER PRIMARY KEY REFERENCES players (id),
+  average_item_level INTEGER,
+  average_item_level_equipped INTEGER,
+  head INTEGER,
+  neck INTEGER,
+  shoulder INTEGER,
+  back INTEGER,
+  chest INTEGER,
+  shirt INTEGER,
+  tabard INTEGER,
+  wrist INTEGER,
+  hands INTEGER,
+  waist INTEGER,
+  legs INTEGER,
+  feet INTEGER,
+  finger1 INTEGER,
+  finger2 INTEGER,
+  trinket1 INTEGER,
+  trinket2 INTEGER,
+  mainhand INTEGER,
+  offhand INTEGER
+);

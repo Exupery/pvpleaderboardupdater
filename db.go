@@ -127,6 +127,7 @@ func updatePlayers(players *map[int]*Player) bool {
 		updatePlayerGlyphs(players)
 		updatePlayerStats(players)
 		updatePlayerAchievements(players)
+		updatePlayerItems(players)
 		return true
 	} else {
 		logger.Printf("%s Updated NO player details (%d expected)", errPrefix, len(*players))
@@ -281,6 +282,84 @@ func updatePlayerStats(players *map[int]*Player) {
 	before += ")"
 	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>stats", numInserted)
+}
+
+func updatePlayerItems(players *map[int]*Player) {
+	var before string = "DELETE FROM players_items WHERE player_id IN ("
+	const qry string = `INSERT INTO players_items
+		(player_id, average_item_level, average_item_level_equipped, head, neck, shoulder, back, chest, shirt,
+		tabard, wrist, hands, waist, legs, feet, finger1, finger2, trinket1, trinket2, mainhand, offhand)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`
+	args := make([][]interface{}, 0)
+	beforeArgs := make([]interface{}, 0)
+	items := make(map[int]Item)
+
+	var ctr int = 1
+	for id, player := range *players {
+		before += fmt.Sprintf("$%d,", ctr)
+		beforeArgs = append(beforeArgs, id)
+		pi := player.Items
+		playerItems := []interface{}{
+			id,
+			pi.AverageItemLevel,
+			pi.AverageItemLevelEquipped,
+			pi.Head.Id,
+			pi.Neck.Id,
+			pi.Shoulder.Id,
+			pi.Back.Id,
+			pi.Chest.Id,
+			pi.Shirt.Id,
+			pi.Tabard.Id,
+			pi.Wrist.Id,
+			pi.Hands.Id,
+			pi.Waist.Id,
+			pi.Legs.Id,
+			pi.Feet.Id,
+			pi.Finger1.Id,
+			pi.Finger2.Id,
+			pi.Trinket1.Id,
+			pi.Trinket2.Id,
+			pi.MainHand.Id,
+			pi.OffHand.Id}
+		args = append(args, playerItems)
+		apppendItems(&items, pi)
+		ctr++
+	}
+
+	before = strings.TrimRight(before, ",")
+	before += ")"
+	updateItems(&items)
+	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
+	logger.Printf("Mapped %v players=>items", numInserted)
+}
+
+func apppendItems(itemsMap *map[int]Item, itemsToAdd Items) {
+	items := []Item{itemsToAdd.Head, itemsToAdd.Neck, itemsToAdd.Shoulder, itemsToAdd.Back, itemsToAdd.Chest,
+		itemsToAdd.Shirt, itemsToAdd.Tabard, itemsToAdd.Wrist, itemsToAdd.Hands, itemsToAdd.Waist,
+		itemsToAdd.Legs, itemsToAdd.Feet, itemsToAdd.Finger1, itemsToAdd.Finger2, itemsToAdd.Trinket1,
+		itemsToAdd.Trinket2, itemsToAdd.MainHand, itemsToAdd.OffHand}
+
+	for _, item := range items {
+		if item.Id > 0 {
+			(*itemsMap)[item.Id] = item
+		}
+	}
+}
+
+func updateItems(items *map[int]Item) {
+	const qry string =
+		`INSERT INTO items (id, name, icon, item_level)
+		SELECT $1, $2, $3, $4
+		WHERE NOT EXISTS (SELECT 1 FROM items WHERE id=$5)`
+	args := make([][]interface{}, 0)
+
+	for _, item := range *items {
+		params := []interface{}{item.Id, item.Name, item.Icon, item.ItemLevel, item.Id}
+		args = append(args, params)
+	}
+
+	numInserted := insert(Query{Sql: qry, Args: args})
+	logger.Printf("Inserted %v items", numInserted)
 }
 
 func addRealms(realms *[]Realm) {
