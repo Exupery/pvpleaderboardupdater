@@ -120,4 +120,43 @@ type Player struct {
 	TalentIds []int
 	AchievementPoints int
 	HonorableKills int
+	Items Items
+}
+
+type TooltipParam struct {
+	Enchant int
+}
+
+type Item struct {
+	Id int
+	Name string
+	Icon string
+	Quality int
+	ItemLevel int
+	TooltipParams TooltipParam
+	Armor int
+	Context string
+}
+
+type Items struct {
+	AverageItemLevel int
+	AverageItemLevelEquipped int
+	Head Item
+	Neck Item
+	Shoulder Item
+	Back Item
+	Chest Item
+	Shirt Item
+	Tabard Item
+	Wrist Item
+	Hands Item
+	Waist Item
+	Legs Item
+	Feet Item
+	Finger1 Item
+	Finger2 Item
+	Trinket1 Item
+	Trinket2 Item
+	MainHand Item
+	OffHand Item
 }

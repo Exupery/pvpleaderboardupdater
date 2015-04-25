@@ -95,3 +95,36 @@ func TestGlyphSpellIdsMap(t *testing.T) {
 		}
 	}
 }
+
+func TestParsePlayerDetails(t *testing.T) {
+	var playerJson *[]byte = get("character/testrealm/testplayer?fields=talents,guild,achievements,stats,items")
+	var player *Player = parsePlayerDetails(playerJson, classIdSpecNameToSpecIdMap())
+
+	if player == nil {
+		t.Error("Parsing player details failed")
+	}
+
+	if len(player.AchievementIds) == 0 {
+		t.Error("Parsing player AchievementIds failed")
+	}
+
+	if len(player.AchievementTimestamps) == 0 {
+		t.Error("Parsing player AchievementTimestamps failed")
+	}
+
+	if len(player.GlyphIds) == 0 {
+		t.Error("Parsing player GlyphIds failed")
+	}
+
+	if len(player.TalentIds) == 0 {
+		t.Error("Parsing player TalentIds failed")
+	}
+
+	if player.Stats.Sta == 0 {
+		t.Error("Parsing player Stats failed")
+	}
+
+	if player.Items.AverageItemLevel == 0 {
+		t.Error("Parsing player AverageItemLevel failed")
+	}
+}

@@ -180,6 +180,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		Achievements Achievements
 		Talents []TalentsJson
 		Stats Stats
+		Items Items
 	}
 
 	var player PlayerJson
@@ -218,6 +219,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		Stats: player.Stats,
 		GlyphIds: glyphIds,
 		TalentIds: talentIds,
+		Items: player.Items,
 		AchievementIds: player.Achievements.AchievementsCompleted,
 		AchievementTimestamps: player.Achievements.AchievementsCompletedTimestamp,
 		AchievementPoints: player.AchievementPoints,
