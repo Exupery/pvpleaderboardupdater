@@ -97,8 +97,9 @@ func TestGlyphSpellIdsMap(t *testing.T) {
 }
 
 func TestParsePlayerDetails(t *testing.T) {
-	var playerJson *[]byte = get("character/testrealm/testplayer?fields=talents,guild,achievements,stats,items")
-	var player *Player = parsePlayerDetails(playerJson, classIdSpecNameToSpecIdMap())
+	var playerJson *[]byte = get("character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
+	m := map[string]int{"9Affliction": 265}
+	var player *Player = parsePlayerDetails(playerJson, &m)
 
 	if player == nil {
 		t.Error("Parsing player details failed")
