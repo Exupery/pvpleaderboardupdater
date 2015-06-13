@@ -80,6 +80,7 @@ CREATE TABLE players (
 CREATE INDEX ON players (class_id, spec_id);
 CREATE INDEX ON players (faction_id, race_id);
 CREATE INDEX ON players (guild);
+CREATE INDEX ON players (last_update DESC);
 
 CREATE TABLE bracket_2v2 (
   ranking INTEGER PRIMARY KEY,
