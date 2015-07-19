@@ -14,7 +14,7 @@ func importStaticData() {
 
 	var classes *[]Class = retrieveClasses()
 	logger.Printf("Parsed %v classes", len(*classes))
-	importClasses(classes)
+	addClasses(classes)
 
 	// specs, talents, and glyphs share an endpoint and are grouped by class
 	var specs *[]Spec
@@ -22,11 +22,11 @@ func importStaticData() {
 	var glyphs *[]Glyph
 	specs, talents, glyphs = retrieveSpecsTalentsGlyphs(classes)
 	logger.Printf("Parsed %v specs", len(*specs))
-	importSpecs(specs)
+	addSpecs(specs)
 	logger.Printf("Parsed %v talents", len(*talents))
-	importTalents(talents)
+	addTalents(talents)
 	logger.Printf("Parsed %v glyphs", len(*glyphs))
-	importGlyphs(glyphs)
+	addGlyphs(glyphs)
 
 	logger.Println("Static data import complete")
 }
@@ -95,10 +95,6 @@ func retrieveClasses() *[]Class {
 	var classesJson *[]byte = get("data/character/classes")
 	var classes []Class = parseClasses(classesJson)
 	return &classes
-}
-
-func importClasses(classes *[]Class) {
-	addClasses(classes)
 }
 
 func retrieveSpecsTalentsGlyphs(classes *[]Class) (*[]Spec, *[]Talent, *[]Glyph) {
@@ -223,18 +219,6 @@ func specSlugToIdMap() map[string]int {
 		"monkBrewmaster": 268,
 		"monkWindwalker": 269,
 		"monkMistweaver": 270}
-}
-
-func importSpecs(specs *[]Spec) {
-	addSpecs(specs)
-}
-
-func importTalents(talents *[]Talent) {
-	addTalents(talents)
-}
-
-func importGlyphs(glyphs *[]Glyph) {
-	addGlyphs(glyphs)
 }
 
 func parseAchievements(data *[]byte) []Achievement {
