@@ -28,7 +28,10 @@ func main() {
 	if *importStatic {
 		importStaticData()
 	} else {
-		updatePlayersAndLeaderboards()
+		brackets := [4]string{"2v2", "3v3", "5v5", "rbg"}
+		for _, bracket := range brackets {
+			updatePlayersAndLeaderboard(bracket)
+		}
 	}
 
 	logger.Println("Updating PvPLeaderBoard Complete")
@@ -56,25 +59,20 @@ func get(path string) *[]byte {
 	return &body
 }
 
-func updatePlayersAndLeaderboards() {
-	brackets := [4]string{"2v2", "3v3", "5v5", "rbg"}
-	leaderboards := make(map[string]*map[string]*LeaderboardEntry)
+func updatePlayersAndLeaderboard(bracket string) {
 	playerMap := make(map[string]*Player)
 
-	for _, bracket := range brackets {
-		leaderboards[bracket] = getLeaderboard(bracket)
-		lbPlayers := getPlayersFromLeaderboard(leaderboards[bracket])
-		max, err := strconv.Atoi(os.Getenv("MAX_PER_BRACKET"))
-		if err != nil || max < 0 || max > len(lbPlayers) {
-			max = len(lbPlayers)
-		}
-		for _, player := range lbPlayers[0:max] {
-			// name + realm as key to create unique set of players
-			playerMap[player.Name + player.RealmSlug] = player
-		}
+	var leaderboard *map[string]*LeaderboardEntry = getLeaderboard(bracket)
+	lbPlayers := getPlayersFromLeaderboard(leaderboard)
+	max, err := strconv.Atoi(os.Getenv("MAX_PER_BRACKET"))
+	if err != nil || max < 0 || max > len(lbPlayers) {
+		max = len(lbPlayers)
+	}
+	for _, player := range lbPlayers[0:max] {
+		playerMap[player.Name + player.RealmSlug] = player
 	}
 
-	logger.Printf("Found %v unique players across %v brackets", len(playerMap), len(leaderboards))
+	logger.Printf("Found %v players in the %s bracket", len(playerMap), bracket)
 
 	players := getPlayerDetails(&playerMap)
 	addPlayers(players)
@@ -82,24 +80,22 @@ func updatePlayersAndLeaderboards() {
 	if len(*playerIdMap) > 0 {
 		updated := updatePlayers(playerIdMap)
 		if updated {
-			updateLeaderboards(playerIdMap, &leaderboards)
+			updateLeaderboard(playerIdMap, leaderboard, bracket)
 		} else {
-			logger.Printf("%s Updating player details failed, NOT updating leaderboards", errPrefix)
+			logger.Printf("%s Updating player details failed, NOT updating %s leaderboard", errPrefix, bracket)
 		}
 	} else {
-		logger.Printf("%s Player ID map empty (%d expected)", errPrefix, len(players))
+		logger.Printf("%s %s player ID map empty (%d expected)", errPrefix, bracket, len(players))
 	}
 }
 
-func updateLeaderboards(playerIdMap *map[int]*Player, leaderboards *map[string]*map[string]*LeaderboardEntry) {
+func updateLeaderboard(playerIdMap *map[int]*Player, leaderboard *map[string]*LeaderboardEntry, bracket string) {
 	var playerSlugIdMap map[string]int = make(map[string]int)
 	for id, player := range *playerIdMap {
 		playerSlugIdMap[player.Name + player.RealmSlug] = id
 	}
 
-	for bracket, leaderboard := range *leaderboards {
-		setLeaderboard(bracket, leaderboard, &playerSlugIdMap)
-	}
+	setLeaderboard(bracket, leaderboard, &playerSlugIdMap)
 }
 
 func parseLeaderboard(data *[]byte) *map[string]*LeaderboardEntry {
