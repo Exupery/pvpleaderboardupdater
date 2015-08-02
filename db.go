@@ -79,6 +79,14 @@ func insert(qry Query) int64 {
 	return numInserted
 }
 
+func execute(sql string) {
+	_, err := db.Exec(sql)
+
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+}
+
 func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playerSlugIdMap *map[string]int) {
 	before := fmt.Sprintf("TRUNCATE TABLE bracket_%s", bracket)
 	qry := fmt.Sprintf(`INSERT INTO bracket_%s
@@ -361,6 +369,14 @@ func updateItems(items *map[int]Item) {
 
 	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v items", numInserted)
+}
+
+func setUpdateTime() {
+	execute(`INSERT INTO metadata (key, last_update)
+		SELECT 'update_time', NOW()
+		WHERE NOT EXISTS (SELECT 1 FROM metadata WHERE key='update_time')`)
+
+	execute("UPDATE metadata SET last_update=NOW() WHERE key='update_time'")
 }
 
 func addRealms(realms *[]Realm) {

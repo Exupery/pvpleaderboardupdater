@@ -32,6 +32,8 @@ func main() {
 		for _, bracket := range brackets {
 			updatePlayersAndLeaderboard(bracket)
 		}
+
+		setUpdateTime()
 	}
 
 	logger.Println("Updating PvPLeaderBoard Complete")

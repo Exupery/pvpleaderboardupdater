@@ -217,3 +217,9 @@ CREATE TABLE players_items (
   mainhand INTEGER,
   offhand INTEGER
 );
+
+CREATE TABLE metadata (
+  key VARCHAR(32) PRIMARY KEY,
+  value VARCHAR(512) NOT NULL DEFAULT '',
+  last_update TIMESTAMP DEFAULT NOW()
+);
