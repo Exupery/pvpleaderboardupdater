@@ -68,7 +68,7 @@ func insert(qry Query) int64 {
 	for _, params := range qry.Args {
 		res, err := stmt.Exec(params...)
 		if err != nil {
-			logger.Printf("%s %s", errPrefix, err)
+			logger.Printf("%s %s. Parameters: %v", errPrefix, err, params)
 			return 0
 		}
 		affected, _ := res.RowsAffected()
