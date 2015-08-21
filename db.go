@@ -213,7 +213,8 @@ func updatePlayerTalents(players *map[int]*Player) {
 
 func updatePlayerGlyphs(players *map[int]*Player) {
 	var before string = "DELETE FROM players_glyphs WHERE player_id IN ("
-	const qry string = "INSERT INTO players_glyphs (player_id, glyph_id) VALUES ($1, $2)"
+	const qry string = `INSERT INTO players_glyphs (player_id, glyph_id) SELECT $1, $2
+		WHERE NOT EXISTS (SELECT 1 FROM players_glyphs WHERE player_id=$3 AND glyph_id=$4)`
 	args := make([][]interface{}, 0)
 	beforeArgs := make([]interface{}, 0)
 
@@ -222,7 +223,7 @@ func updatePlayerGlyphs(players *map[int]*Player) {
 		before += fmt.Sprintf("$%d,", ctr)
 		beforeArgs = append(beforeArgs, id)
 		for _, glyph := range player.GlyphIds {
-			args = append(args, []interface{}{id, glyph})
+			args = append(args, []interface{}{id, glyph, id, glyph})
 		}
 		ctr++
 	}
