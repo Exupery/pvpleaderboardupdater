@@ -4,7 +4,6 @@ import (
 	_ "github.com/lib/pq"
 	"database/sql"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -13,10 +12,7 @@ import (
 var db sql.DB = dbConnect()
 
 func dbConnect() sql.DB {
-	var dbUrl string = os.Getenv("DB_URL")
-	if dbUrl == "" {
-		logger.Fatalf("%s Environment variable 'DB_URL' NOT set! Aborting.", fatalPrefix)
-	}
+  var dbUrl string = getEnvVar("DB_URL")
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {

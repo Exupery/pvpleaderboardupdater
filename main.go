@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
@@ -17,10 +18,11 @@ const fatalPrefix string = "[FATAL]"
 const warnPrefix string = "[WARN]"
 
 var uriBase string
+var apiKey string
 
 func main() {
 	logger.Println("Updating PvPLeaderBoard")
-	flag.StringVar(&uriBase, "base", "https://us.battle.net/api/wow/", "WoW API base URI")
+  flag.StringVar(&uriBase, "base", "https://us.api.battle.net/wow/", "WoW API base URI")
 	var importStatic *bool = flag.Bool("static", false, "Import static data (e.g. races, classes, realms, etc)")
 	flag.Parse()
 	logger.Printf("WoW API URIs using '%s'", uriBase)
@@ -39,8 +41,28 @@ func main() {
 	logger.Println("Updating PvPLeaderBoard Complete")
 }
 
+func getEnvVar(envVar string) string {
+  var value string = os.Getenv(envVar)
+  if value == "" {
+    logger.Fatalf("%s Environment variable '%s' NOT set! Aborting.", fatalPrefix, envVar)
+  }
+
+  return value
+}
+
 func get(path string) *[]byte {
-	resp, err := http.Get(uriBase + path)
+  if apiKey == "" {
+    apiKey = getEnvVar("BATTLE_NET_API_KEY")
+  }
+  var params string = "locale=en_US&apikey=" + apiKey
+  var sep string
+  if strings.Count(path, "?") == 0 {
+    sep = "?"
+  } else {
+    sep = "&"
+  }
+
+  resp, err := http.Get(uriBase + path + sep + params)
 
 	if err != nil {
 		logger.Printf("%s GET '%s' failed: %s", errPrefix, path, err)
