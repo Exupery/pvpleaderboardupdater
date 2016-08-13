@@ -208,7 +208,7 @@ func specSlugToIdMap() map[string]int {
 		"priestHoly": 257,
 		"priestShadow": 258,
 		"rogueAssassination": 259,
-		"rogueCombat": 260,
+		"rogueOutlaw": 260,
 		"rogueSubtlety": 261,
 		"shamanElemental": 262,
 		"shamanEnhancement": 263,
@@ -218,7 +218,9 @@ func specSlugToIdMap() map[string]int {
 		"warlockDestruction": 267,
 		"monkBrewmaster": 268,
 		"monkWindwalker": 269,
-		"monkMistweaver": 270}
+		"monkMistweaver": 270,
+		"demon-hunterHavoc": 577,
+		"demon-hunterVengeance": 581}
 }
 
 func parseAchievements(data *[]byte) []Achievement {

@@ -30,7 +30,7 @@ func main() {
 	if *importStatic {
 		importStaticData()
 	} else {
-		brackets := [4]string{"2v2", "3v3", "5v5", "rbg"}
+		brackets := [4]string{"2v2", "3v3", "rbg"}
 		for _, bracket := range brackets {
 			updatePlayersAndLeaderboard(bracket)
 		}
