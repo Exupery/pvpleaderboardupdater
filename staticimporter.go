@@ -16,17 +16,14 @@ func importStaticData() {
 	logger.Printf("Parsed %v classes", len(*classes))
 	addClasses(classes)
 
-	// specs, talents, and glyphs share an endpoint and are grouped by class
+	// specs and talents share an endpoint and are grouped by class
 	var specs *[]Spec
 	var talents *[]Talent
-	var glyphs *[]Glyph
-	specs, talents, glyphs = retrieveSpecsTalentsGlyphs(classes)
+	specs, talents = retrieveSpecsTalents(classes)
 	logger.Printf("Parsed %v specs", len(*specs))
 	addSpecs(specs)
 	logger.Printf("Parsed %v talents", len(*talents))
 	addTalents(talents)
-	logger.Printf("Parsed %v glyphs", len(*glyphs))
-	addGlyphs(glyphs)
 
 	logger.Println("Static data import complete")
 }
@@ -97,7 +94,7 @@ func retrieveClasses() *[]Class {
 	return &classes
 }
 
-func retrieveSpecsTalentsGlyphs(classes *[]Class) (*[]Spec, *[]Talent, *[]Glyph) {
+func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	var specs []Spec = make([]Spec, 0)
 	var talents []Talent = make([]Talent, 0)
 	var glyphs []Glyph = make([]Glyph, 0)
@@ -125,7 +122,7 @@ func retrieveSpecsTalentsGlyphs(classes *[]Class) (*[]Spec, *[]Talent, *[]Glyph)
 	err := json.Unmarshal(*data, &m)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return &specs, &talents, &glyphs
+		return &specs, &talents
 	}
 
 	var classIds map[string]int = classSlugToIdMap(classes)
@@ -168,7 +165,7 @@ func retrieveSpecsTalentsGlyphs(classes *[]Class) (*[]Spec, *[]Talent, *[]Glyph)
 		}
 	}
 
-	return &specs, &talents, &glyphs
+	return &specs, &talents
 }
 
 func classSlugToIdMap(classes *[]Class) map[string]int {

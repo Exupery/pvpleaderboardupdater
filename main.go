@@ -174,10 +174,6 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		AchievementsCompleted []int
 		AchievementsCompletedTimestamp []int64
 	}
-	type GlyphJson struct {
-		Major []Glyph
-		Minor []Glyph
-	}
 	type Spell struct {
 		Id int
 	}
@@ -186,7 +182,6 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 	}
 	type TalentsJson struct {
 		Talents []TalentJson
-		Glyphs GlyphJson
 		Spec Spec
 		Selected bool
 	}
@@ -218,12 +213,6 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 	for _, t := range player.Talents {
 		if t.Selected {
 			specId = (*classSpecMap)[strconv.Itoa(player.Class) + t.Spec.Name]
-			for _, glyph := range t.Glyphs.Major {
-				glyphIds = append(glyphIds, glyph.Glyph)
-			}
-			for _, glyph := range t.Glyphs.Minor {
-				glyphIds = append(glyphIds, glyph.Glyph)
-			}
 			for _, talent := range t.Talents {
 				talentIds = append(talentIds, talent.Spell.Id)
 			}

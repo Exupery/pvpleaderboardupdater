@@ -37,21 +37,17 @@ func TestParseClasses(t *testing.T) {
 	}
 }
 
-func TestParseSpecsTalentsGlyphs(t *testing.T) {
+func TestParseSpecsTalents(t *testing.T) {
 	var specs *[]Spec
 	var talents *[]Talent
-	var glyphs *[]Glyph
 	var classes *[]Class = retrieveClasses()
-	specs, talents, glyphs = retrieveSpecsTalentsGlyphs(classes)
+	specs, talents = retrieveSpecsTalents(classes)
 
 	if specs == nil || len(*specs) == 0 {
 		t.Error("Parsing specs failed")
 	}
 	if talents == nil || len(*talents) == 0 {
 		t.Error("Parsing talents failed")
-	}
-	if glyphs == nil || len(*glyphs) == 0 {
-		t.Error("Parsing glyphs failed")
 	}
 }
 
@@ -78,24 +74,6 @@ func TestParseAchievements(t *testing.T) {
 	}
 }
 
-func TestGlyphSpellIdsMap(t *testing.T) {
-	const msg = "Creating Glyph Spell IDs map failed"
-	var glyphs *[]Glyph
-	var classes *[]Class = retrieveClasses()
-	_, _, glyphs = retrieveSpecsTalentsGlyphs(classes)
-
-	var glyphSpellIds map[string]int = glyphSpellIdsMap()
-	if glyphSpellIds == nil || len(glyphSpellIds) < len(*glyphs) {
-		t.Error(msg)
-	}
-
-	for _, glyph := range *glyphs {
-		if glyphSpellIds[glyph.Name] == 0 {
-			t.Error(glyph.Name + " missing from glyphSpellIds")
-		}
-	}
-}
-
 func TestParsePlayerDetails(t *testing.T) {
 	var playerJson *[]byte = get("character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
 	m := map[string]int{"9Affliction": 265}
@@ -111,10 +89,6 @@ func TestParsePlayerDetails(t *testing.T) {
 
 	if len(player.AchievementTimestamps) == 0 {
 		t.Error("Parsing player AchievementTimestamps failed")
-	}
-
-	if len(player.GlyphIds) == 0 {
-		t.Error("Parsing player GlyphIds failed")
 	}
 
 	if len(player.TalentIds) == 0 {
