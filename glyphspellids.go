@@ -1,4 +1,4 @@
-package main
+package pvpleaderboardupdater
 
 func glyphSpellIdsMap() map[string]int {
 	// Glyph spell IDs not available via API

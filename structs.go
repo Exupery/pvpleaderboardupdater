@@ -1,4 +1,4 @@
-package main
+package pvpleaderboardupdater
 
 type Query struct {
 	Sql        string

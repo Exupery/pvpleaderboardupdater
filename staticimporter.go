@@ -1,4 +1,4 @@
-package main
+package pvpleaderboardupdater
 
 import (
 	"encoding/json"
