@@ -29,7 +29,7 @@ func importStaticData() {
 }
 
 func parseRealms(data *[]byte) []Realm {
-	type Realms struct  {
+	type Realms struct {
 		Realms []Realm
 	}
 	var realms Realms
@@ -49,7 +49,7 @@ func importRealms() {
 }
 
 func parseRaces(data *[]byte) []Race {
-	type Races struct  {
+	type Races struct {
 		Races []Race
 	}
 	var races Races
@@ -76,7 +76,7 @@ func importFactions() {
 }
 
 func parseClasses(data *[]byte) []Class {
-	type Classes struct  {
+	type Classes struct {
 		Classes []Class
 	}
 	var classes Classes
@@ -100,21 +100,21 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	var glyphs []Glyph = make([]Glyph, 0)
 
 	type Spell struct {
-		Id int
-		Name string
-		Icon string
+		Id          int
+		Name        string
+		Icon        string
 		Description string
 	}
 	type TalentJson struct {
-		Tier int
+		Tier   int
 		Column int
-		Spell Spell
+		Spell  Spell
 	}
 	type ClassData struct {
-		Class string
-		Glyphs []Glyph
+		Class   string
+		Glyphs  []Glyph
 		Talents [][][]TalentJson
-		Specs []Spec
+		Specs   []Spec
 	}
 
 	var m map[string]ClassData
@@ -132,9 +132,9 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	for _, v := range m {
 		var classId int = classIds[v.Class]
 		for _, spec := range v.Specs {
-			var specId int = specIds[v.Class + spec.Name]
+			var specId int = specIds[v.Class+spec.Name]
 			if specId == 0 {
-				logger.Printf("%s ID not found for spec %s", errPrefix, v.Class + spec.Name)
+				logger.Printf("%s ID not found for spec %s", errPrefix, v.Class+spec.Name)
 			}
 			spec.ClassId = classId
 			spec.Id = specId
@@ -182,53 +182,53 @@ func classSlugToIdMap(classes *[]Class) map[string]int {
 func specSlugToIdMap() map[string]int {
 	// Spec name=>ID mapping not available via API
 	return map[string]int{
-		"mageArcane": 62,
-		"mageFire": 63,
-		"mageFrost": 64,
-		"paladinHoly": 65,
-		"paladinProtection": 66,
-		"paladinRetribution": 70,
-		"warriorArms": 71,
-		"warriorFury": 72,
-		"warriorProtection": 73,
-		"druidBalance": 102,
-		"druidFeral": 103,
-		"druidGuardian": 104,
-		"druidRestoration": 105,
-		"death-knightBlood": 250,
-		"death-knightFrost": 251,
-		"death-knightUnholy": 252,
-		"hunterBeast Mastery": 253,
-		"hunterMarksmanship": 254,
-		"hunterSurvival": 255,
-		"priestDiscipline": 256,
-		"priestHoly": 257,
-		"priestShadow": 258,
-		"rogueAssassination": 259,
-		"rogueOutlaw": 260,
-		"rogueSubtlety": 261,
-		"shamanElemental": 262,
-		"shamanEnhancement": 263,
-		"shamanRestoration": 264,
-		"warlockAffliction": 265,
-		"warlockDemonology": 266,
-		"warlockDestruction": 267,
-		"monkBrewmaster": 268,
-		"monkWindwalker": 269,
-		"monkMistweaver": 270,
-		"demon-hunterHavoc": 577,
+		"mageArcane":            62,
+		"mageFire":              63,
+		"mageFrost":             64,
+		"paladinHoly":           65,
+		"paladinProtection":     66,
+		"paladinRetribution":    70,
+		"warriorArms":           71,
+		"warriorFury":           72,
+		"warriorProtection":     73,
+		"druidBalance":          102,
+		"druidFeral":            103,
+		"druidGuardian":         104,
+		"druidRestoration":      105,
+		"death-knightBlood":     250,
+		"death-knightFrost":     251,
+		"death-knightUnholy":    252,
+		"hunterBeast Mastery":   253,
+		"hunterMarksmanship":    254,
+		"hunterSurvival":        255,
+		"priestDiscipline":      256,
+		"priestHoly":            257,
+		"priestShadow":          258,
+		"rogueAssassination":    259,
+		"rogueOutlaw":           260,
+		"rogueSubtlety":         261,
+		"shamanElemental":       262,
+		"shamanEnhancement":     263,
+		"shamanRestoration":     264,
+		"warlockAffliction":     265,
+		"warlockDemonology":     266,
+		"warlockDestruction":    267,
+		"monkBrewmaster":        268,
+		"monkWindwalker":        269,
+		"monkMistweaver":        270,
+		"demon-hunterHavoc":     577,
 		"demon-hunterVengeance": 581}
 }
 
 func parseAchievements(data *[]byte) []Achievement {
 	var pvpAchievements []Achievement = make([]Achievement, 0)
-	type AchievementCategory struct  {
-		Id int
-		Name string
+	type AchievementCategory struct {
+		Id           int
+		Name         string
 		Achievements []Achievement
-		Categories []AchievementCategory
+		Categories   []AchievementCategory
 	}
-	type Achievements struct  {
+	type Achievements struct {
 		Achievements []AchievementCategory
 	}
 

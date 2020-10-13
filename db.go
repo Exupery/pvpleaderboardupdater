@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "github.com/lib/pq"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -12,7 +11,7 @@ import (
 var db sql.DB = dbConnect()
 
 func dbConnect() sql.DB {
-  var dbUrl string = getEnvVar("DB_URL")
+	var dbUrl string = getEnvVar("DB_URL")
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
@@ -108,8 +107,7 @@ func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playe
 }
 
 func addPlayers(players []*Player) {
-	const qry string =
-		`INSERT INTO players (name, realm_slug) SELECT $1, $2
+	const qry string = `INSERT INTO players (name, realm_slug) SELECT $1, $2
 		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
 	args := make([][]interface{}, 0)
 
@@ -155,11 +153,11 @@ func getPlayerIdMap(players []*Player) *map[int]*Player {
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
 		}
-		t[name + realm_slug] = id
+		t[name+realm_slug] = id
 	}
 
 	for _, player := range players {
-		var id int = t[player.Name + player.RealmSlug]
+		var id int = t[player.Name+player.RealmSlug]
 		if id > 0 {
 			m[id] = player
 		}
@@ -168,8 +166,7 @@ func getPlayerIdMap(players []*Player) *map[int]*Player {
 }
 
 func updatePlayerDetails(players *map[int]*Player) int {
-	const qry string =
-		`UPDATE players SET class_id=$1, spec_id=$2, faction_id=$3, race_id=$4, guild=$5,
+	const qry string = `UPDATE players SET class_id=$1, spec_id=$2, faction_id=$3, race_id=$4, guild=$5,
 		gender=$6, achievement_points=$7, honorable_kills=$8, last_update=NOW() WHERE id=$9`
 	args := make([][]interface{}, 0)
 
@@ -231,8 +228,7 @@ func updatePlayerGlyphs(players *map[int]*Player) {
 }
 
 func updatePlayerAchievements(players *map[int]*Player) {
-	const qry string =
-		`INSERT INTO players_achievements (player_id, achievement_id, achieved_at) SELECT $1, $2, $3
+	const qry string = `INSERT INTO players_achievements (player_id, achievement_id, achieved_at) SELECT $1, $2, $3
 		WHERE NOT EXISTS (SELECT 1 FROM players_achievements WHERE player_id=$4 AND achievement_id=$5)`
 	args := make([][]interface{}, 0)
 
@@ -240,7 +236,7 @@ func updatePlayerAchievements(players *map[int]*Player) {
 	for id, player := range *players {
 		for idx, achievId := range player.AchievementIds {
 			if (*validIds)[achievId] {
-				achievedAt := time.Unix(player.AchievementTimestamps[idx] / 1000, 0)
+				achievedAt := time.Unix(player.AchievementTimestamps[idx]/1000, 0)
 				args = append(args, []interface{}{id, achievId, achievedAt, id, achievId})
 			}
 		}
@@ -353,8 +349,7 @@ func apppendItems(itemsMap *map[int]Item, itemsToAdd Items) {
 }
 
 func updateItems(items *map[int]Item) {
-	const qry string =
-		`INSERT INTO items (id, name, icon, item_level)
+	const qry string = `INSERT INTO items (id, name, icon, item_level)
 		SELECT $1, $2, $3, $4
 		WHERE NOT EXISTS (SELECT 1 FROM items WHERE id=$5)`
 	args := make([][]interface{}, 0)
@@ -377,8 +372,7 @@ func setUpdateTime() {
 }
 
 func addRealms(realms *[]Realm) {
-	const qry string =
-		`INSERT INTO realms (slug, name, battlegroup, timezone, type)
+	const qry string = `INSERT INTO realms (slug, name, battlegroup, timezone, type)
 		SELECT $1, $2, $3, $4, $5
 		WHERE NOT EXISTS (SELECT 1 FROM realms WHERE slug=$6)`
 	args := make([][]interface{}, 0)
@@ -393,8 +387,7 @@ func addRealms(realms *[]Realm) {
 }
 
 func addRaces(races *[]Race) {
-	const qry string =
-		`INSERT INTO races (id, name, side) SELECT $1, $2, $3
+	const qry string = `INSERT INTO races (id, name, side) SELECT $1, $2, $3
 		WHERE NOT EXISTS (SELECT 1 FROM races WHERE id=$4)`
 	args := make([][]interface{}, 0)
 
@@ -408,8 +401,7 @@ func addRaces(races *[]Race) {
 }
 
 func addFactions(factions *[]Faction) {
-	const qry string =
-		`INSERT INTO factions (id, name) SELECT $1, $2
+	const qry string = `INSERT INTO factions (id, name) SELECT $1, $2
 		WHERE NOT EXISTS (SELECT 1 FROM factions WHERE id=$3)`
 	args := make([][]interface{}, 0)
 
@@ -423,8 +415,7 @@ func addFactions(factions *[]Faction) {
 }
 
 func addClasses(classes *[]Class) {
-	const qry string =
-		`INSERT INTO classes (id, name) SELECT $1, $2
+	const qry string = `INSERT INTO classes (id, name) SELECT $1, $2
 		WHERE NOT EXISTS (SELECT 1 FROM classes WHERE id=$3)`
 	args := make([][]interface{}, 0)
 
@@ -438,8 +429,7 @@ func addClasses(classes *[]Class) {
 }
 
 func addSpecs(specs *[]Spec) {
-	const qry string =
-		`INSERT INTO specs (id, class_id, name, role, description, background_image, icon)
+	const qry string = `INSERT INTO specs (id, class_id, name, role, description, background_image, icon)
 		SELECT $1, $2, $3, $4, $5, $6, $7
 		WHERE NOT EXISTS (SELECT 1 FROM specs WHERE class_id=$8 AND name=$9)`
 	args := make([][]interface{}, 0)
@@ -455,8 +445,7 @@ func addSpecs(specs *[]Spec) {
 }
 
 func addTalents(talents *[]Talent) {
-	const qry string =
-		`INSERT INTO talents (id, class_id, name, description, icon, tier, col)
+	const qry string = `INSERT INTO talents (id, class_id, name, description, icon, tier, col)
 		SELECT $1, $2, $3, $4, $5, $6, $7
 		WHERE NOT EXISTS (SELECT 1 FROM talents WHERE id=$8)`
 	args := make([][]interface{}, 0)
@@ -472,8 +461,7 @@ func addTalents(talents *[]Talent) {
 }
 
 func addGlyphs(glyphs *[]Glyph) {
-	const qry string =
-		`INSERT INTO glyphs (id, class_id, name, icon, item_id, type_id, spell_id)
+	const qry string = `INSERT INTO glyphs (id, class_id, name, icon, item_id, type_id, spell_id)
 		SELECT $1, $2, $3, $4, $5, $6, $7
 		WHERE NOT EXISTS (SELECT 1 FROM glyphs WHERE id=$8)`
 	args := make([][]interface{}, 0)
@@ -489,8 +477,7 @@ func addGlyphs(glyphs *[]Glyph) {
 }
 
 func addAchievements(achievements *[]Achievement) {
-	const qry string =
-		`INSERT INTO achievements (id, name, description, icon, points)
+	const qry string = `INSERT INTO achievements (id, name, description, icon, points)
 		SELECT $1, $2, $3, $4, $5
 		WHERE NOT EXISTS (SELECT 1 FROM achievements WHERE id=$6)`
 	args := make([][]interface{}, 0)
@@ -520,7 +507,7 @@ func classIdSpecNameToSpecIdMap() *map[string]int {
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
 		}
-		m[strconv.Itoa(classId) + name] = id
+		m[strconv.Itoa(classId)+name] = id
 	}
 	return &m
 }

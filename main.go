@@ -13,6 +13,7 @@ import (
 )
 
 var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
+
 const errPrefix string = "[ERROR]"
 const fatalPrefix string = "[FATAL]"
 const warnPrefix string = "[WARN]"
@@ -22,7 +23,7 @@ var apiKey string
 
 func main() {
 	logger.Println("Updating PvPLeaderBoard")
-  flag.StringVar(&uriBase, "base", "https://us.api.battle.net/wow/", "WoW API base URI")
+	flag.StringVar(&uriBase, "base", "https://us.api.battle.net/wow/", "WoW API base URI")
 	var importStatic *bool = flag.Bool("static", false, "Import static data (e.g. races, classes, realms, etc)")
 	flag.Parse()
 	logger.Printf("WoW API URIs using '%s'", uriBase)
@@ -42,27 +43,27 @@ func main() {
 }
 
 func getEnvVar(envVar string) string {
-  var value string = os.Getenv(envVar)
-  if value == "" {
-    logger.Fatalf("%s Environment variable '%s' NOT set! Aborting.", fatalPrefix, envVar)
-  }
+	var value string = os.Getenv(envVar)
+	if value == "" {
+		logger.Fatalf("%s Environment variable '%s' NOT set! Aborting.", fatalPrefix, envVar)
+	}
 
-  return value
+	return value
 }
 
 func get(path string) *[]byte {
-  if apiKey == "" {
-    apiKey = getEnvVar("BATTLE_NET_API_KEY")
-  }
-  var params string = "locale=en_US&apikey=" + apiKey
-  var sep string
-  if strings.Count(path, "?") == 0 {
-    sep = "?"
-  } else {
-    sep = "&"
-  }
+	if apiKey == "" {
+		apiKey = getEnvVar("BATTLE_NET_API_KEY")
+	}
+	var params string = "locale=en_US&apikey=" + apiKey
+	var sep string
+	if strings.Count(path, "?") == 0 {
+		sep = "?"
+	} else {
+		sep = "&"
+	}
 
-  resp, err := http.Get(uriBase + path + sep + params)
+	resp, err := http.Get(uriBase + path + sep + params)
 
 	if err != nil {
 		logger.Printf("%s GET '%s' failed: %s", errPrefix, path, err)
@@ -93,7 +94,7 @@ func updatePlayersAndLeaderboard(bracket string) {
 		max = len(lbPlayers)
 	}
 	for _, player := range lbPlayers[0:max] {
-		playerMap[player.Name + player.RealmSlug] = player
+		playerMap[player.Name+player.RealmSlug] = player
 	}
 
 	logger.Printf("Found %v players in the %s bracket", len(playerMap), bracket)
@@ -116,7 +117,7 @@ func updatePlayersAndLeaderboard(bracket string) {
 func updateLeaderboard(playerIdMap *map[int]*Player, leaderboard *map[string]*LeaderboardEntry, bracket string) {
 	var playerSlugIdMap map[string]int = make(map[string]int)
 	for id, player := range *playerIdMap {
-		playerSlugIdMap[player.Name + player.RealmSlug] = id
+		playerSlugIdMap[player.Name+player.RealmSlug] = id
 	}
 
 	setLeaderboard(bracket, leaderboard, &playerSlugIdMap)
@@ -136,7 +137,7 @@ func parseLeaderboard(data *[]byte) *map[string]*LeaderboardEntry {
 
 	for _, entry := range leaderboard.Rows {
 		e := LeaderboardEntry(entry)
-		entries[entry.Name + entry.RealmSlug] = &e
+		entries[entry.Name+entry.RealmSlug] = &e
 	}
 	return &entries
 }
@@ -154,12 +155,12 @@ func getPlayersFromLeaderboard(entries *map[string]*LeaderboardEntry) []*Player 
 
 	for _, entry := range *entries {
 		player := Player{
-			Name: entry.Name,
-			ClassId: entry.ClassId,
+			Name:      entry.Name,
+			ClassId:   entry.ClassId,
 			FactionId: entry.FactionId,
-			RaceId: entry.RaceId,
+			RaceId:    entry.RaceId,
 			RealmSlug: entry.RealmSlug,
-			Gender: entry.GenderId}
+			Gender:    entry.GenderId}
 		players = append(players, &player)
 	}
 
@@ -171,7 +172,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		Name string
 	}
 	type Achievements struct {
-		AchievementsCompleted []int
+		AchievementsCompleted          []int
 		AchievementsCompletedTimestamp []int64
 	}
 	type Spell struct {
@@ -181,22 +182,22 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		Spell Spell
 	}
 	type TalentsJson struct {
-		Talents []TalentJson
-		Spec Spec
+		Talents  []TalentJson
+		Spec     Spec
 		Selected bool
 	}
 	type PlayerJson struct {
-		Name string
-		Class int
-		Race int
-		Gender int
-		AchievementPoints int
+		Name                string
+		Class               int
+		Race                int
+		Gender              int
+		AchievementPoints   int
 		TotalHonorableKills int
-		Guild Guild
-		Achievements Achievements
-		Talents []TalentsJson
-		Stats Stats
-		Items Items
+		Guild               Guild
+		Achievements        Achievements
+		Talents             []TalentsJson
+		Stats               Stats
+		Items               Items
 	}
 
 	var player PlayerJson
@@ -212,7 +213,7 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 
 	for _, t := range player.Talents {
 		if t.Selected {
-			specId = (*classSpecMap)[strconv.Itoa(player.Class) + t.Spec.Name]
+			specId = (*classSpecMap)[strconv.Itoa(player.Class)+t.Spec.Name]
 			for _, talent := range t.Talents {
 				talentIds = append(talentIds, talent.Spell.Id)
 			}
@@ -220,20 +221,20 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 	}
 
 	p := Player{
-		Name: player.Name,
-		ClassId: player.Class,
-		SpecId: specId,
-		RaceId: player.Race,
-		Guild: player.Guild.Name,
-		Gender: player.Gender,
-		Stats: player.Stats,
-		GlyphIds: glyphIds,
-		TalentIds: talentIds,
-		Items: player.Items,
-		AchievementIds: player.Achievements.AchievementsCompleted,
+		Name:                  player.Name,
+		ClassId:               player.Class,
+		SpecId:                specId,
+		RaceId:                player.Race,
+		Guild:                 player.Guild.Name,
+		Gender:                player.Gender,
+		Stats:                 player.Stats,
+		GlyphIds:              glyphIds,
+		TalentIds:             talentIds,
+		Items:                 player.Items,
+		AchievementIds:        player.Achievements.AchievementsCompleted,
 		AchievementTimestamps: player.Achievements.AchievementsCompletedTimestamp,
-		AchievementPoints: player.AchievementPoints,
-		HonorableKills: player.TotalHonorableKills}
+		AchievementPoints:     player.AchievementPoints,
+		HonorableKills:        player.TotalHonorableKills}
 
 	return &p
 }
