@@ -126,7 +126,6 @@ func updatePlayers(players *map[int]*Player) bool {
 	updated := updatePlayerDetails(players)
 	if updated > 0 {
 		updatePlayerTalents(players)
-		updatePlayerGlyphs(players)
 		updatePlayerStats(players)
 		updatePlayerAchievements(players)
 		updatePlayerItems(players)
@@ -202,29 +201,6 @@ func updatePlayerTalents(players *map[int]*Player) {
 	before += ")"
 	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>talents", numInserted)
-}
-
-func updatePlayerGlyphs(players *map[int]*Player) {
-	var before string = "DELETE FROM players_glyphs WHERE player_id IN ("
-	const qry string = `INSERT INTO players_glyphs (player_id, glyph_id) SELECT $1, $2
-		WHERE NOT EXISTS (SELECT 1 FROM players_glyphs WHERE player_id=$3 AND glyph_id=$4)`
-	args := make([][]interface{}, 0)
-	beforeArgs := make([]interface{}, 0)
-
-	var ctr int = 1
-	for id, player := range *players {
-		before += fmt.Sprintf("$%d,", ctr)
-		beforeArgs = append(beforeArgs, id)
-		for _, glyph := range player.GlyphIds {
-			args = append(args, []interface{}{id, glyph, id, glyph})
-		}
-		ctr++
-	}
-
-	before = strings.TrimRight(before, ",")
-	before += ")"
-	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
-	logger.Printf("Mapped %v players=>glyphs", numInserted)
 }
 
 func updatePlayerAchievements(players *map[int]*Player) {
@@ -458,22 +434,6 @@ func addTalents(talents *[]Talent) {
 
 	numInserted := insert(Query{Sql: qry, Args: args})
 	logger.Printf("Inserted %v talents", numInserted)
-}
-
-func addGlyphs(glyphs *[]Glyph) {
-	const qry string = `INSERT INTO glyphs (id, class_id, name, icon, item_id, type_id, spell_id)
-		SELECT $1, $2, $3, $4, $5, $6, $7
-		WHERE NOT EXISTS (SELECT 1 FROM glyphs WHERE id=$8)`
-	args := make([][]interface{}, 0)
-
-	for _, glyph := range *glyphs {
-		params := []interface{}{glyph.Glyph, glyph.ClassId, glyph.Name, glyph.Icon,
-			glyph.Item, glyph.TypeId, glyph.SpellId, glyph.Glyph}
-		args = append(args, params)
-	}
-
-	numInserted := insert(Query{Sql: qry, Args: args})
-	logger.Printf("Inserted %v glyphs", numInserted)
 }
 
 func addAchievements(achievements *[]Achievement) {

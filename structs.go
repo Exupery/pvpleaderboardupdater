@@ -51,16 +51,6 @@ type Talent struct {
 	Column      int
 }
 
-type Glyph struct {
-	Glyph   int
-	ClassId int
-	Name    string
-	Icon    string
-	Item    int
-	TypeId  int
-	SpellId int
-}
-
 type Achievement struct {
 	Id          int
 	Title       string
@@ -116,7 +106,6 @@ type Player struct {
 	Stats                 Stats
 	AchievementIds        []int
 	AchievementTimestamps []int64
-	GlyphIds              []int
 	TalentIds             []int
 	AchievementPoints     int
 	HonorableKills        int

@@ -208,7 +208,6 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 	}
 
 	var specId int
-	var glyphIds []int = make([]int, 0)
 	var talentIds []int = make([]int, 0)
 
 	for _, t := range player.Talents {
@@ -228,7 +227,6 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		Guild:                 player.Guild.Name,
 		Gender:                player.Gender,
 		Stats:                 player.Stats,
-		GlyphIds:              glyphIds,
 		TalentIds:             talentIds,
 		Items:                 player.Items,
 		AchievementIds:        player.Achievements.AchievementsCompleted,

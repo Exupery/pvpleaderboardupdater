@@ -97,7 +97,6 @@ func retrieveClasses() *[]Class {
 func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	var specs []Spec = make([]Spec, 0)
 	var talents []Talent = make([]Talent, 0)
-	var glyphs []Glyph = make([]Glyph, 0)
 
 	type Spell struct {
 		Id          int
@@ -112,7 +111,6 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	}
 	type ClassData struct {
 		Class   string
-		Glyphs  []Glyph
 		Talents [][][]TalentJson
 		Specs   []Spec
 	}
@@ -127,7 +125,6 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 
 	var classIds map[string]int = classSlugToIdMap(classes)
 	var specIds map[string]int = specSlugToIdMap()
-	var glyphSpellIds map[string]int = glyphSpellIdsMap()
 
 	for _, v := range m {
 		var classId int = classIds[v.Class]
@@ -139,14 +136,6 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 			spec.ClassId = classId
 			spec.Id = specId
 			specs = append(specs, spec)
-		}
-		for _, glyph := range v.Glyphs {
-			glyph.ClassId = classId
-			glyph.SpellId = glyphSpellIds[glyph.Name]
-			if glyph.SpellId == 0 {
-				logger.Printf("%s SpellID not found for '%s'", errPrefix, glyph.Name)
-			}
-			glyphs = append(glyphs, glyph)
 		}
 		for _, t := range v.Talents {
 			for _, t1 := range t {
