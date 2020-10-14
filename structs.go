@@ -1,12 +1,14 @@
 package pvpleaderboardupdater
 
+// Query : SQL query with optional args
 type Query struct {
-	Sql        string
+	SQL        string
 	Args       [][]interface{}
 	Before     string
 	BeforeArgs []interface{}
 }
 
+// Realm : realm info
 type Realm struct {
 	Slug        string
 	Name        string
@@ -15,25 +17,29 @@ type Realm struct {
 	Type        string
 }
 
+// Race : playable race
 type Race struct {
-	Id   int
+	ID   int
 	Name string
 	Side string
 }
 
+// Faction : player faction
 type Faction struct {
-	Id   int
+	ID   int
 	Name string
 }
 
+// Class : player class
 type Class struct {
-	Id   int
+	ID   int
 	Name string
 }
 
+// Spec : class specialization
 type Spec struct {
-	Id              int
-	ClassId         int
+	ID              int
+	ClassID         int
 	Name            string
 	Role            string
 	Description     string
@@ -41,9 +47,10 @@ type Spec struct {
 	Icon            string
 }
 
+// Talent : talent info
 type Talent struct {
-	Id          int
-	ClassId     int
+	ID          int
+	ClassID     int
 	Name        string
 	Description string
 	Icon        string
@@ -51,14 +58,16 @@ type Talent struct {
 	Column      int
 }
 
+// Achievement : completed achievement info
 type Achievement struct {
-	Id          int
+	ID          int
 	Title       string
 	Points      int
 	Description string
 	Icon        string
 }
 
+// Stats : player stat info
 type Stats struct {
 	Str               int
 	Agi               int
@@ -76,57 +85,56 @@ type Stats struct {
 	ParryRating       float64
 }
 
+// LeaderboardEntry : a singular listing on a leaderboard
 type LeaderboardEntry struct {
 	Name         string
 	Ranking      int
 	Rating       int
-	RealmId      int
+	RealmID      int
 	RealmName    string
 	RealmSlug    string
-	RaceId       int
-	ClassId      int
-	SpecId       int
-	FactionId    int
-	GenderId     int
+	RaceID       int
+	ClassID      int
+	SpecID       int
+	FactionID    int
+	GenderID     int
 	SeasonWins   int
 	SeasonLosses int
 	WeeklyWins   int
 	WeeklyLosses int
 }
 
+// Player : player info
 type Player struct {
 	Name                  string
-	ClassId               int
-	SpecId                int
-	FactionId             int
-	RaceId                int
+	ClassID               int
+	SpecID                int
+	FactionID             int
+	RaceID                int
 	RealmSlug             string
 	Guild                 string
 	Gender                int
 	Stats                 Stats
-	AchievementIds        []int
+	AchievementIDs        []int
 	AchievementTimestamps []int64
-	TalentIds             []int
+	TalentIDs             []int
 	AchievementPoints     int
 	HonorableKills        int
 	Items                 Items
 }
 
-type TooltipParam struct {
-	Enchant int
-}
-
+// Item : an equippable item
 type Item struct {
-	Id            int
-	Name          string
-	Icon          string
-	Quality       int
-	ItemLevel     int
-	TooltipParams TooltipParam
-	Armor         int
-	Context       string
+	ID        int
+	Name      string
+	Icon      string
+	Quality   int
+	ItemLevel int
+	Armor     int
+	Context   string
 }
 
+// Items : a player's equipped items
 type Items struct {
 	AverageItemLevel         int
 	AverageItemLevelEquipped int

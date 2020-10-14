@@ -11,9 +11,9 @@ import (
 var db sql.DB = dbConnect()
 
 func dbConnect() sql.DB {
-	var dbUrl string = getEnvVar("DB_URL")
+	var dbURL string = getEnvVar("DB_URL")
 
-	db, err := sql.Open("postgres", dbUrl)
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		logger.Printf("%s Unable to connect to database: %s", errPrefix, err)
 	}
@@ -44,7 +44,7 @@ func insert(qry Query) int64 {
 	if err != nil {
 		logger.Fatalf("%s %s", fatalPrefix, err)
 	}
-	stmt, _ := txn.Prepare(qry.Sql)
+	stmt, _ := txn.Prepare(qry.SQL)
 
 	if qry.Before != "" {
 		bStmt, _ := txn.Prepare(qry.Before)
@@ -82,7 +82,7 @@ func execute(sql string) {
 	}
 }
 
-func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playerSlugIdMap *map[string]int) {
+func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playerSlugIDMap *map[string]int) {
 	before := fmt.Sprintf("TRUNCATE TABLE bracket_%s", bracket)
 	qry := fmt.Sprintf(`INSERT INTO bracket_%s
 		(ranking, player_id, rating, season_wins, season_losses, last_update)
@@ -90,7 +90,7 @@ func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playe
 	args := make([][]interface{}, 0)
 
 	for slug, entry := range *entries {
-		id := (*playerSlugIdMap)[slug]
+		id := (*playerSlugIDMap)[slug]
 		if id > 0 {
 			params := []interface{}{
 				entry.Ranking,
@@ -102,7 +102,7 @@ func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playe
 		}
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args, Before: before})
+	numInserted := insert(Query{SQL: qry, Args: args, Before: before})
 	logger.Printf("%s leaderboard set with %d entries", bracket, numInserted)
 }
 
@@ -118,7 +118,7 @@ func addPlayers(players []*Player) {
 		}
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Added %v players", numInserted)
 }
 
@@ -130,13 +130,13 @@ func updatePlayers(players *map[int]*Player) bool {
 		updatePlayerAchievements(players)
 		updatePlayerItems(players)
 		return true
-	} else {
-		logger.Printf("%s Updated NO player details (%d expected)", errPrefix, len(*players))
-		return false
 	}
+
+	logger.Printf("%s Updated NO player details (%d expected)", errPrefix, len(*players))
+	return false
 }
 
-func getPlayerIdMap(players []*Player) *map[int]*Player {
+func getPlayerIDMap(players []*Player) *map[int]*Player {
 	var m map[int]*Player = make(map[int]*Player)
 	rows, err := db.Query("SELECT id, name, realm_slug FROM players")
 	if err != nil {
@@ -147,12 +147,12 @@ func getPlayerIdMap(players []*Player) *map[int]*Player {
 	for rows.Next() {
 		var id int
 		var name string
-		var realm_slug string
-		err := rows.Scan(&id, &name, &realm_slug)
+		var realmSlug string
+		err := rows.Scan(&id, &name, &realmSlug)
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
 		}
-		t[name+realm_slug] = id
+		t[name+realmSlug] = id
 	}
 
 	for _, player := range players {
@@ -170,12 +170,12 @@ func updatePlayerDetails(players *map[int]*Player) int {
 	args := make([][]interface{}, 0)
 
 	for id, player := range *players {
-		params := []interface{}{player.ClassId, player.SpecId, player.FactionId, player.RaceId, player.Guild,
+		params := []interface{}{player.ClassID, player.SpecID, player.FactionID, player.RaceID, player.Guild,
 			player.Gender, player.AchievementPoints, player.HonorableKills, id}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Updated %v player details", numInserted)
 	return int(numInserted)
 }
@@ -191,7 +191,7 @@ func updatePlayerTalents(players *map[int]*Player) {
 	for id, player := range *players {
 		before += fmt.Sprintf("$%d,", ctr)
 		beforeArgs = append(beforeArgs, id)
-		for _, talent := range player.TalentIds {
+		for _, talent := range player.TalentIDs {
 			args = append(args, []interface{}{id, talent, talent})
 		}
 		ctr++
@@ -199,7 +199,7 @@ func updatePlayerTalents(players *map[int]*Player) {
 
 	before = strings.TrimRight(before, ",")
 	before += ")"
-	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
+	numInserted := insert(Query{SQL: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>talents", numInserted)
 }
 
@@ -210,15 +210,15 @@ func updatePlayerAchievements(players *map[int]*Player) {
 
 	validIds := getAchievementIds()
 	for id, player := range *players {
-		for idx, achievId := range player.AchievementIds {
-			if (*validIds)[achievId] {
+		for idx, achievID := range player.AchievementIDs {
+			if (*validIds)[achievID] {
 				achievedAt := time.Unix(player.AchievementTimestamps[idx]/1000, 0)
-				args = append(args, []interface{}{id, achievId, achievedAt, id, achievId})
+				args = append(args, []interface{}{id, achievID, achievedAt, id, achievID})
 			}
 		}
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Mapped %v players=>achievements", numInserted)
 }
 
@@ -258,7 +258,7 @@ func updatePlayerStats(players *map[int]*Player) {
 
 	before = strings.TrimRight(before, ",")
 	before += ")"
-	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
+	numInserted := insert(Query{SQL: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>stats", numInserted)
 }
 
@@ -281,24 +281,24 @@ func updatePlayerItems(players *map[int]*Player) {
 			id,
 			pi.AverageItemLevel,
 			pi.AverageItemLevelEquipped,
-			pi.Head.Id,
-			pi.Neck.Id,
-			pi.Shoulder.Id,
-			pi.Back.Id,
-			pi.Chest.Id,
-			pi.Shirt.Id,
-			pi.Tabard.Id,
-			pi.Wrist.Id,
-			pi.Hands.Id,
-			pi.Waist.Id,
-			pi.Legs.Id,
-			pi.Feet.Id,
-			pi.Finger1.Id,
-			pi.Finger2.Id,
-			pi.Trinket1.Id,
-			pi.Trinket2.Id,
-			pi.MainHand.Id,
-			pi.OffHand.Id}
+			pi.Head.ID,
+			pi.Neck.ID,
+			pi.Shoulder.ID,
+			pi.Back.ID,
+			pi.Chest.ID,
+			pi.Shirt.ID,
+			pi.Tabard.ID,
+			pi.Wrist.ID,
+			pi.Hands.ID,
+			pi.Waist.ID,
+			pi.Legs.ID,
+			pi.Feet.ID,
+			pi.Finger1.ID,
+			pi.Finger2.ID,
+			pi.Trinket1.ID,
+			pi.Trinket2.ID,
+			pi.MainHand.ID,
+			pi.OffHand.ID}
 		args = append(args, playerItems)
 		apppendItems(&items, pi)
 		ctr++
@@ -307,7 +307,7 @@ func updatePlayerItems(players *map[int]*Player) {
 	before = strings.TrimRight(before, ",")
 	before += ")"
 	updateItems(&items)
-	numInserted := insert(Query{Sql: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
+	numInserted := insert(Query{SQL: qry, Args: args, Before: before, BeforeArgs: beforeArgs})
 	logger.Printf("Mapped %v players=>items", numInserted)
 }
 
@@ -318,8 +318,8 @@ func apppendItems(itemsMap *map[int]Item, itemsToAdd Items) {
 		itemsToAdd.Trinket2, itemsToAdd.MainHand, itemsToAdd.OffHand}
 
 	for _, item := range items {
-		if item.Id > 0 {
-			(*itemsMap)[item.Id] = item
+		if item.ID > 0 {
+			(*itemsMap)[item.ID] = item
 		}
 	}
 }
@@ -331,11 +331,11 @@ func updateItems(items *map[int]Item) {
 	args := make([][]interface{}, 0)
 
 	for _, item := range *items {
-		params := []interface{}{item.Id, item.Name, item.Icon, item.ItemLevel, item.Id}
+		params := []interface{}{item.ID, item.Name, item.Icon, item.ItemLevel, item.ID}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v items", numInserted)
 }
 
@@ -358,7 +358,7 @@ func addRealms(realms *[]Realm) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v realms", numInserted)
 }
 
@@ -368,11 +368,11 @@ func addRaces(races *[]Race) {
 	args := make([][]interface{}, 0)
 
 	for _, race := range *races {
-		params := []interface{}{race.Id, race.Name, race.Side, race.Id}
+		params := []interface{}{race.ID, race.Name, race.Side, race.ID}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v races", numInserted)
 }
 
@@ -382,11 +382,11 @@ func addFactions(factions *[]Faction) {
 	args := make([][]interface{}, 0)
 
 	for _, faction := range *factions {
-		params := []interface{}{faction.Id, faction.Name, faction.Id}
+		params := []interface{}{faction.ID, faction.Name, faction.ID}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v faction", numInserted)
 }
 
@@ -396,11 +396,11 @@ func addClasses(classes *[]Class) {
 	args := make([][]interface{}, 0)
 
 	for _, class := range *classes {
-		params := []interface{}{class.Id, class.Name, class.Id}
+		params := []interface{}{class.ID, class.Name, class.ID}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v classes", numInserted)
 }
 
@@ -411,12 +411,12 @@ func addSpecs(specs *[]Spec) {
 	args := make([][]interface{}, 0)
 
 	for _, spec := range *specs {
-		params := []interface{}{spec.Id, spec.ClassId, spec.Name, spec.Role, spec.Description,
-			spec.BackgroundImage, spec.Icon, spec.ClassId, spec.Name}
+		params := []interface{}{spec.ID, spec.ClassID, spec.Name, spec.Role, spec.Description,
+			spec.BackgroundImage, spec.Icon, spec.ClassID, spec.Name}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v specs", numInserted)
 }
 
@@ -427,12 +427,12 @@ func addTalents(talents *[]Talent) {
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
-		params := []interface{}{talent.Id, talent.ClassId, talent.Name, talent.Description,
-			talent.Icon, talent.Tier, talent.Column, talent.Id}
+		params := []interface{}{talent.ID, talent.ClassID, talent.Name, talent.Description,
+			talent.Icon, talent.Tier, talent.Column, talent.ID}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v talents", numInserted)
 }
 
@@ -443,16 +443,16 @@ func addAchievements(achievements *[]Achievement) {
 	args := make([][]interface{}, 0)
 
 	for _, achiev := range *achievements {
-		params := []interface{}{achiev.Id, achiev.Title, achiev.Description, achiev.Icon,
-			achiev.Points, achiev.Id}
+		params := []interface{}{achiev.ID, achiev.Title, achiev.Description, achiev.Icon,
+			achiev.Points, achiev.ID}
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{Sql: qry, Args: args})
+	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Inserted %v achievements", numInserted)
 }
 
-func classIdSpecNameToSpecIdMap() *map[string]int {
+func classIDSpecNameToSpecIDMap() *map[string]int {
 	var m map[string]int = make(map[string]int)
 	rows, err := db.Query("SELECT id, class_id, name FROM specs")
 	if err != nil {
@@ -461,13 +461,13 @@ func classIdSpecNameToSpecIdMap() *map[string]int {
 	defer rows.Close()
 	for rows.Next() {
 		var id int
-		var classId int
+		var classID int
 		var name string
-		err := rows.Scan(&id, &classId, &name)
+		err := rows.Scan(&id, &classID, &name)
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
 		}
-		m[strconv.Itoa(classId)+name] = id
+		m[strconv.Itoa(classID)+name] = id
 	}
 	return &m
 }

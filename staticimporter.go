@@ -42,8 +42,8 @@ func parseRealms(data *[]byte) []Realm {
 }
 
 func importRealms() {
-	var realmJson *[]byte = get("realm/status")
-	var realms []Realm = parseRealms(realmJson)
+	var realmJSON *[]byte = get("realm/status")
+	var realms []Realm = parseRealms(realmJSON)
 	logger.Printf("Parsed %v realms", len(realms))
 	addRealms(&realms)
 }
@@ -62,8 +62,8 @@ func parseRaces(data *[]byte) []Race {
 }
 
 func importRaces() {
-	var racesJson *[]byte = get("data/character/races")
-	var races []Race = parseRaces(racesJson)
+	var racesJSON *[]byte = get("data/character/races")
+	var races []Race = parseRaces(racesJSON)
 	logger.Printf("Parsed %v races", len(races))
 	addRaces(&races)
 }
@@ -89,8 +89,8 @@ func parseClasses(data *[]byte) []Class {
 }
 
 func retrieveClasses() *[]Class {
-	var classesJson *[]byte = get("data/character/classes")
-	var classes []Class = parseClasses(classesJson)
+	var classesJSON *[]byte = get("data/character/classes")
+	var classes []Class = parseClasses(classesJSON)
 	return &classes
 }
 
@@ -99,19 +99,19 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	var talents []Talent = make([]Talent, 0)
 
 	type Spell struct {
-		Id          int
+		ID          int
 		Name        string
 		Icon        string
 		Description string
 	}
-	type TalentJson struct {
+	type TalentJSON struct {
 		Tier   int
 		Column int
 		Spell  Spell
 	}
 	type ClassData struct {
 		Class   string
-		Talents [][][]TalentJson
+		Talents [][][]TalentJSON
 		Specs   []Spec
 	}
 
@@ -123,26 +123,26 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 		return &specs, &talents
 	}
 
-	var classIds map[string]int = classSlugToIdMap(classes)
-	var specIds map[string]int = specSlugToIdMap()
+	var classIds map[string]int = classSlugToIDMap(classes)
+	var specIds map[string]int = specSlugToIDMap()
 
 	for _, v := range m {
-		var classId int = classIds[v.Class]
+		var classID int = classIds[v.Class]
 		for _, spec := range v.Specs {
-			var specId int = specIds[v.Class+spec.Name]
-			if specId == 0 {
+			var specID int = specIds[v.Class+spec.Name]
+			if specID == 0 {
 				logger.Printf("%s ID not found for spec %s", errPrefix, v.Class+spec.Name)
 			}
-			spec.ClassId = classId
-			spec.Id = specId
+			spec.ClassID = classID
+			spec.ID = specID
 			specs = append(specs, spec)
 		}
 		for _, t := range v.Talents {
 			for _, t1 := range t {
 				for _, t2 := range t1 {
 					var talent Talent = Talent{
-						t2.Spell.Id,
-						classId,
+						t2.Spell.ID,
+						classID,
 						t2.Spell.Name,
 						t2.Spell.Description,
 						t2.Spell.Icon,
@@ -157,18 +157,18 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	return &specs, &talents
 }
 
-func classSlugToIdMap(classes *[]Class) map[string]int {
+func classSlugToIDMap(classes *[]Class) map[string]int {
 	var m map[string]int = make(map[string]int)
 	for _, c := range *classes {
 		var slug string = strings.ToLower(c.Name)
 		slug = strings.Replace(slug, " ", "-", -1)
-		m[slug] = c.Id
+		m[slug] = c.ID
 	}
 
 	return m
 }
 
-func specSlugToIdMap() map[string]int {
+func specSlugToIDMap() map[string]int {
 	// Spec name=>ID mapping not available via API
 	return map[string]int{
 		"mageArcane":            62,
@@ -212,7 +212,7 @@ func specSlugToIdMap() map[string]int {
 func parseAchievements(data *[]byte) []Achievement {
 	var pvpAchievements []Achievement = make([]Achievement, 0)
 	type AchievementCategory struct {
-		Id           int
+		ID           int
 		Name         string
 		Achievements []Achievement
 		Categories   []AchievementCategory
@@ -242,8 +242,8 @@ func parseAchievements(data *[]byte) []Achievement {
 }
 
 func importAchievements() {
-	var achievementsJson *[]byte = get("data/character/achievements")
-	var achievements []Achievement = parseAchievements(achievementsJson)
+	var achievementsJSON *[]byte = get("data/character/achievements")
+	var achievements []Achievement = parseAchievements(achievementsJSON)
 	logger.Printf("Parsed %v achievements", len(achievements))
 	addAchievements(&achievements)
 }

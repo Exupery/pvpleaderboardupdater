@@ -101,11 +101,11 @@ func updatePlayersAndLeaderboard(bracket string) {
 
 	players := getPlayerDetails(&playerMap)
 	addPlayers(players)
-	var playerIdMap *map[int]*Player = getPlayerIdMap(players)
-	if len(*playerIdMap) > 0 {
-		updated := updatePlayers(playerIdMap)
+	var playerIDMap *map[int]*Player = getPlayerIDMap(players)
+	if len(*playerIDMap) > 0 {
+		updated := updatePlayers(playerIDMap)
 		if updated {
-			updateLeaderboard(playerIdMap, leaderboard, bracket)
+			updateLeaderboard(playerIDMap, leaderboard, bracket)
 		} else {
 			logger.Printf("%s Updating player details failed, NOT updating %s leaderboard", errPrefix, bracket)
 		}
@@ -114,13 +114,13 @@ func updatePlayersAndLeaderboard(bracket string) {
 	}
 }
 
-func updateLeaderboard(playerIdMap *map[int]*Player, leaderboard *map[string]*LeaderboardEntry, bracket string) {
-	var playerSlugIdMap map[string]int = make(map[string]int)
-	for id, player := range *playerIdMap {
-		playerSlugIdMap[player.Name+player.RealmSlug] = id
+func updateLeaderboard(playerIDMap *map[int]*Player, leaderboard *map[string]*LeaderboardEntry, bracket string) {
+	var playerSlugIDMap map[string]int = make(map[string]int)
+	for id, player := range *playerIDMap {
+		playerSlugIDMap[player.Name+player.RealmSlug] = id
 	}
 
-	setLeaderboard(bracket, leaderboard, &playerSlugIdMap)
+	setLeaderboard(bracket, leaderboard, &playerSlugIDMap)
 }
 
 func parseLeaderboard(data *[]byte) *map[string]*LeaderboardEntry {
@@ -143,8 +143,8 @@ func parseLeaderboard(data *[]byte) *map[string]*LeaderboardEntry {
 }
 
 func getLeaderboard(bracket string) *map[string]*LeaderboardEntry {
-	var leaderboardJson *[]byte = get("leaderboard/" + bracket)
-	var entries *map[string]*LeaderboardEntry = parseLeaderboard(leaderboardJson)
+	var leaderboardJSON *[]byte = get("leaderboard/" + bracket)
+	var entries *map[string]*LeaderboardEntry = parseLeaderboard(leaderboardJSON)
 	logger.Printf("Parsed %v %s entries", len(*entries), bracket)
 
 	return entries
@@ -156,11 +156,11 @@ func getPlayersFromLeaderboard(entries *map[string]*LeaderboardEntry) []*Player 
 	for _, entry := range *entries {
 		player := Player{
 			Name:      entry.Name,
-			ClassId:   entry.ClassId,
-			FactionId: entry.FactionId,
-			RaceId:    entry.RaceId,
+			ClassID:   entry.ClassID,
+			FactionID: entry.FactionID,
+			RaceID:    entry.RaceID,
 			RealmSlug: entry.RealmSlug,
-			Gender:    entry.GenderId}
+			Gender:    entry.GenderID}
 		players = append(players, &player)
 	}
 
@@ -176,17 +176,17 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		AchievementsCompletedTimestamp []int64
 	}
 	type Spell struct {
-		Id int
+		ID int
 	}
-	type TalentJson struct {
+	type TalentJSON struct {
 		Spell Spell
 	}
-	type TalentsJson struct {
-		Talents  []TalentJson
+	type TalentsJSON struct {
+		Talents  []TalentJSON
 		Spec     Spec
 		Selected bool
 	}
-	type PlayerJson struct {
+	type PlayerJSON struct {
 		Name                string
 		Class               int
 		Race                int
@@ -195,41 +195,41 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 		TotalHonorableKills int
 		Guild               Guild
 		Achievements        Achievements
-		Talents             []TalentsJson
+		Talents             []TalentsJSON
 		Stats               Stats
 		Items               Items
 	}
 
-	var player PlayerJson
+	var player PlayerJSON
 	err := json.Unmarshal(*data, &player)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return nil
 	}
 
-	var specId int
+	var specID int
 	var talentIds []int = make([]int, 0)
 
 	for _, t := range player.Talents {
 		if t.Selected {
-			specId = (*classSpecMap)[strconv.Itoa(player.Class)+t.Spec.Name]
+			specID = (*classSpecMap)[strconv.Itoa(player.Class)+t.Spec.Name]
 			for _, talent := range t.Talents {
-				talentIds = append(talentIds, talent.Spell.Id)
+				talentIds = append(talentIds, talent.Spell.ID)
 			}
 		}
 	}
 
 	p := Player{
 		Name:                  player.Name,
-		ClassId:               player.Class,
-		SpecId:                specId,
-		RaceId:                player.Race,
+		ClassID:               player.Class,
+		SpecID:                specID,
+		RaceID:                player.Race,
 		Guild:                 player.Guild.Name,
 		Gender:                player.Gender,
 		Stats:                 player.Stats,
-		TalentIds:             talentIds,
+		TalentIDs:             talentIds,
 		Items:                 player.Items,
-		AchievementIds:        player.Achievements.AchievementsCompleted,
+		AchievementIDs:        player.Achievements.AchievementsCompleted,
 		AchievementTimestamps: player.Achievements.AchievementsCompletedTimestamp,
 		AchievementPoints:     player.AchievementPoints,
 		HonorableKills:        player.TotalHonorableKills}
@@ -239,17 +239,17 @@ func parsePlayerDetails(data *[]byte, classSpecMap *map[string]int) *Player {
 
 func getPlayerDetails(playerMap *map[string]*Player) []*Player {
 	players := make([]*Player, 0)
-	classSpecMap := classIdSpecNameToSpecIdMap()
+	classSpecMap := classIDSpecNameToSpecIDMap()
 	const path string = "character/%s/%s?fields=talents,guild,achievements,stats,items"
 	for _, player := range *playerMap {
 		// realm may be empty if character is transferring
 		if player.RealmSlug != "" {
-			var playerJson *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
-			if playerJson != nil {
-				var p *Player = parsePlayerDetails(playerJson, classSpecMap)
+			var playerJSON *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
+			if playerJSON != nil {
+				var p *Player = parsePlayerDetails(playerJSON, classSpecMap)
 				if p != nil {
 					p.RealmSlug = player.RealmSlug
-					p.FactionId = player.FactionId
+					p.FactionID = player.FactionID
 					if playerIsValid(p) {
 						players = append(players, p)
 					}
@@ -266,15 +266,15 @@ func playerIsValid(player *Player) bool {
 		return false
 	}
 	const msg string = "%s %s-%s has no %s"
-	if player.ClassId == 0 {
+	if player.ClassID == 0 {
 		logger.Printf(msg, warnPrefix, player.Name, player.RealmSlug, "ClassId")
 		return false
 	}
-	if player.SpecId == 0 {
+	if player.SpecID == 0 {
 		logger.Printf(msg, warnPrefix, player.Name, player.RealmSlug, "SpecId")
 		return false
 	}
-	if player.RaceId == 0 {
+	if player.RaceID == 0 {
 		logger.Printf(msg, warnPrefix, player.Name, player.RealmSlug, "RaceId")
 		return false
 	}
