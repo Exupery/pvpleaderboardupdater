@@ -1,13 +1,14 @@
 package pvpleaderboardupdater
 
 import (
-	"os"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	uriBase = os.Getenv("TEST_BASE_URI")
-	os.Exit(m.Run())
+func TestCreateToken(t *testing.T) {
+	var token = createToken()
+	if len(token) == 0 {
+		t.Error("Creating token failed")
+	}
 }
 
 func TestParseRealms(t *testing.T) {
