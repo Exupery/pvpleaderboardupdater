@@ -5,14 +5,21 @@ import (
 )
 
 func TestCreateToken(t *testing.T) {
-	var token = createToken()
+	var token string = createToken()
 	if len(token) == 0 {
 		t.Error("Creating token failed")
 	}
 }
 
+func TestGet(t *testing.T) {
+	var resp *[]byte = get("US", "data/wow/token")
+	if len(*resp) == 0 {
+		t.Error("No response from GET")
+	}
+}
+
 func TestParseRealms(t *testing.T) {
-	var realmJSON *[]byte = get("realm/status")
+	var realmJSON *[]byte = get("TODO", "realm/status")
 	var realms []Realm = parseRealms(realmJSON)
 
 	if realms == nil || len(realms) == 0 {
@@ -21,7 +28,7 @@ func TestParseRealms(t *testing.T) {
 }
 
 func TestParseRaces(t *testing.T) {
-	var racesJSON *[]byte = get("data/character/races")
+	var racesJSON *[]byte = get("TODO", "data/character/races")
 	var races []Race = parseRaces(racesJSON)
 
 	if races == nil || len(races) == 0 {
@@ -30,7 +37,7 @@ func TestParseRaces(t *testing.T) {
 }
 
 func TestParseClasses(t *testing.T) {
-	var classesJSON *[]byte = get("data/character/classes")
+	var classesJSON *[]byte = get("TODO", "data/character/classes")
 	var classes []Class = parseClasses(classesJSON)
 
 	if classes == nil || len(classes) == 0 {
@@ -67,7 +74,7 @@ func TestClassSlugToIdMap(t *testing.T) {
 }
 
 func TestParseAchievements(t *testing.T) {
-	var achievementsJSON *[]byte = get("data/character/achievements")
+	var achievementsJSON *[]byte = get("TODO", "data/character/achievements")
 	var achievements []Achievement = parseAchievements(achievementsJSON)
 
 	if achievements == nil || len(achievements) == 0 {
@@ -76,7 +83,7 @@ func TestParseAchievements(t *testing.T) {
 }
 
 func TestParsePlayerDetails(t *testing.T) {
-	var playerJSON *[]byte = get("character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
+	var playerJSON *[]byte = get("TODO", "character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
 	m := map[string]int{"9Affliction": 265}
 	var player *Player = parsePlayerDetails(playerJSON, &m)
 
