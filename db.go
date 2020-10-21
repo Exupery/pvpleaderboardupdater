@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 var db sql.DB = dbConnect()
