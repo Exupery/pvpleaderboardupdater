@@ -17,8 +17,32 @@ var clienID string = getEnvVar("BATTLE_NET_CLIENT_ID")
 var secret string = getEnvVar("BATTLE_NET_SECRET")
 var token string = createToken()
 
-func get(region, path string) *[]byte {
-	var params string = fmt.Sprintf(requiredParams, token, "dynamic-us") // TODO
+func getStatic(region, path string) *[]byte {
+	var namespace = "static-" + region
+	var staticPath = "data/wow/" + path
+	return get(region, namespace, staticPath)
+}
+
+func getDynamic(region, path string) *[]byte {
+	var namespace = "dynamic-" + region
+	var dynamicPath = "data/wow/" + path
+	return get(region, namespace, dynamicPath)
+}
+
+func getProfile(region, path string) *[]byte {
+	var namespace = "profile-" + region
+	var profilePath = "profile/wow/character/" + path
+	return get(region, namespace, profilePath)
+}
+
+func getMedia(region, path string) *[]byte {
+	var namespace = "static-" + region
+	var mediaPath = "data/wow/media/" + path
+	return get(region, namespace, mediaPath)
+}
+
+func get(region, namespace, path string) *[]byte {
+	var params string = fmt.Sprintf(requiredParams, token, strings.ToLower(namespace))
 	var url string = fmt.Sprintf(baseURI, strings.ToLower(region), path, params)
 	resp, err := http.Get(url)
 	if err != nil {
