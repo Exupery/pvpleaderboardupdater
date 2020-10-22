@@ -356,7 +356,7 @@ func addRealms(realms *[]Realm) {
 	args := make([][]interface{}, 0)
 
 	for _, realm := range *realms {
-		params := []interface{}{realm.Slug, realm.Name, realm.Battlegroup, realm.Timezone, realm.Type, realm.Slug}
+		params := []interface{}{realm.Slug, realm.Name, realm.Slug}
 		args = append(args, params)
 	}
 

@@ -42,9 +42,9 @@ func parseRealms(data *[]byte) []Realm {
 }
 
 func importRealms() {
-	var realmJSON *[]byte = get("realm/status")
+	var realmJSON *[]byte = getDynamic(region, "realm/index")
 	var realms []Realm = parseRealms(realmJSON)
-	logger.Printf("Parsed %v realms", len(realms))
+	logger.Printf("Parsed %v %s realms", len(realms), region)
 	addRealms(&realms)
 }
 
@@ -62,7 +62,7 @@ func parseRaces(data *[]byte) []Race {
 }
 
 func importRaces() {
-	var racesJSON *[]byte = get("data/character/races")
+	var racesJSON *[]byte = getStatic(region, "data/character/races")
 	var races []Race = parseRaces(racesJSON)
 	logger.Printf("Parsed %v races", len(races))
 	addRaces(&races)
@@ -89,7 +89,7 @@ func parseClasses(data *[]byte) []Class {
 }
 
 func retrieveClasses() *[]Class {
-	var classesJSON *[]byte = get("data/character/classes")
+	var classesJSON *[]byte = getStatic(region, "data/character/classes")
 	var classes []Class = parseClasses(classesJSON)
 	return &classes
 }
@@ -116,7 +116,7 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	}
 
 	var m map[string]ClassData
-	var data *[]byte = get("data/talents")
+	var data *[]byte = getStatic(region, "data/talents")
 	err := json.Unmarshal(*data, &m)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
@@ -242,7 +242,7 @@ func parseAchievements(data *[]byte) []Achievement {
 }
 
 func importAchievements() {
-	var achievementsJSON *[]byte = get("data/character/achievements")
+	var achievementsJSON *[]byte = getStatic(region, "data/character/achievements")
 	var achievements []Achievement = parseAchievements(achievementsJSON)
 	logger.Printf("Parsed %v achievements", len(achievements))
 	addAchievements(&achievements)

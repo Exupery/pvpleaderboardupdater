@@ -10,11 +10,9 @@ type Query struct {
 
 // Realm : realm info
 type Realm struct {
-	Slug        string
-	Name        string
-	Battlegroup string
-	Timezone    string
-	Type        string
+	ID   int
+	Slug string
+	Name string
 }
 
 // Race : playable race

@@ -4,6 +4,8 @@ import (
 	"testing"
 )
 
+const testRegion = "US"
+
 func TestCreateToken(t *testing.T) {
 	var token string = createToken()
 	if len(token) == 0 {
@@ -12,14 +14,14 @@ func TestCreateToken(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	var resp *[]byte = getDynamic("US", "token")
+	var resp *[]byte = getDynamic(testRegion, "token/")
 	if len(*resp) == 0 {
 		t.Error("No response from GET")
 	}
 }
 
 func TestParseRealms(t *testing.T) {
-	var realmJSON *[]byte = getStatic("TODO", "realm/status")
+	var realmJSON *[]byte = getDynamic(testRegion, "realm/index")
 	var realms []Realm = parseRealms(realmJSON)
 
 	if realms == nil || len(realms) == 0 {
@@ -28,7 +30,7 @@ func TestParseRealms(t *testing.T) {
 }
 
 func TestParseRaces(t *testing.T) {
-	var racesJSON *[]byte = getStatic("TODO", "data/character/races")
+	var racesJSON *[]byte = getStatic(testRegion, "data/character/races")
 	var races []Race = parseRaces(racesJSON)
 
 	if races == nil || len(races) == 0 {
@@ -37,7 +39,7 @@ func TestParseRaces(t *testing.T) {
 }
 
 func TestParseClasses(t *testing.T) {
-	var classesJSON *[]byte = getStatic("TODO", "data/character/classes")
+	var classesJSON *[]byte = getStatic(testRegion, "data/character/classes")
 	var classes []Class = parseClasses(classesJSON)
 
 	if classes == nil || len(classes) == 0 {
@@ -74,7 +76,7 @@ func TestClassSlugToIdMap(t *testing.T) {
 }
 
 func TestParseAchievements(t *testing.T) {
-	var achievementsJSON *[]byte = getStatic("TODO", "data/character/achievements")
+	var achievementsJSON *[]byte = getStatic(testRegion, "data/character/achievements")
 	var achievements []Achievement = parseAchievements(achievementsJSON)
 
 	if achievements == nil || len(achievements) == 0 {
@@ -83,7 +85,7 @@ func TestParseAchievements(t *testing.T) {
 }
 
 func TestParsePlayerDetails(t *testing.T) {
-	var playerJSON *[]byte = getDynamic("TODO", "character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
+	var playerJSON *[]byte = getDynamic(testRegion, "character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
 	m := map[string]int{"9Affliction": 265}
 	var player *Player = parsePlayerDetails(playerJSON, &m)
 
