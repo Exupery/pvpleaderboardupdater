@@ -37,7 +37,7 @@ CREATE TABLE specs (
 );
 
 CREATE TABLE talents (
-  id SERIAL,
+  id INTEGER PRIMARY KEY,
   spell_id INTEGER NOT NULL,
   class_id INTEGER NOT NULL REFERENCES classes (id),
   spec_id INTEGER DEFAULT 0,
@@ -45,9 +45,7 @@ CREATE TABLE talents (
   description VARCHAR(1024),
   icon VARCHAR(128),
   tier SMALLINT,
-  col SMALLINT,
-  PRIMARY KEY (spell_id, spec_id),
-  UNIQUE(id)
+  col SMALLINT
 );
 
 CREATE INDEX ON talents (tier, col);
@@ -55,25 +53,23 @@ CREATE INDEX ON talents (class_id, spec_id);
 
 CREATE TABLE players (
   id SERIAL PRIMARY KEY,
+  api_id INTEGER NOT NULL,
   name VARCHAR(32) NOT NULL,
+  realm_id INTEGER NOT NULL REFERENCES realms (id),
   class_id INTEGER REFERENCES classes (id),
   spec_id INTEGER REFERENCES specs (id),
   faction_id INTEGER REFERENCES factions (id),
   race_id INTEGER REFERENCES races (id),
-  realm_id INTEGER NOT NULL REFERENCES realms (id),
   guild VARCHAR(64),
   gender SMALLINT,
-  achievement_points INTEGER,
-  honorable_kills INTEGER,
-  thumbnail VARCHAR(128),
   last_update TIMESTAMP NOT NULL DEFAULT NOW(),
-  UNIQUE (name, realm_id)
+  UNIQUE (name, realm_id),
+  UNIQUE (api_id, realm_id)
 );
 
 CREATE INDEX ON players (class_id, spec_id);
 CREATE INDEX ON players (faction_id, race_id);
 CREATE INDEX ON players (guild);
-CREATE INDEX ON players (last_update DESC);
 
 CREATE TABLE leaderboards (
   bracket CHAR(3) NOT NULL,
@@ -94,11 +90,8 @@ CREATE TABLE achievements (
   id INTEGER PRIMARY KEY,
   name VARCHAR(128),
   description VARCHAR(1024),
-  icon VARCHAR(128),
   points SMALLINT
 );
-
-CREATE INDEX ON achievements (name);
 
 CREATE TABLE players_achievements (
   player_id INTEGER NOT NULL REFERENCES players (id),
@@ -130,8 +123,7 @@ CREATE TABLE players_stats (
 
 CREATE TABLE items (
   id INTEGER PRIMARY KEY,
-  name VARCHAR(128),
-  icon VARCHAR(128)
+  name VARCHAR(128)
 );
 
  CREATE TABLE players_items (
@@ -175,16 +167,3 @@ BEGIN
   DELETE FROM players_items WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players WHERE id NOT IN (SELECT player_id FROM leaderboards);
 END; $proc$;
-
--- Changes for WoW Game Data API migration
-ALTER TABLE realms DROP COLUMN battlegroup;
-ALTER TABLE realms DROP COLUMN timezone;
-ALTER TABLE realms DROP COLUMN type;
-
-ALTER TABLE players DROP COLUMN honorable_kills;
-
-ALTER TABLE items DROP COLUMN icon;
-ALTER TABLE achievements DROP COLUMN icon;
-
-ALTER TABLE talents ALTER COLUMN id TYPE INTEGER;
-ALTER TABLE talents ALTER COLUMN id DROP DEFAULT;
