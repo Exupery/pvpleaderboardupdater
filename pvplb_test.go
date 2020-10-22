@@ -42,12 +42,13 @@ func TestParseRaces(t *testing.T) {
 }
 
 func TestParseClasses(t *testing.T) {
-	var classesJSON *[]byte = getStatic(testRegion, "data/character/classes")
+	var classesJSON *[]byte = getStatic(testRegion, "playable-class/index")
 	var classes []Class = parseClasses(classesJSON)
 
 	if classes == nil || len(classes) == 0 {
 		t.Error("Parsing classes failed")
 	}
+	t.Logf("Found and parsed %v classes", len(classes))
 }
 
 func TestParseSpecsTalents(t *testing.T) {
