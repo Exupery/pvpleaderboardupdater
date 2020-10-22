@@ -1,11 +1,8 @@
 CREATE TABLE realms (
-  id SERIAL PRIMARY KEY,
+  id INTEGER PRIMARY KEY,
   slug VARCHAR(64) NOT NULL,
   name VARCHAR(64) NOT NULL,
   region CHAR(2) NOT NULL,
-  battlegroup VARCHAR(64),
-  timezone VARCHAR(64),
-  type VARCHAR(16),
   UNIQUE (slug, region)
 );
 
