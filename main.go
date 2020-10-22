@@ -4,12 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
-	"strings"
 )
 
 var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
@@ -20,6 +17,8 @@ const warnPrefix string = "[WARN]"
 
 var uriBase string
 var apiKey string
+
+var region = "us"
 
 func main() {
 	logger.Println("Updating PvPLeaderBoard")
@@ -49,39 +48,6 @@ func getEnvVar(envVar string) string {
 	}
 
 	return value
-}
-
-func get(path string) *[]byte {
-	if apiKey == "" {
-		apiKey = getEnvVar("BATTLE_NET_API_KEY")
-	}
-	var params string = "locale=en_US&apikey=" + apiKey
-	var sep string
-	if strings.Count(path, "?") == 0 {
-		sep = "?"
-	} else {
-		sep = "&"
-	}
-
-	resp, err := http.Get(uriBase + path + sep + params)
-
-	if err != nil {
-		logger.Printf("%s GET '%s' failed: %s", errPrefix, path, err)
-		return nil
-	}
-	if resp.StatusCode != 200 {
-		logger.Printf("%s non-200 status code for '%s': %v", warnPrefix, path, resp.StatusCode)
-		return nil
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		logger.Printf("%s reading body failed: %s", errPrefix, err)
-		return nil
-	}
-
-	return &body
 }
 
 func updatePlayersAndLeaderboard(bracket string) {
@@ -143,7 +109,7 @@ func parseLeaderboard(data *[]byte) *map[string]*LeaderboardEntry {
 }
 
 func getLeaderboard(bracket string) *map[string]*LeaderboardEntry {
-	var leaderboardJSON *[]byte = get("leaderboard/" + bracket)
+	var leaderboardJSON *[]byte = getDynamic(region, "leaderboard/"+bracket)
 	var entries *map[string]*LeaderboardEntry = parseLeaderboard(leaderboardJSON)
 	logger.Printf("Parsed %v %s entries", len(*entries), bracket)
 
@@ -244,7 +210,7 @@ func getPlayerDetails(playerMap *map[string]*Player) []*Player {
 	for _, player := range *playerMap {
 		// realm may be empty if character is transferring
 		if player.RealmSlug != "" {
-			var playerJSON *[]byte = get(fmt.Sprintf(path, player.RealmSlug, player.Name))
+			var playerJSON *[]byte = getDynamic(region, fmt.Sprintf(path, player.RealmSlug, player.Name))
 			if playerJSON != nil {
 				var p *Player = parsePlayerDetails(playerJSON, classSpecMap)
 				if p != nil {
