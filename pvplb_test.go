@@ -11,6 +11,7 @@ func TestCreateToken(t *testing.T) {
 	if len(token) == 0 {
 		t.Error("Creating token failed")
 	}
+	t.Logf("Created token '%s'", token)
 }
 
 func TestGet(t *testing.T) {
@@ -27,6 +28,7 @@ func TestParseRealms(t *testing.T) {
 	if realms == nil || len(realms) == 0 {
 		t.Error("Parsing realms failed")
 	}
+	t.Logf("Found and parsed %v realms", len(realms))
 }
 
 func TestParseRaces(t *testing.T) {
