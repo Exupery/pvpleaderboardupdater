@@ -378,20 +378,6 @@ func addRaces(races *[]Race) {
 	logger.Printf("Inserted %v races", numInserted)
 }
 
-func addFactions(factions *[]Faction) {
-	const qry string = `INSERT INTO factions (id, name) SELECT $1, $2
-		WHERE NOT EXISTS (SELECT 1 FROM factions WHERE id=$3)`
-	args := make([][]interface{}, 0)
-
-	for _, faction := range *factions {
-		params := []interface{}{faction.ID, faction.Name, faction.ID}
-		args = append(args, params)
-	}
-
-	numInserted := insert(Query{SQL: qry, Args: args})
-	logger.Printf("Inserted %v faction", numInserted)
-}
-
 func addClasses(classes *[]Class) {
 	const qry string = `INSERT INTO classes (id, name) SELECT $1, $2
 		WHERE NOT EXISTS (SELECT 1 FROM classes WHERE id=$3)`

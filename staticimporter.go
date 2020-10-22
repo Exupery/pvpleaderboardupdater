@@ -8,7 +8,6 @@ import (
 func importStaticData() {
 	logger.Println("Beginning import of static data")
 	importRealms() // TODO IMPORT FOR EACH REGION
-	importFactions()
 	importRaces()
 	importAchievements()
 
@@ -67,13 +66,6 @@ func importRaces() {
 	var races []Race = parseRaces(racesJSON)
 	logger.Printf("Parsed %v races", len(races))
 	addRaces(&races)
-}
-
-func importFactions() {
-	// No faction data via API
-	factions := []Faction{Faction{0, "Alliance"}, Faction{1, "Horde"}}
-	logger.Printf("Parsed %v factions", len(factions))
-	addFactions(&factions)
 }
 
 func parseClasses(data *[]byte) []Class {

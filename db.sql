@@ -18,6 +18,9 @@ CREATE TABLE factions (
   name VARCHAR(32) NOT NULL,
   UNIQUE (name)
 );
+-- there are only two playable factions and no endpoint
+-- to either retrieve only those or filter so just insert them
+INSERT INTO factions(id, name) VALUES (67, 'Horde'), (469, 'Alliance');
 
 CREATE TABLE classes (
   id INTEGER PRIMARY KEY,
