@@ -7,9 +7,9 @@ import (
 
 func importStaticData() {
 	logger.Println("Beginning import of static data")
-	importRealms()
-	importRaces()
+	importRealms() // TODO IMPORT FOR EACH REGION
 	importFactions()
+	importRaces()
 	importAchievements()
 
 	var classes *[]Class = retrieveClasses()
@@ -24,6 +24,7 @@ func importStaticData() {
 	addSpecs(specs)
 	logger.Printf("Parsed %v talents", len(*talents))
 	addTalents(talents)
+	// TODO IMPORT PVP TALENTS
 
 	logger.Println("Static data import complete")
 }
