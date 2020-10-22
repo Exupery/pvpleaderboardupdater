@@ -9,7 +9,6 @@ CREATE TABLE realms (
 CREATE TABLE races (
   id INTEGER PRIMARY KEY,
   name VARCHAR(32) NOT NULL,
-  side VARCHAR(32) NOT NULL,
   UNIQUE (name, side)
 );
 

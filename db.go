@@ -370,7 +370,7 @@ func addRaces(races *[]Race) {
 	args := make([][]interface{}, 0)
 
 	for _, race := range *races {
-		params := []interface{}{race.ID, race.Name, race.Side, race.ID}
+		params := []interface{}{race.ID, race.Name, race.ID}
 		args = append(args, params)
 	}
 

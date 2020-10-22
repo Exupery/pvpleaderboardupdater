@@ -19,7 +19,6 @@ type Realm struct {
 type Race struct {
 	ID   int
 	Name string
-	Side string
 }
 
 // Faction : player faction

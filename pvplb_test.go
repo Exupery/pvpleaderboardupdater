@@ -32,12 +32,13 @@ func TestParseRealms(t *testing.T) {
 }
 
 func TestParseRaces(t *testing.T) {
-	var racesJSON *[]byte = getStatic(testRegion, "data/character/races")
+	var racesJSON *[]byte = getStatic(testRegion, "playable-race/index")
 	var races []Race = parseRaces(racesJSON)
 
 	if races == nil || len(races) == 0 {
 		t.Error("Parsing races failed")
 	}
+	t.Logf("Found and parsed %v races", len(races))
 }
 
 func TestParseClasses(t *testing.T) {
