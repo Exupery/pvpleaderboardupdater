@@ -3,28 +3,19 @@ package pvpleaderboardupdater
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 func importStaticData() {
 	logger.Println("Beginning import of static data")
 	importRealms() // TODO IMPORT FOR EACH REGION
 	importRaces()
-	importAchievements()
 
 	var classes *[]Class = retrieveClasses()
 	logger.Printf("Parsed %v classes", len(*classes))
 	addClasses(classes)
 
-	// specs and talents share an endpoint and are grouped by class
-	var specs *[]Spec
-	var talents *[]Talent
-	specs, talents = retrieveSpecsTalents(classes)
-	logger.Printf("Parsed %v specs", len(*specs))
-	addSpecs(specs)
-	logger.Printf("Parsed %v talents", len(*talents))
-	addTalents(talents)
-	// TODO IMPORT PVP TALENTS
+	// TODO SPECS AND TALENTS
+	importAchievements()
 
 	logger.Println("Static data import complete")
 }
@@ -112,21 +103,13 @@ func getFullSpecInfo(specIDs []int) []Spec {
 	type RoleJSON struct {
 		Role string `json:"type"`
 	}
-	type TalentJSON struct {
-		ID int `json:"column_index"` // TODO
-	}
-	type TalentTierJSON struct {
-		Talents   []TalentJSON
-		TierIndex int
-	}
-	// TODO PVP TALENTS
 	type SpecJSON struct {
 		ID            int
 		PlayableClass Class `json:"playable_class"`
 		Name          string
 		Media         Media
 		Role          RoleJSON
-		TalentTiers   []TalentTierJSON
+		TalentTiers   []TalentTierJSON `json:"talent_tiers"`
 	}
 
 	var specs []Spec = make([]Spec, 0)
@@ -136,129 +119,47 @@ func getFullSpecInfo(specIDs []int) []Spec {
 		var specJSON *[]byte = getStatic(region, path)
 		var s SpecJSON
 		json.Unmarshal(*specJSON, &s)
+		// TODO PVP TALENTS
 		spec := Spec{
 			s.ID,
 			s.PlayableClass.ID,
 			s.Name,
 			s.Role.Role,
-			icon}
+			icon,
+			getFullSpecTalents(s.TalentTiers)}
 		specs = append(specs, spec)
 	}
 	return specs
 }
 
-func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
-	var specs []Spec = make([]Spec, 0)
+func getFullSpecTalents(talentTiers []TalentTierJSON) []Talent {
 	var talents []Talent = make([]Talent, 0)
-
-	type Spell struct {
-		ID          int
-		Name        string
-		Icon        string
-		Description string
-	}
 	type TalentJSON struct {
-		Tier   int
-		Column int
-		Spell  Spell
+		ID            int
+		Spell         KeyedValue
+		PlayableClass Class `json:"playable_class"`
 	}
-	type ClassData struct {
-		Class   string
-		Talents [][][]TalentJSON
-		Specs   []Spec
-	}
-
-	var m map[string]ClassData
-	var data *[]byte = getStatic(region, "data/talents")
-	err := json.Unmarshal(*data, &m)
-	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return &specs, &talents
-	}
-
-	var classIds map[string]int = classSlugToIDMap(classes)
-	var specIds map[string]int = specSlugToIDMap()
-
-	for _, v := range m {
-		var classID int = classIds[v.Class]
-		for _, spec := range v.Specs {
-			var specID int = specIds[v.Class+spec.Name]
-			if specID == 0 {
-				logger.Printf("%s ID not found for spec %s", errPrefix, v.Class+spec.Name)
-			}
-			spec.ClassID = classID
-			spec.ID = specID
-			specs = append(specs, spec)
-		}
-		for _, t := range v.Talents {
-			for _, t1 := range t {
-				for _, t2 := range t1 {
-					var talent Talent = Talent{
-						t2.Spell.ID,
-						classID,
-						t2.Spell.Name,
-						t2.Spell.Icon,
-						t2.Tier,
-						t2.Column}
-					talents = append(talents, talent)
-				}
-			}
+	for _, t := range talentTiers {
+		tier := t.TierIndex
+		for _, talentEntry := range t.Talents {
+			col := talentEntry.ColumnIndex
+			id := talentEntry.Talent.ID
+			var talentJSON *[]byte = getStatic(region, fmt.Sprintf("talent/%d", id))
+			var talentDetails TalentJSON
+			json.Unmarshal(*talentJSON, &talentDetails)
+			icon := getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
+			talent := Talent{
+				id,
+				talentDetails.PlayableClass.ID,
+				talentDetails.Spell.ID,
+				talentDetails.Spell.Name,
+				icon,
+				tier,
+				col}
+			talents = append(talents, talent)
 		}
 	}
-
-	return &specs, &talents
-}
-
-func classSlugToIDMap(classes *[]Class) map[string]int {
-	var m map[string]int = make(map[string]int)
-	for _, c := range *classes {
-		var slug string = strings.ToLower(c.Name)
-		slug = strings.Replace(slug, " ", "-", -1)
-		m[slug] = c.ID
-	}
-
-	return m
-}
-
-func specSlugToIDMap() map[string]int {
-	// Spec name=>ID mapping not available via API
-	return map[string]int{
-		"mageArcane":            62,
-		"mageFire":              63,
-		"mageFrost":             64,
-		"paladinHoly":           65,
-		"paladinProtection":     66,
-		"paladinRetribution":    70,
-		"warriorArms":           71,
-		"warriorFury":           72,
-		"warriorProtection":     73,
-		"druidBalance":          102,
-		"druidFeral":            103,
-		"druidGuardian":         104,
-		"druidRestoration":      105,
-		"death-knightBlood":     250,
-		"death-knightFrost":     251,
-		"death-knightUnholy":    252,
-		"hunterBeast Mastery":   253,
-		"hunterMarksmanship":    254,
-		"hunterSurvival":        255,
-		"priestDiscipline":      256,
-		"priestHoly":            257,
-		"priestShadow":          258,
-		"rogueAssassination":    259,
-		"rogueOutlaw":           260,
-		"rogueSubtlety":         261,
-		"shamanElemental":       262,
-		"shamanEnhancement":     263,
-		"shamanRestoration":     264,
-		"warlockAffliction":     265,
-		"warlockDemonology":     266,
-		"warlockDestruction":    267,
-		"monkBrewmaster":        268,
-		"monkWindwalker":        269,
-		"monkMistweaver":        270,
-		"demon-hunterHavoc":     577,
-		"demon-hunterVengeance": 581}
+	return talents
 }
 
 func parseAchievements(data *[]byte) []Achievement {

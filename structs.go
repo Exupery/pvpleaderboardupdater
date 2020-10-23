@@ -42,12 +42,14 @@ type Spec struct {
 	Name    string
 	Role    string
 	Icon    string
+	Talents []Talent
 }
 
 // Talent : talent info
 type Talent struct {
 	ID      int
 	ClassID int
+	SpellID int
 	Name    string
 	Icon    string
 	Tier    int

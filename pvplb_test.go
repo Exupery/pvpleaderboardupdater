@@ -51,7 +51,7 @@ func TestParseClasses(t *testing.T) {
 	t.Logf("Found and parsed %v classes", len(classes))
 }
 
-func TestParseSpecs(t *testing.T) {
+func TestParseSpecsTalents(t *testing.T) {
 	var specsJSON *[]byte = getStatic(testRegion, "playable-specialization/index")
 	var specs []Spec = parseSpecs(specsJSON)
 
@@ -61,35 +61,11 @@ func TestParseSpecs(t *testing.T) {
 	t.Logf("Found and parsed %v specs", len(specs))
 
 	for _, spec := range specs {
-		t.Logf("%v", spec) // TODO DELME
-	}
-}
-
-func TestParseSpecsTalents(t *testing.T) {
-	var specs *[]Spec
-	var talents *[]Talent
-	var classes *[]Class = retrieveClasses()
-	specs, talents = retrieveSpecsTalents(classes)
-
-	if specs == nil || len(*specs) == 0 {
-		t.Error("Parsing specs failed")
-	}
-	if talents == nil || len(*talents) == 0 {
-		t.Error("Parsing talents failed")
-	}
-}
-
-func TestClassSlugToIdMap(t *testing.T) {
-	const msg = "Creating Class Slug=>Id map failed"
-	var classes *[]Class = retrieveClasses()
-
-	if classes == nil || len(*classes) == 0 {
-		t.Error(msg)
-	}
-
-	var slugIDMap map[string]int = classSlugToIDMap(classes)
-	if slugIDMap == nil || len(slugIDMap) != len(*classes) {
-		t.Error(msg)
+		talents := spec.Talents
+		if talents == nil || len(talents) == 0 {
+			t.Error("Parsing talents failed")
+		}
+		t.Logf("Found and parsed %v talents for %s", len(talents), spec.Name)
 	}
 }
 

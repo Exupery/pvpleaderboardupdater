@@ -136,8 +136,31 @@ type Key struct {
 	Href string
 }
 
+type KeyedValue struct {
+	Key  Key
+	Name string
+	ID   int
+}
+
 // Media : API media link and ID
 type Media struct {
 	Key Key
 	ID  int
+}
+
+// TalentJSON : talent ID JSON
+type TalentJSON struct {
+	ID int
+}
+
+// TalentEntryJSON : talent JSON
+type TalentEntryJSON struct {
+	Talent      TalentJSON
+	ColumnIndex int `json:"column_index"`
+}
+
+// TalentTierJSON : talent tier JSON
+type TalentTierJSON struct {
+	Talents   []TalentEntryJSON
+	TierIndex int `json:"tier_index"`
 }
