@@ -41,6 +41,32 @@ func getMedia(region, path string) *[]byte {
 	return get(region, namespace, mediaPath)
 }
 
+func getIcon(region, path string) string {
+	type AssetJSON struct {
+		Key   string
+		Value string
+	}
+	type IconJSON struct {
+		Assets []AssetJSON
+	}
+	var data *[]byte = getMedia(region, path)
+	var iconJSON IconJSON
+	err := json.Unmarshal(*data, &iconJSON)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return ""
+	}
+	for _, asset := range iconJSON.Assets {
+		if asset.Key == "icon" {
+			href := asset.Value
+			start := strings.LastIndex(href, "/") + 1
+			end := strings.LastIndex(href, ".")
+			return href[start:end]
+		}
+	}
+	return ""
+}
+
 func get(region, namespace, path string) *[]byte {
 	var params string = fmt.Sprintf(requiredParams, token, strings.ToLower(namespace))
 	var url string = fmt.Sprintf(baseURI, strings.ToLower(region), path, params)
@@ -103,4 +129,15 @@ type AccessTokenResponse struct {
 	Token   string `json:"access_token"`
 	Type    string `json:"token_type"`
 	Expires int    `json:"expires_in"`
+}
+
+// Key : API key containing an HREF
+type Key struct {
+	Href string
+}
+
+// Media : API media link and ID
+type Media struct {
+	Key Key
+	ID  int
 }

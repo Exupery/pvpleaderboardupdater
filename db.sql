@@ -32,8 +32,6 @@ CREATE TABLE specs (
   class_id INTEGER NOT NULL REFERENCES classes (id),
   name VARCHAR(32) NOT NULL,
   role VARCHAR(32),
-  description VARCHAR(1024),
-  background_image VARCHAR(128),
   icon VARCHAR(128),
   UNIQUE (class_id, name)
 );
@@ -44,7 +42,6 @@ CREATE TABLE talents (
   class_id INTEGER NOT NULL REFERENCES classes (id),
   spec_id INTEGER DEFAULT 0,
   name VARCHAR(128) NOT NULL,
-  description VARCHAR(1024),
   icon VARCHAR(128),
   tier SMALLINT,
   col SMALLINT

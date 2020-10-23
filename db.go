@@ -399,8 +399,7 @@ func addSpecs(specs *[]Spec) {
 	args := make([][]interface{}, 0)
 
 	for _, spec := range *specs {
-		params := []interface{}{spec.ID, spec.ClassID, spec.Name, spec.Role, spec.Description,
-			spec.BackgroundImage, spec.Icon, spec.ClassID, spec.Name}
+		params := []interface{}{spec.ID, spec.ClassID, spec.Name, spec.Role, spec.Icon, spec.ClassID, spec.Name}
 		args = append(args, params)
 	}
 
@@ -415,7 +414,7 @@ func addTalents(talents *[]Talent) {
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
-		params := []interface{}{talent.ID, talent.ClassID, talent.Name, talent.Description,
+		params := []interface{}{talent.ID, talent.ClassID, talent.Name,
 			talent.Icon, talent.Tier, talent.Column, talent.ID}
 		args = append(args, params)
 	}

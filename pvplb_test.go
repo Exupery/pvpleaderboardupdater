@@ -51,6 +51,20 @@ func TestParseClasses(t *testing.T) {
 	t.Logf("Found and parsed %v classes", len(classes))
 }
 
+func TestParseSpecs(t *testing.T) {
+	var specsJSON *[]byte = getStatic(testRegion, "playable-specialization/index")
+	var specs []Spec = parseSpecs(specsJSON)
+
+	if specs == nil || len(specs) == 0 {
+		t.Error("Parsing specs failed")
+	}
+	t.Logf("Found and parsed %v specs", len(specs))
+
+	for _, spec := range specs {
+		t.Logf("%v", spec) // TODO DELME
+	}
+}
+
 func TestParseSpecsTalents(t *testing.T) {
 	var specs *[]Spec
 	var talents *[]Talent

@@ -2,6 +2,7 @@ package pvpleaderboardupdater
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -87,6 +88,65 @@ func retrieveClasses() *[]Class {
 	return &classes
 }
 
+func parseSpecs(data *[]byte) []Spec {
+	type CharacterSpecializationJSON struct {
+		ID int
+	}
+	type SpecsJSON struct {
+		CharacterSpecializations []CharacterSpecializationJSON `json:"character_specializations"`
+	}
+	var specsJSON SpecsJSON
+	err := json.Unmarshal(*data, &specsJSON)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return make([]Spec, 0)
+	}
+	var specIDs []int = make([]int, 0)
+	for _, cs := range specsJSON.CharacterSpecializations {
+		specIDs = append(specIDs, cs.ID)
+	}
+	return getFullSpecInfo(specIDs)
+}
+
+func getFullSpecInfo(specIDs []int) []Spec {
+	type RoleJSON struct {
+		Role string `json:"type"`
+	}
+	type TalentJSON struct {
+		ID int `json:"column_index"` // TODO
+	}
+	type TalentTierJSON struct {
+		Talents   []TalentJSON
+		TierIndex int
+	}
+	// TODO PVP TALENTS
+	type SpecJSON struct {
+		ID            int
+		PlayableClass Class `json:"playable_class"`
+		Name          string
+		Media         Media
+		Role          RoleJSON
+		TalentTiers   []TalentTierJSON
+	}
+
+	var specs []Spec = make([]Spec, 0)
+	for _, i := range specIDs {
+		var path string = fmt.Sprintf("playable-specialization/%d", i)
+		var icon = getIcon(region, path)
+		var specJSON *[]byte = getStatic(region, path)
+		var s SpecJSON
+		json.Unmarshal(*specJSON, &s)
+		spec := Spec{
+			s.ID,
+			s.PlayableClass.ID,
+			s.Name,
+			s.Role.Role,
+			icon}
+		specs = append(specs, spec)
+	}
+	return specs
+}
+
 func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 	var specs []Spec = make([]Spec, 0)
 	var talents []Talent = make([]Talent, 0)
@@ -137,7 +197,6 @@ func retrieveSpecsTalents(classes *[]Class) (*[]Spec, *[]Talent) {
 						t2.Spell.ID,
 						classID,
 						t2.Spell.Name,
-						t2.Spell.Description,
 						t2.Spell.Icon,
 						t2.Tier,
 						t2.Column}

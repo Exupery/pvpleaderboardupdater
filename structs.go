@@ -1,5 +1,7 @@
 package pvpleaderboardupdater
 
+/* Structs used across multiple layers */
+
 // Query : SQL query with optional args
 type Query struct {
 	SQL        string
@@ -35,24 +37,21 @@ type Class struct {
 
 // Spec : class specialization
 type Spec struct {
-	ID              int
-	ClassID         int
-	Name            string
-	Role            string
-	Description     string
-	BackgroundImage string
-	Icon            string
+	ID      int
+	ClassID int
+	Name    string
+	Role    string
+	Icon    string
 }
 
 // Talent : talent info
 type Talent struct {
-	ID          int
-	ClassID     int
-	Name        string
-	Description string
-	Icon        string
-	Tier        int
-	Column      int
+	ID      int
+	ClassID int
+	Name    string
+	Icon    string
+	Tier    int
+	Column  int
 }
 
 // Achievement : completed achievement info
