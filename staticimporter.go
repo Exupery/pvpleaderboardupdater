@@ -100,6 +100,18 @@ func parseSpecs(data *[]byte) []Spec {
 }
 
 func getFullSpecInfo(specIDs []int) []Spec {
+	var specs []Spec = make([]Spec, 0)
+	var ch chan Spec = make(chan Spec, len(specIDs))
+	for _, i := range specIDs {
+		go getSpec(ch, i)
+	}
+	for range specIDs {
+		specs = append(specs, <-ch)
+	}
+	return specs
+}
+
+func getSpec(ch chan Spec, specID int) {
 	type RoleJSON struct {
 		Role string `json:"type"`
 	}
@@ -111,25 +123,19 @@ func getFullSpecInfo(specIDs []int) []Spec {
 		Role          RoleJSON
 		TalentTiers   []TalentTierJSON `json:"talent_tiers"`
 	}
-
-	var specs []Spec = make([]Spec, 0)
-	for _, i := range specIDs {
-		var path string = fmt.Sprintf("playable-specialization/%d", i)
-		var icon = getIcon(region, path)
-		var specJSON *[]byte = getStatic(region, path)
-		var s SpecJSON
-		json.Unmarshal(*specJSON, &s)
-		// TODO PVP TALENTS
-		spec := Spec{
-			s.ID,
-			s.PlayableClass.ID,
-			s.Name,
-			s.Role.Role,
-			icon,
-			getFullSpecTalents(s.TalentTiers)}
-		specs = append(specs, spec)
-	}
-	return specs
+	var path string = fmt.Sprintf("playable-specialization/%d", specID)
+	var icon = getIcon(region, path)
+	var specJSON *[]byte = getStatic(region, path)
+	var s SpecJSON
+	json.Unmarshal(*specJSON, &s)
+	// TODO PVP TALENTS
+	ch <- Spec{
+		s.ID,
+		s.PlayableClass.ID,
+		s.Name,
+		s.Role.Role,
+		icon,
+		getFullSpecTalents(s.TalentTiers)}
 }
 
 func getFullSpecTalents(talentTiers []TalentTierJSON) []Talent {
