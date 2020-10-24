@@ -9,12 +9,9 @@ func importStaticData() {
 	logger.Println("Beginning import of static data")
 	importRealms() // TODO IMPORT FOR EACH REGION
 	importRaces()
-
-	var classes *[]Class = retrieveClasses()
-	logger.Printf("Parsed %v classes", len(*classes))
-	addClasses(classes)
-
-	// TODO SPECS AND TALENTS
+	importClasses()
+	importSpecsAndTalents()
+	importPvPTalents()
 	importAchievements()
 
 	logger.Println("Static data import complete")
@@ -73,10 +70,17 @@ func parseClasses(data *[]byte) []Class {
 	return classes.Classes
 }
 
-func retrieveClasses() *[]Class {
-	var classesJSON *[]byte = getStatic(region, "data/character/classes")
+func importClasses() {
+	var classesJSON *[]byte = getStatic(region, "playable-class/index")
 	var classes []Class = parseClasses(classesJSON)
-	return &classes
+	logger.Printf("Parsed %v classes", len(classes))
+	addClasses(&classes)
+}
+
+func importSpecsAndTalents() *[]Spec {
+	var specsJSON *[]byte = getStatic(region, "playable-specialization/index")
+	var specs []Spec = parseSpecs(specsJSON)
+	return &specs // TODO CALL ADDERS INSTEAD OF RETURNING
 }
 
 func parseSpecs(data *[]byte) []Spec {
