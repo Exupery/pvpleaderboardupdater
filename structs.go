@@ -69,9 +69,7 @@ type PvPTalent struct {
 type Achievement struct {
 	ID          int
 	Title       string
-	Points      int
 	Description string
-	Icon        string
 }
 
 // Stats : player stat info

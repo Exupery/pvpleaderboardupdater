@@ -430,8 +430,7 @@ func addAchievements(achievements *[]Achievement) {
 	args := make([][]interface{}, 0)
 
 	for _, achiev := range *achievements {
-		params := []interface{}{achiev.ID, achiev.Title, achiev.Description, achiev.Icon,
-			achiev.Points, achiev.ID}
+		params := []interface{}{achiev.ID, achiev.Title, achiev.Description, achiev.ID}
 		args = append(args, params)
 	}
 

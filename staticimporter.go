@@ -3,7 +3,16 @@ package pvpleaderboardupdater
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
+
+const pvpFeatsOfStrengthCategory int = 15270
+
+var achievementIDs = []int{
+	// Arena achievements
+	401, 405, 404, 1159, 1160, 1161, 5266, 5267, 876, 2090, 2093, 2092, 2091,
+	// RBG achievements
+	5329, 5326, 5339, 5353, 5341, 5355, 5343, 5356, 6942, 6941}
 
 func importStaticData() {
 	logger.Println("Beginning import of static data")
@@ -217,39 +226,55 @@ func getPvPTalent(ch chan PvPTalent, id int) {
 }
 
 func parseAchievements(data *[]byte) []Achievement {
-	var pvpAchievements []Achievement = make([]Achievement, 0)
-	type AchievementCategory struct {
+	type Achievements struct {
 		ID           int
 		Name         string
-		Achievements []Achievement
-		Categories   []AchievementCategory
-	}
-	type Achievements struct {
-		Achievements []AchievementCategory
+		Achievements []KeyedValue
 	}
 
 	var achievements Achievements
 	err := json.Unmarshal(*data, &achievements)
+	var pvpAchievements []Achievement = make([]Achievement, 0)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return pvpAchievements
 	}
 
+	var achievementIDs []int = make([]int, 0)
 	for _, ac := range achievements.Achievements {
-		if ac.Name == "Player vs. Player" {
-			for _, acc := range ac.Categories {
-				if acc.Name == "Rated Battleground" || acc.Name == "Arena" {
-					pvpAchievements = append(pvpAchievements, acc.Achievements...)
-				}
-			}
+		if strings.Contains(ac.Name, "Season") {
+			achievementIDs = append(achievementIDs, ac.ID)
 		}
+	}
+	var ch chan Achievement = make(chan Achievement, len(achievementIDs))
+	for _, id := range achievementIDs {
+		go getPvPAchievement(ch, id)
+	}
+	for range achievementIDs {
+		pvpAchievements = append(pvpAchievements, <-ch)
 	}
 
 	return pvpAchievements
 }
 
+func getPvPAchievement(ch chan Achievement, id int) {
+	type PvPAchievementJSON struct {
+		ID          int
+		Name        string
+		Description string
+	}
+	var pvpAchievementJSON *[]byte = getStatic(region, fmt.Sprintf("achievement/%d", id))
+	var pvpAchievementJSONDetails PvPAchievementJSON
+	json.Unmarshal(*pvpAchievementJSON, &pvpAchievementJSONDetails)
+	ch <- Achievement{
+		id,
+		pvpAchievementJSONDetails.Name,
+		pvpAchievementJSONDetails.Description}
+}
+
 func importAchievements() {
-	var achievementsJSON *[]byte = getStatic(region, "data/character/achievements")
+	// TODO GET ALL MATCHING achievementIDs
+	var achievementsJSON *[]byte = getStatic(region, fmt.Sprintf("achievement-category/%d", pvpFeatsOfStrengthCategory))
 	var achievements []Achievement = parseAchievements(achievementsJSON)
 	logger.Printf("Parsed %v achievements", len(achievements))
 	addAchievements(&achievements)

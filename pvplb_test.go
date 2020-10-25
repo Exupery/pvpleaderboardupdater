@@ -80,12 +80,13 @@ func TestParsePvPTalents(t *testing.T) {
 }
 
 func TestParseAchievements(t *testing.T) {
-	var achievementsJSON *[]byte = getStatic(testRegion, "data/character/achievements")
+	var achievementsJSON *[]byte = getStatic(testRegion, "achievement-category/15270")
 	var achievements []Achievement = parseAchievements(achievementsJSON)
 
 	if achievements == nil || len(achievements) == 0 {
 		t.Error("Parsing achievements failed")
 	}
+	t.Logf("Found and parsed %v PvP achievements", len(achievements))
 }
 
 func TestParsePlayerDetails(t *testing.T) {
