@@ -1,4 +1,4 @@
-package pvpleaderboardupdater
+package main
 
 import (
 	"testing"

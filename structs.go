@@ -1,4 +1,4 @@
-package pvpleaderboardupdater
+package main
 
 /* Structs used across multiple layers */
 

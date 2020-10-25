@@ -1,4 +1,4 @@
-package pvpleaderboardupdater
+package main
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
@@ -21,6 +22,7 @@ var apiKey string
 var region = "us"
 
 func main() {
+	start := time.Now()
 	logger.Println("Updating PvPLeaderBoard")
 	flag.StringVar(&uriBase, "base", "https://us.api.battle.net/wow/", "WoW API base URI")
 	var importStatic *bool = flag.Bool("static", false, "Import static data (e.g. races, classes, realms, etc)")
@@ -38,7 +40,8 @@ func main() {
 		setUpdateTime()
 	}
 
-	logger.Println("Updating PvPLeaderBoard Complete")
+	end := time.Now()
+	logger.Printf("Updating PvPLeaderBoard Complete after %v", end.Sub(start))
 }
 
 func getEnvVar(envVar string) string {
