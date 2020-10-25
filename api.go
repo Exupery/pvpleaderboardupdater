@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const baseURI string = "https://%s.api.blizzard.com/%s%s"
 const oauthURI string = "https://us.battle.net/oauth/token"
 const requiredParams string = "?locale=en_US&access_token=%s&namespace=%s"
+const rateLimitRetryWaitSeconds int = 2
 
 var clienID string = getEnvVar("BATTLE_NET_CLIENT_ID")
 var secret string = getEnvVar("BATTLE_NET_SECRET")
@@ -75,6 +77,11 @@ func get(region, namespace, path string) *[]byte {
 		logger.Printf("%s GET '%s' failed: %s", errPrefix, path, err)
 		return nil
 	}
+	if resp.StatusCode == 429 {
+		logger.Printf("Received 429 - retrying after %d seconds", rateLimitRetryWaitSeconds)
+		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
+		return get(region, namespace, path)
+	}
 	if resp.StatusCode != 200 {
 		logger.Printf("%s non-200 status code for '%s': %v", warnPrefix, path, resp.StatusCode)
 		return nil
@@ -136,6 +143,7 @@ type Key struct {
 	Href string
 }
 
+// KeyedValue : API element containing a name, ID, and Key
 type KeyedValue struct {
 	Key  Key
 	Name string
