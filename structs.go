@@ -56,6 +56,15 @@ type Talent struct {
 	Column  int
 }
 
+// PvPTalent : PvP talent info
+type PvPTalent struct {
+	ID      int
+	Name    string
+	SpellID int
+	SpecID  int
+	Icon    string
+}
+
 // Achievement : completed achievement info
 type Achievement struct {
 	ID          int

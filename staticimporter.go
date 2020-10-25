@@ -172,6 +172,50 @@ func getFullSpecTalents(talentTiers []TalentTierJSON) []Talent {
 	return talents
 }
 
+func importPvPTalents() *[]PvPTalent {
+	var talentsJSON *[]byte = getStatic(region, "pvp-talent/index")
+	var pvpTalents []PvPTalent = parsePvPTalents(talentsJSON)
+	return &pvpTalents // TODO CALL ADDER INSTEAD OF RETURNING
+}
+
+func parsePvPTalents(data *[]byte) []PvPTalent {
+	type PvPTalentsJSON struct {
+		PvPTalents []KeyedValue `json:"pvp_talents"`
+	}
+	var pvpTalentsJSON PvPTalentsJSON
+	err := json.Unmarshal(*data, &pvpTalentsJSON)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return make([]PvPTalent, 0)
+	}
+	var pvpTalents []PvPTalent = make([]PvPTalent, 0)
+	var ch chan PvPTalent = make(chan PvPTalent, len(pvpTalentsJSON.PvPTalents))
+	for _, keyedValue := range pvpTalentsJSON.PvPTalents {
+		go getPvPTalent(ch, keyedValue.ID)
+	}
+	for range pvpTalentsJSON.PvPTalents {
+		pvpTalents = append(pvpTalents, <-ch)
+	}
+	return pvpTalents
+}
+
+func getPvPTalent(ch chan PvPTalent, id int) {
+	type PvPTalentJSON struct {
+		Spell                  KeyedValue
+		PlayableSpecialization KeyedValue `json:"playable_specialization"`
+	}
+	var pvpTalentJSON *[]byte = getStatic(region, fmt.Sprintf("pvp-talent/%d", id))
+	var talentDetails PvPTalentJSON
+	json.Unmarshal(*pvpTalentJSON, &talentDetails)
+	icon := getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
+	ch <- PvPTalent{
+		id,
+		talentDetails.Spell.Name,
+		talentDetails.Spell.ID,
+		talentDetails.PlayableSpecialization.ID,
+		icon}
+}
+
 func parseAchievements(data *[]byte) []Achievement {
 	var pvpAchievements []Achievement = make([]Achievement, 0)
 	type AchievementCategory struct {

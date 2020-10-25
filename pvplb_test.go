@@ -69,6 +69,16 @@ func TestParseSpecsTalents(t *testing.T) {
 	}
 }
 
+func TestParsePvPTalents(t *testing.T) {
+	var talentsJSON *[]byte = getStatic(region, "pvp-talent/index")
+	var pvpTalents []PvPTalent = parsePvPTalents(talentsJSON)
+
+	if pvpTalents == nil || len(pvpTalents) == 0 {
+		t.Error("Parsing PvP Talents failed")
+	}
+	t.Logf("Found and parsed %v PvP Talents", len(pvpTalents))
+}
+
 func TestParseAchievements(t *testing.T) {
 	var achievementsJSON *[]byte = getStatic(testRegion, "data/character/achievements")
 	var achievements []Achievement = parseAchievements(achievementsJSON)
