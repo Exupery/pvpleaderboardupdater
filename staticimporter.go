@@ -16,7 +16,7 @@ var achievementIDs = []int{
 
 func importStaticData() {
 	logger.Println("Beginning import of static data")
-	importRealms() // TODO IMPORT FOR EACH REGION
+	importRealms(region) // TODO IMPORT FOR EACH REGION
 	importRaces()
 	importClasses()
 	importSpecsAndTalents()
@@ -39,11 +39,11 @@ func parseRealms(data *[]byte) []Realm {
 	return realms.Realms
 }
 
-func importRealms() {
+func importRealms(region string) {
 	var realmJSON *[]byte = getDynamic(region, "realm/index")
 	var realms []Realm = parseRealms(realmJSON)
-	logger.Printf("Parsed %v %s realms", len(realms), region)
-	addRealms(&realms)
+	logger.Printf("Found %d %s realms", len(realms), region)
+	addRealms(&realms, region)
 }
 
 func parseRaces(data *[]byte) []Race {
@@ -60,9 +60,9 @@ func parseRaces(data *[]byte) []Race {
 }
 
 func importRaces() {
-	var racesJSON *[]byte = getStatic(region, "data/character/races")
+	var racesJSON *[]byte = getStatic(region, "playable-race/index")
 	var races []Race = parseRaces(racesJSON)
-	logger.Printf("Parsed %v races", len(races))
+	logger.Printf("Found %d races", len(races))
 	addRaces(&races)
 }
 
@@ -82,14 +82,20 @@ func parseClasses(data *[]byte) []Class {
 func importClasses() {
 	var classesJSON *[]byte = getStatic(region, "playable-class/index")
 	var classes []Class = parseClasses(classesJSON)
-	logger.Printf("Parsed %v classes", len(classes))
+	logger.Printf("Found %d classes", len(classes))
 	addClasses(&classes)
 }
 
-func importSpecsAndTalents() *[]Spec {
+func importSpecsAndTalents() {
 	var specsJSON *[]byte = getStatic(region, "playable-specialization/index")
 	var specs []Spec = parseSpecs(specsJSON)
-	return &specs // TODO CALL ADDERS INSTEAD OF RETURNING
+	logger.Printf("Found %d specializations", len(specs))
+	addSpecs(&specs)
+	var talents []Talent = make([]Talent, 0)
+	for _, spec := range specs {
+		talents = append(talents, spec.Talents...)
+	}
+	addTalents(&talents)
 }
 
 func parseSpecs(data *[]byte) []Spec {
@@ -141,17 +147,16 @@ func getSpec(ch chan Spec, specID int) {
 	var specJSON *[]byte = getStatic(region, path)
 	var s SpecJSON
 	json.Unmarshal(*specJSON, &s)
-	// TODO PVP TALENTS
 	ch <- Spec{
 		s.ID,
 		s.PlayableClass.ID,
 		s.Name,
 		s.Role.Role,
 		icon,
-		getFullSpecTalents(s.TalentTiers)}
+		getFullSpecTalents(specID, s.TalentTiers)}
 }
 
-func getFullSpecTalents(talentTiers []TalentTierJSON) []Talent {
+func getFullSpecTalents(specID int, talentTiers []TalentTierJSON) []Talent {
 	var talents []Talent = make([]Talent, 0)
 	type TalentJSON struct {
 		ID            int
@@ -169,8 +174,9 @@ func getFullSpecTalents(talentTiers []TalentTierJSON) []Talent {
 			icon := getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
 			talent := Talent{
 				id,
-				talentDetails.PlayableClass.ID,
 				talentDetails.Spell.ID,
+				talentDetails.PlayableClass.ID,
+				specID,
 				talentDetails.Spell.Name,
 				icon,
 				tier,
@@ -181,10 +187,11 @@ func getFullSpecTalents(talentTiers []TalentTierJSON) []Talent {
 	return talents
 }
 
-func importPvPTalents() *[]PvPTalent {
+func importPvPTalents() {
 	var talentsJSON *[]byte = getStatic(region, "pvp-talent/index")
 	var pvpTalents []PvPTalent = parsePvPTalents(talentsJSON)
-	return &pvpTalents // TODO CALL ADDER INSTEAD OF RETURNING
+	logger.Printf("Found %d PvP Talents", len(pvpTalents))
+	addPvPTalents(&pvpTalents)
 }
 
 func parsePvPTalents(data *[]byte) []PvPTalent {
@@ -258,6 +265,10 @@ func parseAchievements(data *[]byte) []Achievement {
 }
 
 func getPvPAchievement(ch chan Achievement, id int) {
+	ch <- getAchievement(id)
+}
+
+func getAchievement(id int) Achievement {
 	type PvPAchievementJSON struct {
 		ID          int
 		Name        string
@@ -266,16 +277,21 @@ func getPvPAchievement(ch chan Achievement, id int) {
 	var pvpAchievementJSON *[]byte = getStatic(region, fmt.Sprintf("achievement/%d", id))
 	var pvpAchievementJSONDetails PvPAchievementJSON
 	json.Unmarshal(*pvpAchievementJSON, &pvpAchievementJSONDetails)
-	ch <- Achievement{
+	return Achievement{
 		id,
 		pvpAchievementJSONDetails.Name,
 		pvpAchievementJSONDetails.Description}
 }
 
 func importAchievements() {
-	// TODO GET ALL MATCHING achievementIDs
 	var achievementsJSON *[]byte = getStatic(region, fmt.Sprintf("achievement-category/%d", pvpFeatsOfStrengthCategory))
 	var achievements []Achievement = parseAchievements(achievementsJSON)
-	logger.Printf("Parsed %v achievements", len(achievements))
+	var seasonalCount int = len(achievements)
+	logger.Printf("Found %d seasonal achievements", seasonalCount)
+	for _, id := range achievementIDs {
+		achievement := getAchievement(id)
+		achievements = append(achievements, achievement)
+	}
+	logger.Printf("Found %d non-seasonal achievements", len(achievements)-seasonalCount)
 	addAchievements(&achievements)
 }

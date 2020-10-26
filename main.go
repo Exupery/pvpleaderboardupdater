@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -19,27 +18,19 @@ const warnPrefix string = "[WARN]"
 var uriBase string
 var apiKey string
 
-var region = "us"
+var region = "US"
 
 func main() {
 	start := time.Now()
-	logger.Println("Updating PvPLeaderBoard")
-	flag.StringVar(&uriBase, "base", "https://us.api.battle.net/wow/", "WoW API base URI")
-	var importStatic *bool = flag.Bool("static", false, "Import static data (e.g. races, classes, realms, etc)")
-	flag.Parse()
-	logger.Printf("WoW API URIs using '%s'", uriBase)
-
-	if *importStatic {
-		importStaticData()
-	} else {
-		brackets := [4]string{"2v2", "3v3", "rbg"}
-		for _, bracket := range brackets {
-			updatePlayersAndLeaderboard(bracket)
-		}
-
-		setUpdateTime()
-	}
-
+	logger.Println("Updating PvPLeaderBoard DB")
+	importStaticData()
+	// TODO HANDLE REGIONS
+	// brackets := []string{"2v2", "3v3", "rbg"}
+	// for _, bracket := range brackets {
+	// 	updatePlayersAndLeaderboard(bracket)
+	// }
+	// TODO PURGE STALE DATA
+	// setUpdateTime()
 	end := time.Now()
 	logger.Printf("Updating PvPLeaderBoard Complete after %v", end.Sub(start))
 }

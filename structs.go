@@ -4,10 +4,9 @@ package main
 
 // Query : SQL query with optional args
 type Query struct {
-	SQL        string
-	Args       [][]interface{}
-	Before     string
-	BeforeArgs []interface{}
+	SQL    string
+	Args   [][]interface{}
+	Before string
 }
 
 // Realm : realm info
@@ -48,8 +47,9 @@ type Spec struct {
 // Talent : talent info
 type Talent struct {
 	ID      int
-	ClassID int
 	SpellID int
+	ClassID int
+	SpecID  int
 	Name    string
 	Icon    string
 	Tier    int

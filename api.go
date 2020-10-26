@@ -78,7 +78,7 @@ func get(region, namespace, path string) *[]byte {
 		return nil
 	}
 	if resp.StatusCode == 429 {
-		logger.Printf("Received 429 - retrying after %d seconds", rateLimitRetryWaitSeconds)
+		logger.Printf("Received 429 - retrying '%s' after %d seconds", path, rateLimitRetryWaitSeconds)
 		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
 		return get(region, namespace, path)
 	}

@@ -8,8 +8,7 @@ CREATE TABLE realms (
 
 CREATE TABLE races (
   id INTEGER PRIMARY KEY,
-  name VARCHAR(32) NOT NULL,
-  UNIQUE (name, side)
+  name VARCHAR(32) NOT NULL
 );
 
 CREATE TABLE factions (
@@ -32,23 +31,36 @@ CREATE TABLE specs (
   class_id INTEGER NOT NULL REFERENCES classes (id),
   name VARCHAR(32) NOT NULL,
   role VARCHAR(32),
-  icon VARCHAR(128),
-  UNIQUE (class_id, name)
+  icon VARCHAR(128)
 );
 
 CREATE TABLE talents (
   id INTEGER PRIMARY KEY,
   spell_id INTEGER NOT NULL,
   class_id INTEGER NOT NULL REFERENCES classes (id),
-  spec_id INTEGER DEFAULT 0,
+  spec_id INTEGER REFERENCES specs (id),
   name VARCHAR(128) NOT NULL,
   icon VARCHAR(128),
   tier SMALLINT,
   col SMALLINT
 );
-
 CREATE INDEX ON talents (tier, col);
 CREATE INDEX ON talents (class_id, spec_id);
+
+CREATE TABLE pvp_talents (
+  id INTEGER PRIMARY KEY,
+  spell_id INTEGER NOT NULL,
+  spec_id INTEGER NOT NULL REFERENCES specs (id),
+  name VARCHAR(128) NOT NULL,
+  icon VARCHAR(128)
+);
+CREATE INDEX ON pvp_talents (spec_id);
+
+CREATE TABLE achievements (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(128),
+  description VARCHAR(1024)
+);
 
 CREATE TABLE players (
   id SERIAL PRIMARY KEY,
@@ -85,13 +97,6 @@ CREATE TABLE leaderboards (
 CREATE INDEX ON leaderboards (ranking);
 CREATE INDEX ON leaderboards (rating);
 
-CREATE TABLE achievements (
-  id INTEGER PRIMARY KEY,
-  name VARCHAR(128),
-  description VARCHAR(1024),
-  points SMALLINT
-);
-
 CREATE TABLE players_achievements (
   player_id INTEGER NOT NULL REFERENCES players (id),
   achievement_id INTEGER NOT NULL REFERENCES achievements (id),
@@ -103,6 +108,12 @@ CREATE TABLE players_talents (
   player_id INTEGER NOT NULL REFERENCES players (id),
   talent_id INTEGER NOT NULL REFERENCES talents (id),
   PRIMARY KEY (player_id, talent_id)
+);
+
+CREATE TABLE players_pvp_talents (
+  player_id INTEGER NOT NULL REFERENCES players (id),
+  pvp_talent_id INTEGER NOT NULL REFERENCES pvp_talents (id),
+  PRIMARY KEY (player_id, pvp_talent_id)
 );
 
 CREATE TABLE players_stats (
@@ -161,8 +172,9 @@ CREATE OR REPLACE FUNCTION purge_old_players()
 RETURNS VOID LANGUAGE plpgsql AS $proc$
 BEGIN
   DELETE FROM players_achievements WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
+  DELETE FROM players_pvp_talents WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_talents WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_stats WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_items WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM players WHERE id NOT IN (SELECT player_id FROM leaderboards);
+  DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
 END; $proc$;
