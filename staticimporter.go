@@ -138,7 +138,7 @@ func getSpec(ch chan Spec, specID int) {
 		ID            int
 		PlayableClass Class `json:"playable_class"`
 		Name          string
-		Media         Media
+		Media         KeyedID
 		Role          RoleJSON
 		TalentTiers   []TalentTierJSON `json:"talent_tiers"`
 	}

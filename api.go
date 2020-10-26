@@ -150,8 +150,8 @@ type KeyedValue struct {
 	ID   int
 }
 
-// Media : API media link and ID
-type Media struct {
+// KeyedID : API key and ID
+type KeyedID struct {
 	Key Key
 	ID  int
 }
