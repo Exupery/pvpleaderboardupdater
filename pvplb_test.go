@@ -89,6 +89,15 @@ func TestParseAchievements(t *testing.T) {
 	t.Logf("Found and parsed %v PvP achievements", len(achievements))
 }
 
+func TestGetCurrentSeason(t *testing.T) {
+	var currentSeason = getCurrentSeason()
+
+	if currentSeason == 0 {
+		t.Error("Determining current season failed")
+	}
+	t.Logf("Current PvP season is %d", currentSeason)
+}
+
 func TestParsePlayerDetails(t *testing.T) {
 	var playerJSON *[]byte = getDynamic(testRegion, "character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
 	m := map[string]int{"9Affliction": 265}

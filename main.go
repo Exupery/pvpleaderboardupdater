@@ -27,7 +27,8 @@ func main() {
 	// TODO HANDLE REGIONS
 	// brackets := []string{"2v2", "3v3", "rbg"}
 	// for _, bracket := range brackets {
-	// 	updatePlayersAndLeaderboard(bracket)
+	bracket := "2v2" // TODO DELME
+	updatePlayersAndLeaderboard(bracket)
 	// }
 	// TODO PURGE STALE DATA
 	// setUpdateTime()
@@ -42,6 +43,21 @@ func getEnvVar(envVar string) string {
 	}
 
 	return value
+}
+
+func getCurrentSeason() int {
+	type Seasons struct {
+		Seasons       []KeyedID
+		CurrentSeason KeyedID `json:"current_season"`
+	}
+	var seasonsJSON *[]byte = getDynamic(region, "pvp-season/index")
+	var seasons Seasons
+	err := json.Unmarshal(*seasonsJSON, &seasons)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return 0
+	}
+	return seasons.CurrentSeason.ID
 }
 
 func updatePlayersAndLeaderboard(bracket string) {
