@@ -107,6 +107,10 @@ func getLeaderboard(bracket string, season int) []LeaderboardEntry {
 			entry.WinsLosses.Lost}
 		leaderboardEntries = append(leaderboardEntries, leaderboardEntry)
 	}
+	max, err := strconv.Atoi(os.Getenv("MAX_PER_BRACKET"))
+	if err == nil && max < len(leaderboardEntries) {
+		return leaderboardEntries[0:max]
+	}
 	return leaderboardEntries
 }
 
