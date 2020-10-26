@@ -94,7 +94,7 @@ func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playe
 		id := (*playerSlugIDMap)[slug]
 		if id > 0 {
 			params := []interface{}{
-				entry.Ranking,
+				entry.Rank,
 				id,
 				entry.Rating,
 				entry.SeasonWins,

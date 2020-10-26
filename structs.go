@@ -93,20 +93,12 @@ type Stats struct {
 // LeaderboardEntry : a singular listing on a leaderboard
 type LeaderboardEntry struct {
 	Name         string
-	Ranking      int
-	Rating       int
 	RealmID      int
-	RealmName    string
-	RealmSlug    string
-	RaceID       int
-	ClassID      int
-	SpecID       int
-	FactionID    int
-	GenderID     int
+	BlizzardID   int
+	Rank         int
+	Rating       int
 	SeasonWins   int
 	SeasonLosses int
-	WeeklyWins   int
-	WeeklyLosses int
 }
 
 // Player : player info

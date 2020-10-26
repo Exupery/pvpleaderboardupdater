@@ -24,10 +24,13 @@ func main() {
 	start := time.Now()
 	logger.Println("Updating PvPLeaderBoard DB")
 	importStaticData()
+	season := getCurrentSeason()
 	// TODO HANDLE REGIONS
 	// brackets := []string{"2v2", "3v3", "rbg"}
 	// for _, bracket := range brackets {
 	bracket := "2v2" // TODO DELME
+	leaderboard := getLeaderboard(bracket, season)
+	logger.Printf("Found %d players on %s %s leaderboard", len(leaderboard), region, bracket)
 	updatePlayersAndLeaderboard(bracket)
 	// }
 	// TODO PURGE STALE DATA
@@ -60,11 +63,58 @@ func getCurrentSeason() int {
 	return seasons.CurrentSeason.ID
 }
 
+func getLeaderboard(bracket string, season int) []LeaderboardEntry {
+	type RealmJSON struct {
+		Slug string
+		ID   int
+	}
+	type CharacterJSON struct {
+		Name  string
+		ID    int
+		Realm RealmJSON
+	}
+	type WinLossJSON struct {
+		Played int
+		Won    int
+		Lost   int
+	}
+	type LeaderboardEntryJSON struct {
+		Rank       int
+		Rating     int
+		Character  CharacterJSON
+		WinsLosses WinLossJSON `json:"season_match_statistics"`
+	}
+	type LeaderBoardJSON struct {
+		Entries []LeaderboardEntryJSON
+	}
+	var leaderboardJSON *[]byte = getDynamic(region, fmt.Sprintf("pvp-season/%d/pvp-leaderboard/%s",
+		season, bracket))
+	var leaderboard LeaderBoardJSON
+	err := json.Unmarshal(*leaderboardJSON, &leaderboard)
+	var leaderboardEntries []LeaderboardEntry = make([]LeaderboardEntry, 0)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return leaderboardEntries
+	}
+	for _, entry := range leaderboard.Entries {
+		leaderboardEntry := LeaderboardEntry{
+			entry.Character.Name,
+			entry.Character.Realm.ID,
+			entry.Character.ID,
+			entry.Rank,
+			entry.Rating,
+			entry.WinsLosses.Won,
+			entry.WinsLosses.Lost}
+		leaderboardEntries = append(leaderboardEntries, leaderboardEntry)
+	}
+	return leaderboardEntries
+}
+
 func updatePlayersAndLeaderboard(bracket string) {
 	playerMap := make(map[string]*Player)
 
-	var leaderboard *map[string]*LeaderboardEntry = getLeaderboard(bracket)
-	lbPlayers := getPlayersFromLeaderboard(leaderboard)
+	var leaderboard map[string]*LeaderboardEntry = make(map[string]*LeaderboardEntry) // TODO
+	lbPlayers := getPlayersFromLeaderboard(&leaderboard)
 	max, err := strconv.Atoi(os.Getenv("MAX_PER_BRACKET"))
 	if err != nil || max < 0 || max > len(lbPlayers) {
 		max = len(lbPlayers)
@@ -81,7 +131,7 @@ func updatePlayersAndLeaderboard(bracket string) {
 	if len(*playerIDMap) > 0 {
 		updated := updatePlayers(playerIDMap)
 		if updated {
-			updateLeaderboard(playerIDMap, leaderboard, bracket)
+			updateLeaderboard(playerIDMap, &leaderboard, bracket)
 		} else {
 			logger.Printf("%s Updating player details failed, NOT updating %s leaderboard", errPrefix, bracket)
 		}
@@ -99,44 +149,12 @@ func updateLeaderboard(playerIDMap *map[int]*Player, leaderboard *map[string]*Le
 	setLeaderboard(bracket, leaderboard, &playerSlugIDMap)
 }
 
-func parseLeaderboard(data *[]byte) *map[string]*LeaderboardEntry {
-	entries := make(map[string]*LeaderboardEntry)
-	type Leaderboard struct {
-		Rows []LeaderboardEntry
-	}
-	var leaderboard Leaderboard
-	err := json.Unmarshal(*data, &leaderboard)
-	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return &entries
-	}
-
-	for _, entry := range leaderboard.Rows {
-		e := LeaderboardEntry(entry)
-		entries[entry.Name+entry.RealmSlug] = &e
-	}
-	return &entries
-}
-
-func getLeaderboard(bracket string) *map[string]*LeaderboardEntry {
-	var leaderboardJSON *[]byte = getDynamic(region, "leaderboard/"+bracket)
-	var entries *map[string]*LeaderboardEntry = parseLeaderboard(leaderboardJSON)
-	logger.Printf("Parsed %v %s entries", len(*entries), bracket)
-
-	return entries
-}
-
 func getPlayersFromLeaderboard(entries *map[string]*LeaderboardEntry) []*Player {
 	players := make([]*Player, 0)
 
 	for _, entry := range *entries {
 		player := Player{
-			Name:      entry.Name,
-			ClassID:   entry.ClassID,
-			FactionID: entry.FactionID,
-			RaceID:    entry.RaceID,
-			RealmSlug: entry.RealmSlug,
-			Gender:    entry.GenderID}
+			Name: entry.Name}
 		players = append(players, &player)
 	}
 

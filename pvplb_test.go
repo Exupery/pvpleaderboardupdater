@@ -98,6 +98,15 @@ func TestGetCurrentSeason(t *testing.T) {
 	t.Logf("Current PvP season is %d", currentSeason)
 }
 
+func TestGetLeaderboard(t *testing.T) {
+	var leaderboard = getLeaderboard("2v2", 29)
+
+	if leaderboard == nil || len(leaderboard) == 0 {
+		t.Error("Parsing current season failed")
+	}
+	t.Logf("Found %d players on leaderboard", len(leaderboard))
+}
+
 func TestParsePlayerDetails(t *testing.T) {
 	var playerJSON *[]byte = getDynamic(testRegion, "character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
 	m := map[string]int{"9Affliction": 265}

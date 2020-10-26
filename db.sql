@@ -64,7 +64,7 @@ CREATE TABLE achievements (
 
 CREATE TABLE players (
   id SERIAL PRIMARY KEY,
-  api_id INTEGER NOT NULL,
+  blizzard_id INTEGER NOT NULL,
   name VARCHAR(32) NOT NULL,
   realm_id INTEGER NOT NULL REFERENCES realms (id),
   class_id INTEGER REFERENCES classes (id),
@@ -75,9 +75,8 @@ CREATE TABLE players (
   gender SMALLINT,
   last_update TIMESTAMP NOT NULL DEFAULT NOW(),
   UNIQUE (name, realm_id),
-  UNIQUE (api_id, realm_id)
+  UNIQUE (realm_id, blizzard_id)
 );
-
 CREATE INDEX ON players (class_id, spec_id);
 CREATE INDEX ON players (faction_id, race_id);
 CREATE INDEX ON players (guild);
@@ -85,15 +84,14 @@ CREATE INDEX ON players (guild);
 CREATE TABLE leaderboards (
   bracket CHAR(3) NOT NULL,
   region CHAR(2) NOT NULL,
-  ranking INTEGER NOT NULL,
   player_id INTEGER NOT NULL REFERENCES players (id),
+  ranking SMALLINT NOT NULL,
   rating SMALLINT NOT NULL,
   season_wins SMALLINT,
   season_losses SMALLINT,
   last_update TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (bracket, region, player_id)
 );
-
 CREATE INDEX ON leaderboards (ranking);
 CREATE INDEX ON leaderboards (rating);
 
