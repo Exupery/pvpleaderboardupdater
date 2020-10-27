@@ -5,6 +5,7 @@ import (
 )
 
 const testRegion = "US"
+const testSeason = 29
 
 func TestCreateToken(t *testing.T) {
 	var token string = createToken()
@@ -99,7 +100,7 @@ func TestGetCurrentSeason(t *testing.T) {
 }
 
 func TestGetLeaderboard(t *testing.T) {
-	var leaderboard = getLeaderboard("2v2", 29)
+	var leaderboard = getLeaderboard("2v2", testSeason)
 
 	if leaderboard == nil || len(leaderboard) == 0 {
 		t.Error("Parsing current season failed")
@@ -107,32 +108,13 @@ func TestGetLeaderboard(t *testing.T) {
 	t.Logf("Found %d players on leaderboard", len(leaderboard))
 }
 
-func TestParsePlayerDetails(t *testing.T) {
-	var playerJSON *[]byte = getDynamic(testRegion, "character/tichondrius/Exupery?fields=talents,guild,achievements,stats,items")
-	m := map[string]int{"9Affliction": 265}
-	var player *Player = parsePlayerDetails(playerJSON, &m)
+func TestGetPlayersFromLeaderboards(t *testing.T) {
+	var a = getLeaderboard("2v2", testSeason)
+	var b = getLeaderboard("3v3", testSeason)
+	var players = getPlayersFromLeaderboards(map[string][]LeaderboardEntry{"2v2": a, "3v3": b})
 
-	if player == nil {
-		t.Error("Parsing player details failed")
+	if players == nil || len(players) == 0 {
+		t.Error("Getting leaderboard players failed")
 	}
-
-	if len(player.AchievementIDs) == 0 {
-		t.Error("Parsing player AchievementIds failed")
-	}
-
-	if len(player.AchievementTimestamps) == 0 {
-		t.Error("Parsing player AchievementTimestamps failed")
-	}
-
-	if len(player.TalentIDs) == 0 {
-		t.Error("Parsing player TalentIds failed")
-	}
-
-	if player.Stats.Sta == 0 {
-		t.Error("Parsing player Stats failed")
-	}
-
-	if player.Items.AverageItemLevel == 0 {
-		t.Error("Parsing player AverageItemLevel failed")
-	}
+	t.Logf("Found %d players from leaderboards", len(players))
 }

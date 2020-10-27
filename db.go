@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
-	"time"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
@@ -112,12 +111,12 @@ func addPlayers(players []*Player) {
 		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
 	args := make([][]interface{}, 0)
 
-	for _, player := range players {
-		if player.RealmSlug != "" && player.Name != "" {
-			params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
-			args = append(args, params)
-		}
-	}
+	// for _, player := range players {
+	// if player.RealmSlug != "" && player.Name != "" {
+	// 	params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
+	// 	args = append(args, params)
+	// }
+	// }
 
 	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Added %d players", numInserted)
@@ -156,12 +155,12 @@ func getPlayerIDMap(players []*Player) *map[int]*Player {
 		t[name+realmSlug] = id
 	}
 
-	for _, player := range players {
-		var id int = t[player.Name+player.RealmSlug]
-		if id > 0 {
-			m[id] = player
-		}
-	}
+	// for _, player := range players {
+	// var id int = t[player.Name+player.RealmSlug]
+	// if id > 0 {
+	// 	m[id] = player
+	// }
+	// }
 	return &m
 }
 
@@ -172,7 +171,7 @@ func updatePlayerDetails(players *map[int]*Player) int {
 
 	for id, player := range *players {
 		params := []interface{}{player.ClassID, player.SpecID, player.FactionID, player.RaceID, player.Guild,
-			player.Gender, player.AchievementPoints, player.HonorableKills, id}
+			player.Gender, id}
 		args = append(args, params)
 	}
 
@@ -187,12 +186,12 @@ func updatePlayerTalents(players *map[int]*Player) {
 	args := make([][]interface{}, 0)
 
 	var ctr int = 1
-	for id, player := range *players {
-		for _, talent := range player.TalentIDs {
-			args = append(args, []interface{}{id, talent, talent})
-		}
-		ctr++
-	}
+	// for id, player := range *players {
+	// for _, talent := range player.TalentIDs {
+	// 	args = append(args, []interface{}{id, talent, talent})
+	// }
+	ctr++
+	// }
 
 	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>talents", numInserted)
@@ -203,15 +202,15 @@ func updatePlayerAchievements(players *map[int]*Player) {
 		WHERE NOT EXISTS (SELECT 1 FROM players_achievements WHERE player_id=$4 AND achievement_id=$5)`
 	args := make([][]interface{}, 0)
 
-	validIds := getAchievementIds()
-	for id, player := range *players {
-		for idx, achievID := range player.AchievementIDs {
-			if (*validIds)[achievID] {
-				achievedAt := time.Unix(player.AchievementTimestamps[idx]/1000, 0)
-				args = append(args, []interface{}{id, achievID, achievedAt, id, achievID})
-			}
-		}
-	}
+	// validIds := getAchievementIds()
+	// for id, player := range *players {
+	// for idx, achievID := range player.AchievementIDs {
+	// 	if (*validIds)[achievID] {
+	// 		achievedAt := time.Unix(player.AchievementTimestamps[idx]/1000, 0)
+	// 		args = append(args, []interface{}{id, achievID, achievedAt, id, achievID})
+	// 	}
+	// }
+	// }
 
 	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>achievements", numInserted)
@@ -224,28 +223,28 @@ func updatePlayerStats(players *map[int]*Player) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
 	args := make([][]interface{}, 0)
 
-	var ctr int = 1
-	for id, player := range *players {
-		ps := player.Stats
-		stats := []interface{}{
-			id,
-			ps.Str,
-			ps.Agi,
-			ps.Int,
-			ps.Sta,
-			ps.Spr,
-			ps.CritRating,
-			ps.HasteRating,
-			ps.AttackPower,
-			int(ps.MasteryRating),
-			int(ps.MultistrikeRating),
-			int(ps.Versatility),
-			int(ps.LeechRating),
-			int(ps.DodgeRating),
-			int(ps.ParryRating)}
-		args = append(args, stats)
-		ctr++
-	}
+	// var ctr int = 1
+	// for id, player := range *players {
+	// ps := player.Stats
+	// stats := []interface{}{
+	// 	id,
+	// 	ps.Str,
+	// 	ps.Agi,
+	// 	ps.Int,
+	// 	ps.Sta,
+	// 	ps.Spr,
+	// 	ps.CritRating,
+	// 	ps.HasteRating,
+	// 	ps.AttackPower,
+	// 	int(ps.MasteryRating),
+	// 	int(ps.MultistrikeRating),
+	// 	int(ps.Versatility),
+	// 	int(ps.LeechRating),
+	// 	int(ps.DodgeRating),
+	// 	int(ps.ParryRating)}
+	// args = append(args, stats)
+	// ctr++
+	// }
 
 	numInserted := insert(Query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>stats", numInserted)
@@ -259,35 +258,35 @@ func updatePlayerItems(players *map[int]*Player) {
 	args := make([][]interface{}, 0)
 	items := make(map[int]Item)
 
-	var ctr int = 1
-	for id, player := range *players {
-		pi := player.Items
-		playerItems := []interface{}{
-			id,
-			pi.AverageItemLevel,
-			pi.AverageItemLevelEquipped,
-			pi.Head.ID,
-			pi.Neck.ID,
-			pi.Shoulder.ID,
-			pi.Back.ID,
-			pi.Chest.ID,
-			pi.Shirt.ID,
-			pi.Tabard.ID,
-			pi.Wrist.ID,
-			pi.Hands.ID,
-			pi.Waist.ID,
-			pi.Legs.ID,
-			pi.Feet.ID,
-			pi.Finger1.ID,
-			pi.Finger2.ID,
-			pi.Trinket1.ID,
-			pi.Trinket2.ID,
-			pi.MainHand.ID,
-			pi.OffHand.ID}
-		args = append(args, playerItems)
-		apppendItems(&items, pi)
-		ctr++
-	}
+	// var ctr int = 1
+	// for id, player := range *players {
+	// pi := player.Items
+	// playerItems := []interface{}{
+	// 	id,
+	// 	pi.AverageItemLevel,
+	// 	pi.AverageItemLevelEquipped,
+	// 	pi.Head.ID,
+	// 	pi.Neck.ID,
+	// 	pi.Shoulder.ID,
+	// 	pi.Back.ID,
+	// 	pi.Chest.ID,
+	// 	pi.Shirt.ID,
+	// 	pi.Tabard.ID,
+	// 	pi.Wrist.ID,
+	// 	pi.Hands.ID,
+	// 	pi.Waist.ID,
+	// 	pi.Legs.ID,
+	// 	pi.Feet.ID,
+	// 	pi.Finger1.ID,
+	// 	pi.Finger2.ID,
+	// 	pi.Trinket1.ID,
+	// 	pi.Trinket2.ID,
+	// 	pi.MainHand.ID,
+	// 	pi.OffHand.ID}
+	// args = append(args, playerItems)
+	// apppendItems(&items, pi)
+	// 	ctr++
+	// }
 
 	updateItems(&items)
 	numInserted := insert(Query{SQL: qry, Args: args})

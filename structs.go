@@ -103,21 +103,15 @@ type LeaderboardEntry struct {
 
 // Player : player info
 type Player struct {
-	Name                  string
-	ClassID               int
-	SpecID                int
-	FactionID             int
-	RaceID                int
-	RealmSlug             string
-	Guild                 string
-	Gender                int
-	Stats                 Stats
-	AchievementIDs        []int
-	AchievementTimestamps []int64
-	TalentIDs             []int
-	AchievementPoints     int
-	HonorableKills        int
-	Items                 Items
+	Name       string
+	BlizzardID int
+	RealmID    int
+	ClassID    int
+	SpecID     int
+	FactionID  int
+	RaceID     int
+	Guild      string
+	Gender     int
 }
 
 // Item : an equippable item
