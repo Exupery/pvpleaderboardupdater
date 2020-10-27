@@ -10,3 +10,4 @@ Environment variables:
 * `BATTLE_NET_CLIENT_ID` [battle.net](https://develop.battle.net/) Client ID (required)
 * `BATTLE_NET_SECRET` [battle.net](https://develop.battle.net/) Client ID (required)
 * `MAX_PER_BRACKET` maximum number of players to retrieve per bracket (optional, will retrieve all players for each bracket if not set)
+* `GROUP_SIZE` number of players each goroutine should handle when importing player details (optional)

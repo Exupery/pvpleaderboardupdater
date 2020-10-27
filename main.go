@@ -15,6 +15,8 @@ const errPrefix string = "[ERROR]"
 const fatalPrefix string = "[FATAL]"
 const warnPrefix string = "[WARN]"
 
+const defaultGroupSize int = 100
+
 var uriBase string
 var apiKey string
 
@@ -24,6 +26,7 @@ func main() {
 	start := time.Now()
 	logger.Println("Updating PvPLeaderBoard DB")
 	importStaticData()
+	groupSize := groupSize()
 	season := getCurrentSeason()
 	// TODO HANDLE REGIONS
 	leaderboards := make(map[string][]LeaderboardEntry)
@@ -35,6 +38,10 @@ func main() {
 	leaderboards[bracket] = leaderboard
 	players := getPlayersFromLeaderboards(leaderboards)
 	logger.Printf("Found %d unique players across %s leaderboards", len(players), region)
+	groups := split(players, groupSize)
+	for _, group := range groups {
+		logger.Printf("%v", group) // TODO DELME
+	}
 	// }
 	// TODO PURGE STALE DATA
 	// setUpdateTime()
@@ -49,6 +56,38 @@ func getEnvVar(envVar string) string {
 	}
 
 	return value
+}
+
+func groupSize() int {
+	var size = os.Getenv("GROUP_SIZE")
+	if size == "" {
+		return defaultGroupSize
+	}
+	i, err := strconv.Atoi(size)
+	if err != nil {
+		logger.Printf("%s Cannot convert '%s' to int, using default group size (%d).",
+			warnPrefix, size, defaultGroupSize)
+		return defaultGroupSize
+	}
+	return i
+}
+
+func split(slice []Player, groupSize int) [][]Player {
+	groups := make([][]Player, 0)
+	if len(slice) <= groupSize {
+		return append(groups, slice)
+	}
+
+	group := make([]Player, 0)
+	for i, p := range slice {
+		group = append(group, p)
+		if (i+1)%groupSize == 0 {
+			groups = append(groups, group)
+			group = make([]Player, 0)
+		}
+	}
+
+	return groups
 }
 
 func getCurrentSeason() int {
@@ -142,4 +181,8 @@ func getPlayersFromLeaderboards(leaderboards map[string][]LeaderboardEntry) []Pl
 
 func playerKey(realmID, blizzardID int) string {
 	return fmt.Sprintf("%d-%d", realmID, blizzardID)
+}
+
+func importPlayers(players []Player) {
+	// TODO
 }

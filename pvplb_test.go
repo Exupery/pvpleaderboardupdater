@@ -118,3 +118,28 @@ func TestGetPlayersFromLeaderboards(t *testing.T) {
 	}
 	t.Logf("Found %d players from leaderboards", len(players))
 }
+
+func TestSliceSplitting(t *testing.T) {
+	max := 100
+	slice := make([]Player, 0)
+	for i := 0; i < max; i++ {
+		slice = append(slice, Player{BlizzardID: i})
+	}
+
+	groups := split(slice, len(slice))
+	validateSplitting(t, groups, 1, max)
+
+	groups = split(slice, 10)
+	validateSplitting(t, groups, len(slice)/10, 10)
+}
+
+func validateSplitting(t *testing.T, groups [][]Player, expectedNumGroups, maxGroupSize int) {
+	if len(groups) != expectedNumGroups {
+		t.Errorf("Returned %d groups, but expected %d", len(groups), expectedNumGroups)
+	}
+	for _, group := range groups {
+		if len(group) > maxGroupSize {
+			t.Errorf("Group has %d elements - should not exceed %d", len(group), maxGroupSize)
+		}
+	}
+}
