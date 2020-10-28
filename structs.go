@@ -110,8 +110,9 @@ type Player struct {
 	SpecID     int
 	FactionID  int
 	RaceID     int
-	Guild      string
 	Gender     int
+	Guild      string
+	Path       string
 }
 
 // Item : an equippable item

@@ -10,6 +10,8 @@ import (
 
 var db *sql.DB = dbConnect()
 
+var realmSlugs = make(map[int]string)
+
 func dbConnect() *sql.DB {
 	var dbURL string = getEnvVar("DB_URL")
 
@@ -464,4 +466,30 @@ func getAchievementIds() *map[int]bool {
 		m[id] = true
 	}
 	return &m
+}
+
+func getRealmSlug(id int) string {
+	slug, ok := realmSlugs[id]
+	if ok {
+		return slug
+	}
+	mapRealmSlugs()
+	return realmSlugs[id]
+}
+
+func mapRealmSlugs() {
+	rows, err := db.Query("SELECT id, slug FROM realms")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var slug string
+		err := rows.Scan(&id, &slug)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+		}
+		realmSlugs[id] = slug
+	}
 }

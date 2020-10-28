@@ -121,9 +121,9 @@ func TestGetPlayersFromLeaderboards(t *testing.T) {
 
 func TestSliceSplitting(t *testing.T) {
 	max := 100
-	slice := make([]Player, 0)
+	slice := make([]*Player, 0)
 	for i := 0; i < max; i++ {
-		slice = append(slice, Player{BlizzardID: i})
+		slice = append(slice, &Player{BlizzardID: i})
 	}
 
 	groups := split(slice, len(slice))
@@ -133,7 +133,7 @@ func TestSliceSplitting(t *testing.T) {
 	validateSplitting(t, groups, len(slice)/10, 10)
 }
 
-func validateSplitting(t *testing.T, groups [][]Player, expectedNumGroups, maxGroupSize int) {
+func validateSplitting(t *testing.T, groups [][]*Player, expectedNumGroups, maxGroupSize int) {
 	if len(groups) != expectedNumGroups {
 		t.Errorf("Returned %d groups, but expected %d", len(groups), expectedNumGroups)
 	}
@@ -141,5 +141,23 @@ func validateSplitting(t *testing.T, groups [][]Player, expectedNumGroups, maxGr
 		if len(group) > maxGroupSize {
 			t.Errorf("Group has %d elements - should not exceed %d", len(group), maxGroupSize)
 		}
+	}
+}
+
+func TestGetPlayerProfileDetails(t *testing.T) {
+	player := Player{Path: "emerald-dream/exupery"}
+	setPlayerDetails(&player)
+
+	if player.ClassID == 0 {
+		t.Error("Player class NOT set")
+	}
+	if player.SpecID == 0 {
+		t.Error("Player spec NOT set")
+	}
+	if player.FactionID == 0 {
+		t.Error("Player faction NOT set")
+	}
+	if player.RaceID == 0 {
+		t.Error("Player race NOT set")
 	}
 }

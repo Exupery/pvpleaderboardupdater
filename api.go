@@ -156,6 +156,12 @@ type KeyedID struct {
 	ID  int
 }
 
+// TypedName : API type and name
+type TypedName struct {
+	Type string
+	name string
+}
+
 // TalentJSON : talent ID JSON
 type TalentJSON struct {
 	ID int
