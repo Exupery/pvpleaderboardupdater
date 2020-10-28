@@ -194,12 +194,15 @@ func importPlayers(players []*Player, waitGroup *sync.WaitGroup) {
 	for _, player := range players {
 		setPlayerDetails(player)
 	}
+	foundPlayers := make([]*Player, 0)
 	for _, player := range players {
 		if player.ClassID == 0 {
 			logger.Printf("No details found for %s, skipping", player.Path)
+			continue
 		}
+		foundPlayers = append(foundPlayers, player)
 	}
-	// TODO INSERT PLAYERS
+	addPlayers(foundPlayers)
 	// TODO IMPORT/INSERT TALENTS
 	// TODO IMPORT/INSERT STATS
 	// TODO IMPORT/INSERT ITEMS
@@ -228,10 +231,14 @@ func setPlayerDetails(player *Player) {
 
 	if profile.Gender.Type == "FEMALE" {
 		player.Gender = 1
+	} else {
+		player.Gender = 0
 	}
 
 	if profile.Faction.Type == "HORDE" {
-		player.FactionID = 1
+		player.FactionID = 67
+	} else {
+		player.FactionID = 469
 	}
 
 	player.RaceID = profile.Race.ID

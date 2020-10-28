@@ -109,19 +109,20 @@ func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playe
 }
 
 func addPlayers(players []*Player) {
-	const qry string = `INSERT INTO players (name, realm_slug) SELECT $1, $2
-		WHERE NOT EXISTS (SELECT 1 FROM players WHERE name=$3 AND realm_slug=$4)`
+	const qry string = `INSERT INTO players (name, realm_id, blizzard_id, class_id, spec_id,
+		faction_id, race_id, gender, guild) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (realm_id, blizzard_id) DO UPDATE SET name=$1, spec_id=$5, faction_id=$6,
+		race_id=$7, gender=$8, guild=$9, last_update=NOW()`
 	args := make([][]interface{}, 0)
 
-	// for _, player := range players {
-	// if player.RealmSlug != "" && player.Name != "" {
-	// 	params := []interface{}{player.Name, player.RealmSlug, player.Name, player.RealmSlug}
-	// 	args = append(args, params)
-	// }
-	// }
+	for _, player := range players {
+		params := []interface{}{player.Name, player.RealmID, player.BlizzardID, player.ClassID,
+			player.SpecID, player.FactionID, player.RaceID, player.Gender, player.Guild}
+		args = append(args, params)
+	}
 
 	numInserted := insert(Query{SQL: qry, Args: args})
-	logger.Printf("Added %d players", numInserted)
+	logger.Printf("Added or updated %d players", numInserted)
 }
 
 func updatePlayers(players *map[int]*Player) bool {

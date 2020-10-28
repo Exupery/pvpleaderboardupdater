@@ -64,17 +64,16 @@ CREATE TABLE achievements (
 
 CREATE TABLE players (
   id SERIAL PRIMARY KEY,
-  blizzard_id INTEGER NOT NULL,
   name VARCHAR(32) NOT NULL,
   realm_id INTEGER NOT NULL REFERENCES realms (id),
+  blizzard_id INTEGER NOT NULL,
   class_id INTEGER REFERENCES classes (id),
   spec_id INTEGER REFERENCES specs (id),
   faction_id INTEGER REFERENCES factions (id),
   race_id INTEGER REFERENCES races (id),
-  guild VARCHAR(64),
   gender SMALLINT,
+  guild VARCHAR(64),
   last_update TIMESTAMP NOT NULL DEFAULT NOW(),
-  UNIQUE (name, realm_id),
   UNIQUE (realm_id, blizzard_id)
 );
 CREATE INDEX ON players (class_id, spec_id);
