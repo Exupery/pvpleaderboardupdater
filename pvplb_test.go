@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"testing"
 )
 
@@ -169,4 +170,36 @@ func TestGetPlayerTalents(t *testing.T) {
 		t.Error("Getting player talents failed")
 	}
 	t.Logf("Found %d talents and %d PvP talents", len(talents.Talents), len(talents.PvPTalents))
+}
+
+func TestGetPlayerStats(t *testing.T) {
+	stats := getPlayerStats(testPlayerPath)
+	if stats.Intellect == 0 || stats.Stamina == 0 {
+		t.Error("Getting player stats failed")
+	}
+	t.Logf("Found stats: %v", stats)
+}
+
+func TestHighestStat(t *testing.T) {
+	a := highestStat(3, 2, 1)
+	if a != 3 {
+		t.Errorf("Expected 3 as highest stat, not %d", a)
+	}
+	b := highestStat(2, 3, 1)
+	if b != 3 {
+		t.Errorf("Expected 3 as highest stat, not %d", b)
+	}
+	c := highestStat(1, 2, 3)
+	if c != 3 {
+		t.Errorf("Expected 3 as highest stat, not %d", c)
+	}
+	ab := highestStat(3, 3, 1)
+	if ab != 3 {
+		t.Errorf("Expected 3 as highest stat, not %d", ab)
+	}
+	max := math.MaxInt32
+	z := highestStat(max, max, max)
+	if z != max {
+		t.Errorf("Expected %d as highest stat, not %d", max, z)
+	}
 }

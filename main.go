@@ -202,14 +202,18 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 		}
 		foundPlayers = append(foundPlayers, player)
 	}
+
 	addPlayers(foundPlayers)
 	var playerIDs map[string]int = getPlayerIDs(foundPlayers)
+
 	var playersTalents map[int]playerTalents = make(map[int]playerTalents, 0)
+	var playersStats map[int]stats = make(map[int]stats, 0)
 	for profilePath, dbID := range playerIDs {
 		playersTalents[dbID] = getPlayerTalents(profilePath)
+		playersStats[dbID] = getPlayerStats(profilePath)
 	}
 	addPlayerTalents(playersTalents)
-	// TODO IMPORT/INSERT STATS
+	// TODO ADD STATS
 	// TODO IMPORT/INSERT ITEMS
 	// TODO IMPORT/INSERT ACHIEVS
 }
@@ -303,6 +307,69 @@ func getPlayerTalents(path string) playerTalents {
 	}
 
 	return playerTalents{talents, pvpTalents}
+}
+
+func getPlayerStats(path string) stats {
+	type RatedStat struct {
+		Rating      float64
+		RatingBonus float64 `json:"rating_bonus"`
+		Value       float64
+	}
+	type Stat struct {
+		Base      int
+		Effective int
+	}
+	type StatJSON struct {
+		Strength    Stat
+		Agility     Stat
+		Intellect   Stat
+		Stamina     Stat
+		Versatility float64
+		Mastery     RatedStat
+		Lifesteal   RatedStat
+		Dodge       RatedStat
+		Parry       RatedStat
+		MeleeCrit   RatedStat `json:"melee_crit"`
+		MeleeHaste  RatedStat `json:"melee_haste"`
+		RangedCrit  RatedStat `json:"ranged_crit"`
+		RangedHaste RatedStat `json:"ranged_haste"`
+		SpellCrit   RatedStat `json:"spell_crit"`
+		SpellHaste  RatedStat `json:"spell_haste"`
+	}
+	var statsJSON *[]byte = getProfile(region, path+"/statistics")
+	if statsJSON == nil {
+		return stats{}
+	}
+	var s StatJSON
+	err := json.Unmarshal(*statsJSON, &s)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return stats{}
+	}
+	crit := highestStat(int(s.MeleeCrit.Rating), int(s.RangedCrit.Rating), int(s.SpellCrit.Rating))
+	haste := highestStat(int(s.MeleeHaste.Rating), int(s.RangedHaste.Rating), int(s.SpellHaste.Rating))
+	return stats{
+		Strength:       s.Strength.Effective,
+		Agility:        s.Agility.Effective,
+		Intellect:      s.Intellect.Effective,
+		Stamina:        s.Stamina.Effective,
+		CriticalStrike: crit,
+		Haste:          haste,
+		Versatility:    int(s.Versatility),
+		Mastery:        int(s.Mastery.Rating),
+		Leech:          int(s.Lifesteal.Rating),
+		Dodge:          int(s.Dodge.Rating),
+		Parry:          int(s.Parry.Rating)}
+}
+
+func highestStat(a, b, c int) int {
+	if a >= b && a >= c {
+		return a
+	}
+	if b >= a && b >= c {
+		return b
+	}
+	return c
 }
 
 type playerTalents struct {

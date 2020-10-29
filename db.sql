@@ -121,11 +121,11 @@ CREATE TABLE players_stats (
   stamina INTEGER,
   critical_strike INTEGER,
   haste INTEGER,
-  mastery INTEGER,
   versatility INTEGER,
-  leech REAL,
-  dodge REAL,
-  parry REAL
+  mastery INTEGER,
+  leech INTEGER,
+  dodge INTEGER,
+  parry INTEGER
 );
 
 CREATE TABLE items (
