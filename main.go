@@ -204,13 +204,11 @@ func importPlayers(players []*Player, waitGroup *sync.WaitGroup) {
 	}
 	addPlayers(foundPlayers)
 	var playerIDs map[string]int = getPlayerIDs(foundPlayers)
-	logger.Printf("%v", playerIDs) // TODO DELME
 	var playersTalents map[int]playerTalents = make(map[int]playerTalents, 0)
 	for profilePath, dbID := range playerIDs {
 		playersTalents[dbID] = getPlayerTalents(profilePath)
 	}
-	logger.Printf("%v", playersTalents) // TODO DELME
-	// TODO ADD TALENTS
+	addPlayerTalents(playersTalents)
 	// TODO IMPORT/INSERT STATS
 	// TODO IMPORT/INSERT ITEMS
 	// TODO IMPORT/INSERT ACHIEVS

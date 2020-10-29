@@ -4,9 +4,10 @@ package main
 
 // Query : SQL query with optional args
 type Query struct {
-	SQL    string
-	Args   [][]interface{}
-	Before string
+	SQL        string
+	Args       [][]interface{}
+	Before     string
+	BeforeArgs []interface{}
 }
 
 // Realm : realm info

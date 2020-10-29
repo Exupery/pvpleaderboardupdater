@@ -56,9 +56,16 @@ func insert(qry Query) int64 {
 
 	if qry.Before != "" {
 		bStmt, _ := txn.Prepare(qry.Before)
-		_, err := bStmt.Exec()
+		var err error = nil
+		if len(qry.BeforeArgs) == 0 {
+			_, err = bStmt.Exec()
+		} else {
+			for _, param := range qry.BeforeArgs {
+				_, err = bStmt.Exec(param)
+			}
+		}
 		if err != nil {
-			logger.Printf("%s %s", errPrefix, err)
+			logger.Printf("%s Before query failed: %s", errPrefix, err)
 			return 0
 		}
 	}
@@ -155,37 +162,31 @@ func getPlayerIDs(players []*Player) map[string]int {
 	return m
 }
 
-func updatePlayerDetails(players *map[int]*Player) int {
-	const qry string = `UPDATE players SET class_id=$1, spec_id=$2, faction_id=$3, race_id=$4, guild=$5,
-		gender=$6, achievement_points=$7, honorable_kills=$8, last_update=NOW() WHERE id=$9`
-	args := make([][]interface{}, 0)
+func addPlayerTalents(playersTalents map[int]playerTalents) {
+	const deleteTalentQuery string = `DELETE FROM players_talents WHERE player_id=$1`
+	const talentQuery string = `INSERT INTO players_talents (player_id, talent_id) VALUES ($1, $2)`
+	const deletePvPTalentQuery string = `DELETE FROM players_pvp_talents WHERE player_id=$1`
+	const pvpTalentQuery string = `INSERT INTO players_pvp_talents (player_id, pvp_talent_id) VALUES ($1, $2)`
+	deleteArgs := make([]interface{}, 0)
+	talentArgs := make([][]interface{}, 0)
+	pvpTalentArgs := make([][]interface{}, 0)
 
-	for id, player := range *players {
-		params := []interface{}{player.ClassID, player.SpecID, player.FactionID, player.RaceID, player.Guild,
-			player.Gender, id}
-		args = append(args, params)
+	for id, talents := range playersTalents {
+		deleteArgs = append(deleteArgs, id)
+		for _, talent := range talents.Talents {
+			talentArgs = append(talentArgs, []interface{}{id, talent})
+		}
+		for _, pvptalent := range talents.PvPTalents {
+			pvpTalentArgs = append(pvpTalentArgs, []interface{}{id, pvptalent})
+		}
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
-	logger.Printf("Updated %d player details", numInserted)
-	return int(numInserted)
-}
-
-func updatePlayerTalents(players *map[int]*Player) {
-	const qry string = `INSERT INTO players_talents (player_id, talent_id) SELECT $1, $2
-		WHERE EXISTS (SELECT 1 FROM talents WHERE id=$3)`
-	args := make([][]interface{}, 0)
-
-	var ctr int = 1
-	// for id, player := range *players {
-	// for _, talent := range player.TalentIDs {
-	// 	args = append(args, []interface{}{id, talent, talent})
-	// }
-	ctr++
-	// }
-
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(Query{SQL: talentQuery, Args: talentArgs,
+		Before: deleteTalentQuery, BeforeArgs: deleteArgs})
 	logger.Printf("Mapped %d players=>talents", numInserted)
+	numInserted = insert(Query{SQL: pvpTalentQuery, Args: pvpTalentArgs,
+		Before: deletePvPTalentQuery, BeforeArgs: deleteArgs})
+	logger.Printf("Mapped %d players=>PvP talents", numInserted)
 }
 
 func updatePlayerAchievements(players *map[int]*Player) {
