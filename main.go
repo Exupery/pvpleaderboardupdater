@@ -208,13 +208,15 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 
 	var playersTalents map[int]playerTalents = make(map[int]playerTalents, 0)
 	var playersStats map[int]stats = make(map[int]stats, 0)
+	var playersItems map[int]items = make(map[int]items, 0)
 	for profilePath, dbID := range playerIDs {
 		playersTalents[dbID] = getPlayerTalents(profilePath)
 		playersStats[dbID] = getPlayerStats(profilePath)
+		playersItems[dbID] = getPlayerItems(profilePath)
 	}
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
-	// TODO IMPORT/INSERT ITEMS
+	// TODO addPlayerItems(playersItems)
 	// TODO IMPORT/INSERT ACHIEVS
 }
 
@@ -360,6 +362,53 @@ func getPlayerStats(path string) stats {
 		Leech:          int(s.Lifesteal.Rating),
 		Dodge:          int(s.Dodge.Rating),
 		Parry:          int(s.Parry.Rating)}
+}
+
+func getPlayerItems(path string) items {
+	type ItemJSON struct {
+		Item keyedValue
+		Slot typedName
+		Name string
+	}
+	type ItemsJSON struct {
+		EquippedItems []ItemJSON `json:"equipped_items"`
+	}
+	var itemsJSON *[]byte = getProfile(region, path+"/equipment")
+	if itemsJSON == nil {
+		return items{}
+	}
+	var equipped ItemsJSON
+	err := json.Unmarshal(*itemsJSON, &equipped)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return items{}
+	}
+	equippedItems := make(map[string]item)
+	for _, i := range equipped.EquippedItems {
+		if i.Name == "" {
+			continue
+		}
+		equippedItems[i.Slot.Type] = item{i.Item.ID, i.Name}
+	}
+	return items{
+		Head:     equippedItems["HEAD"],
+		Neck:     equippedItems["NECK"],
+		Shoulder: equippedItems["SHOULDER"],
+		Back:     equippedItems["BACK"],
+		Chest:    equippedItems["CHEST"],
+		Shirt:    equippedItems["SHIRT"],
+		Tabard:   equippedItems["TABARD"],
+		Wrist:    equippedItems["WRIST"],
+		Hands:    equippedItems["HANDS"],
+		Waist:    equippedItems["WAIST"],
+		Legs:     equippedItems["LEGS"],
+		Feet:     equippedItems["FEET"],
+		Finger1:  equippedItems["FINGER_1"],
+		Finger2:  equippedItems["FINGER_2"],
+		Trinket1: equippedItems["TRINKET_1"],
+		Trinket2: equippedItems["TRINKET_2"],
+		MainHand: equippedItems["MAIN_HAND"],
+		OffHand:  equippedItems["OFF_HAND"]}
 }
 
 func highestStat(a, b, c int) int {

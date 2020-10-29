@@ -135,8 +135,6 @@ CREATE TABLE items (
 
  CREATE TABLE players_items (
   player_id INTEGER PRIMARY KEY REFERENCES players (id),
-  average_item_level INTEGER,
-  average_item_level_equipped INTEGER,
   head INTEGER,
   neck INTEGER,
   shoulder INTEGER,

@@ -203,3 +203,11 @@ func TestHighestStat(t *testing.T) {
 		t.Errorf("Expected %d as highest stat, not %d", max, z)
 	}
 }
+
+func TestGetPlayerItems(t *testing.T) {
+	items := getPlayerItems(testPlayerPath)
+	if items.Back.ID == 0 || items.Shoulder.ID == 0 {
+		t.Error("Getting player items failed")
+	}
+	t.Logf("Found items: %v", items)
+}

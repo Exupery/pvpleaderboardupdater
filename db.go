@@ -301,7 +301,7 @@ func updateItems(items *map[int]item) {
 	args := make([][]interface{}, 0)
 
 	for _, item := range *items {
-		params := []interface{}{item.ID, item.Name, item.Icon, item.ItemLevel, item.ID}
+		params := []interface{}{item.ID, item.Name}
 		args = append(args, params)
 	}
 

@@ -153,7 +153,7 @@ type keyedValue struct {
 // typedName : API type and name
 type typedName struct {
 	Type string
-	name string
+	Name string
 }
 
 // talentJSON : talent ID JSON

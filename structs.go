@@ -115,35 +115,28 @@ type player struct {
 
 // item : an equippable item
 type item struct {
-	ID        int
-	Name      string
-	Icon      string
-	Quality   int
-	ItemLevel int
-	Armor     int
-	Context   string
+	ID   int
+	Name string
 }
 
 // items : a player's equipped items
 type items struct {
-	AverageItemLevel         int
-	AverageItemLevelEquipped int
-	Head                     item
-	Neck                     item
-	Shoulder                 item
-	Back                     item
-	Chest                    item
-	Shirt                    item
-	Tabard                   item
-	Wrist                    item
-	Hands                    item
-	Waist                    item
-	Legs                     item
-	Feet                     item
-	Finger1                  item
-	Finger2                  item
-	Trinket1                 item
-	Trinket2                 item
-	MainHand                 item
-	OffHand                  item
+	Head     item
+	Neck     item
+	Shoulder item
+	Back     item
+	Chest    item
+	Shirt    item
+	Tabard   item
+	Wrist    item
+	Hands    item
+	Waist    item
+	Legs     item
+	Feet     item
+	Finger1  item
+	Finger2  item
+	Trinket1 item
+	Trinket2 item
+	MainHand item
+	OffHand  item
 }
