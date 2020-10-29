@@ -121,7 +121,7 @@ func createToken() string {
 		logger.Printf("%s reading token body failed: %s", errPrefix, err)
 		return ""
 	}
-	var accessTokenResponse = new(AccessTokenResponse)
+	var accessTokenResponse = new(accessTokenResponse)
 	err = json.Unmarshal(body, &accessTokenResponse)
 	if err != nil {
 		logger.Printf("%s unmarshalling token response failed: %s", errPrefix, err)
@@ -131,50 +131,44 @@ func createToken() string {
 	return accessTokenResponse.Token
 }
 
-// AccessTokenResponse : response from an OAuth token request
-type AccessTokenResponse struct {
+// accessTokenResponse : response from an OAuth token request
+type accessTokenResponse struct {
 	Token   string `json:"access_token"`
 	Type    string `json:"token_type"`
 	Expires int    `json:"expires_in"`
 }
 
-// Key : API key containing an HREF
-type Key struct {
+// key : API key containing an HREF
+type key struct {
 	Href string
 }
 
-// KeyedValue : API element containing a name, ID, and Key
-type KeyedValue struct {
-	Key  Key
+// keyedValue : API element containing a name, ID, and Key
+type keyedValue struct {
+	Key  key
 	Name string
 	ID   int
 }
 
-// KeyedID : API key and ID
-type KeyedID struct {
-	Key Key
-	ID  int
-}
-
-// TypedName : API type and name
-type TypedName struct {
+// typedName : API type and name
+type typedName struct {
 	Type string
 	name string
 }
 
-// TalentJSON : talent ID JSON
-type TalentJSON struct {
+// talentJSON : talent ID JSON
+type talentJSON struct {
 	ID int
 }
 
-// TalentEntryJSON : talent JSON
-type TalentEntryJSON struct {
-	Talent      TalentJSON
+// talentEntryJSON : talent JSON
+type talentEntryJSON struct {
+	Talent      talentJSON
 	ColumnIndex int `json:"column_index"`
 }
 
-// TalentTierJSON : talent tier JSON
-type TalentTierJSON struct {
-	Talents   []TalentEntryJSON
+// talentTierJSON : talent tier JSON
+type talentTierJSON struct {
+	Talents   []talentEntryJSON
 	TierIndex int `json:"tier_index"`
 }

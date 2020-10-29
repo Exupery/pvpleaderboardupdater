@@ -43,7 +43,7 @@ func queryTemplate() {
 	}
 }
 
-func insert(qry Query) int64 {
+func insert(qry query) int64 {
 	var numInserted int64 = 0
 	txn, err := db.Begin()
 	if err != nil {
@@ -92,7 +92,7 @@ func execute(sql string) {
 	}
 }
 
-func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playerSlugIDMap *map[string]int) {
+func setLeaderboard(bracket string, entries *map[string]*leaderboardEntry, playerSlugIDMap *map[string]int) {
 	qry := fmt.Sprintf(`INSERT INTO bracket_%s
 		(ranking, player_id, rating, season_wins, season_losses, last_update)
 		VALUES ($1, $2, $3, $4, $5, NOW())`, bracket)
@@ -111,11 +111,11 @@ func setLeaderboard(bracket string, entries *map[string]*LeaderboardEntry, playe
 		}
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("%s leaderboard set with %d entries", bracket, numInserted)
 }
 
-func addPlayers(players []*Player) {
+func addPlayers(players []*player) {
 	const qry string = `INSERT INTO players (name, realm_id, blizzard_id, class_id, spec_id,
 		faction_id, race_id, gender, guild) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (realm_id, blizzard_id) DO UPDATE SET name=$1, spec_id=$5, faction_id=$6,
@@ -128,11 +128,11 @@ func addPlayers(players []*Player) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Added or updated %d players", numInserted)
 }
 
-func getPlayerIDs(players []*Player) map[string]int {
+func getPlayerIDs(players []*player) map[string]int {
 	var m map[string]int = make(map[string]int)
 	rows, err := db.Query("SELECT id, realm_id, blizzard_id FROM players")
 	if err != nil {
@@ -181,15 +181,15 @@ func addPlayerTalents(playersTalents map[int]playerTalents) {
 		}
 	}
 
-	numInserted := insert(Query{SQL: talentQuery, Args: talentArgs,
+	numInserted := insert(query{SQL: talentQuery, Args: talentArgs,
 		Before: deleteTalentQuery, BeforeArgs: deleteArgs})
 	logger.Printf("Mapped %d players=>talents", numInserted)
-	numInserted = insert(Query{SQL: pvpTalentQuery, Args: pvpTalentArgs,
+	numInserted = insert(query{SQL: pvpTalentQuery, Args: pvpTalentArgs,
 		Before: deletePvPTalentQuery, BeforeArgs: deleteArgs})
 	logger.Printf("Mapped %d players=>PvP talents", numInserted)
 }
 
-func updatePlayerAchievements(players *map[int]*Player) {
+func updatePlayerAchievements(players *map[int]*player) {
 	const qry string = `INSERT INTO players_achievements (player_id, achievement_id, achieved_at) SELECT $1, $2, $3
 		WHERE NOT EXISTS (SELECT 1 FROM players_achievements WHERE player_id=$4 AND achievement_id=$5)`
 	args := make([][]interface{}, 0)
@@ -204,11 +204,11 @@ func updatePlayerAchievements(players *map[int]*Player) {
 	// }
 	// }
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>achievements", numInserted)
 }
 
-func updatePlayerStats(players *map[int]*Player) {
+func updatePlayerStats(players *map[int]*player) {
 	const qry string = `INSERT INTO players_stats
 		(player_id, strength, agility, intellect, stamina, spirit, critical_strike, haste,
 		attack_power, mastery, multistrike, versatility, leech, dodge, parry)
@@ -238,17 +238,17 @@ func updatePlayerStats(players *map[int]*Player) {
 	// ctr++
 	// }
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>stats", numInserted)
 }
 
-func updatePlayerItems(players *map[int]*Player) {
+func updatePlayerItems(players *map[int]*player) {
 	const qry string = `INSERT INTO players_items
 		(player_id, average_item_level, average_item_level_equipped, head, neck, shoulder, back, chest, shirt,
 		tabard, wrist, hands, waist, legs, feet, finger1, finger2, trinket1, trinket2, mainhand, offhand)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`
 	args := make([][]interface{}, 0)
-	items := make(map[int]Item)
+	items := make(map[int]item)
 
 	// var ctr int = 1
 	// for id, player := range *players {
@@ -281,12 +281,12 @@ func updatePlayerItems(players *map[int]*Player) {
 	// }
 
 	updateItems(&items)
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>items", numInserted)
 }
 
-func apppendItems(itemsMap *map[int]Item, itemsToAdd Items) {
-	items := []Item{itemsToAdd.Head, itemsToAdd.Neck, itemsToAdd.Shoulder, itemsToAdd.Back, itemsToAdd.Chest,
+func apppendItems(itemsMap *map[int]item, itemsToAdd items) {
+	items := []item{itemsToAdd.Head, itemsToAdd.Neck, itemsToAdd.Shoulder, itemsToAdd.Back, itemsToAdd.Chest,
 		itemsToAdd.Shirt, itemsToAdd.Tabard, itemsToAdd.Wrist, itemsToAdd.Hands, itemsToAdd.Waist,
 		itemsToAdd.Legs, itemsToAdd.Feet, itemsToAdd.Finger1, itemsToAdd.Finger2, itemsToAdd.Trinket1,
 		itemsToAdd.Trinket2, itemsToAdd.MainHand, itemsToAdd.OffHand}
@@ -298,7 +298,7 @@ func apppendItems(itemsMap *map[int]Item, itemsToAdd Items) {
 	}
 }
 
-func updateItems(items *map[int]Item) {
+func updateItems(items *map[int]item) {
 	const qry string = `INSERT INTO items (id, name, icon, item_level)
 		SELECT $1, $2, $3, $4
 		WHERE NOT EXISTS (SELECT 1 FROM items WHERE id=$5)`
@@ -309,7 +309,7 @@ func updateItems(items *map[int]Item) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d items", numInserted)
 }
 
@@ -321,7 +321,7 @@ func setUpdateTime() {
 	execute("UPDATE metadata SET last_update=NOW() WHERE key='update_time'")
 }
 
-func addRealms(realms *[]Realm, region string) {
+func addRealms(realms *[]realm, region string) {
 	const qry string = `INSERT INTO realms (id, slug, name, region)
 	VALUES($1, $2, $3, $4) ON CONFLICT DO NOTHING`
 	args := make([][]interface{}, 0)
@@ -331,11 +331,11 @@ func addRealms(realms *[]Realm, region string) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d realms", numInserted)
 }
 
-func addRaces(races *[]Race) {
+func addRaces(races *[]race) {
 	const qry string = `INSERT INTO races (id, name) VALUES($1, $2) ON CONFLICT DO NOTHING`
 	args := make([][]interface{}, 0)
 
@@ -344,11 +344,11 @@ func addRaces(races *[]Race) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d races", numInserted)
 }
 
-func addClasses(classes *[]Class) {
+func addClasses(classes *[]class) {
 	const qry string = `INSERT INTO classes (id, name) VALUES($1, $2) ON CONFLICT DO NOTHING`
 	args := make([][]interface{}, 0)
 
@@ -357,11 +357,11 @@ func addClasses(classes *[]Class) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d classes", numInserted)
 }
 
-func addSpecs(specs *[]Spec) {
+func addSpecs(specs *[]spec) {
 	const qry string = `INSERT INTO specs (id, class_id, name, role, icon)
 		VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET icon = $5`
 	args := make([][]interface{}, 0)
@@ -371,11 +371,11 @@ func addSpecs(specs *[]Spec) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted or updated %d specs", numInserted)
 }
 
-func addTalents(talents *[]Talent) {
+func addTalents(talents *[]talent) {
 	const deleteQuery string = `TRUNCATE TABLE talents CASCADE`
 	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon, tier, col)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET spec_id = NULL`
@@ -387,11 +387,11 @@ func addTalents(talents *[]Talent) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args, Before: deleteQuery})
+	numInserted := insert(query{SQL: qry, Args: args, Before: deleteQuery})
 	logger.Printf("Inserted %d talents", numInserted)
 }
 
-func addPvPTalents(pvpTalents *[]PvPTalent) {
+func addPvPTalents(pvpTalents *[]pvpTalent) {
 	const deleteQuery string = `TRUNCATE TABLE pvp_talents CASCADE`
 	const qry string = `INSERT INTO pvp_talents (id, spell_id, spec_id, name, icon)
 		VALUES ($1, $2, $3, $4, $5)`
@@ -402,11 +402,11 @@ func addPvPTalents(pvpTalents *[]PvPTalent) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args, Before: deleteQuery})
+	numInserted := insert(query{SQL: qry, Args: args, Before: deleteQuery})
 	logger.Printf("Inserted %d PvP talents", numInserted)
 }
 
-func addAchievements(achievements *[]Achievement) {
+func addAchievements(achievements *[]achievement) {
 	const qry string = `INSERT INTO achievements (id, name, description)
 		VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
 	args := make([][]interface{}, 0)
@@ -416,7 +416,7 @@ func addAchievements(achievements *[]Achievement) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(Query{SQL: qry, Args: args})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d achievements", numInserted)
 }
 

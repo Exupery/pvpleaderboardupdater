@@ -2,51 +2,51 @@ package main
 
 /* Structs used across multiple layers */
 
-// Query : SQL query with optional args
-type Query struct {
+// query : SQL query with optional args
+type query struct {
 	SQL        string
 	Args       [][]interface{}
 	Before     string
 	BeforeArgs []interface{}
 }
 
-// Realm : realm info
-type Realm struct {
+// realm : realm info
+type realm struct {
 	ID   int
 	Slug string
 	Name string
 }
 
-// Race : playable race
-type Race struct {
+// race : playable race
+type race struct {
 	ID   int
 	Name string
 }
 
-// Faction : player faction
-type Faction struct {
+// faction : player faction
+type faction struct {
 	ID   int
 	Name string
 }
 
-// Class : player class
-type Class struct {
+// class : player class
+type class struct {
 	ID   int
 	Name string
 }
 
-// Spec : class specialization
-type Spec struct {
+// spec : class specialization
+type spec struct {
 	ID      int
 	ClassID int
 	Name    string
 	Role    string
 	Icon    string
-	Talents []Talent
+	Talents []talent
 }
 
-// Talent : talent info
-type Talent struct {
+// talent : talent info
+type talent struct {
 	ID      int
 	SpellID int
 	ClassID int
@@ -57,8 +57,8 @@ type Talent struct {
 	Column  int
 }
 
-// PvPTalent : PvP talent info
-type PvPTalent struct {
+// pvpTalent : PvP talent info
+type pvpTalent struct {
 	ID      int
 	Name    string
 	SpellID int
@@ -66,15 +66,15 @@ type PvPTalent struct {
 	Icon    string
 }
 
-// Achievement : completed achievement info
-type Achievement struct {
+// achievement : completed achievement info
+type achievement struct {
 	ID          int
 	Title       string
 	Description string
 }
 
-// Stats : player stat info
-type Stats struct {
+// stats : player stat info
+type stats struct {
 	Str               int
 	Agi               int
 	Int               int
@@ -91,8 +91,8 @@ type Stats struct {
 	ParryRating       float64
 }
 
-// LeaderboardEntry : a singular listing on a leaderboard
-type LeaderboardEntry struct {
+// leaderboardEntry : a singular listing on a leaderboard
+type leaderboardEntry struct {
 	Name         string
 	RealmID      int
 	BlizzardID   int
@@ -102,8 +102,8 @@ type LeaderboardEntry struct {
 	SeasonLosses int
 }
 
-// Player : player info
-type Player struct {
+// player : player info
+type player struct {
 	Name       string
 	BlizzardID int
 	RealmID    int
@@ -116,8 +116,8 @@ type Player struct {
 	Path       string
 }
 
-// Item : an equippable item
-type Item struct {
+// item : an equippable item
+type item struct {
 	ID        int
 	Name      string
 	Icon      string
@@ -127,26 +127,26 @@ type Item struct {
 	Context   string
 }
 
-// Items : a player's equipped items
-type Items struct {
+// items : a player's equipped items
+type items struct {
 	AverageItemLevel         int
 	AverageItemLevelEquipped int
-	Head                     Item
-	Neck                     Item
-	Shoulder                 Item
-	Back                     Item
-	Chest                    Item
-	Shirt                    Item
-	Tabard                   Item
-	Wrist                    Item
-	Hands                    Item
-	Waist                    Item
-	Legs                     Item
-	Feet                     Item
-	Finger1                  Item
-	Finger2                  Item
-	Trinket1                 Item
-	Trinket2                 Item
-	MainHand                 Item
-	OffHand                  Item
+	Head                     item
+	Neck                     item
+	Shoulder                 item
+	Back                     item
+	Chest                    item
+	Shirt                    item
+	Tabard                   item
+	Wrist                    item
+	Hands                    item
+	Waist                    item
+	Legs                     item
+	Feet                     item
+	Finger1                  item
+	Finger2                  item
+	Trinket1                 item
+	Trinket2                 item
+	MainHand                 item
+	OffHand                  item
 }

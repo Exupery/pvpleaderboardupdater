@@ -25,7 +25,7 @@ func TestGet(t *testing.T) {
 
 func TestParseRealms(t *testing.T) {
 	var realmJSON *[]byte = getDynamic(testRegion, "realm/index")
-	var realms []Realm = parseRealms(realmJSON)
+	var realms []realm = parseRealms(realmJSON)
 
 	if realms == nil || len(realms) == 0 {
 		t.Error("Parsing realms failed")
@@ -35,7 +35,7 @@ func TestParseRealms(t *testing.T) {
 
 func TestParseRaces(t *testing.T) {
 	var racesJSON *[]byte = getStatic(testRegion, "playable-race/index")
-	var races []Race = parseRaces(racesJSON)
+	var races []race = parseRaces(racesJSON)
 
 	if races == nil || len(races) == 0 {
 		t.Error("Parsing races failed")
@@ -45,7 +45,7 @@ func TestParseRaces(t *testing.T) {
 
 func TestParseClasses(t *testing.T) {
 	var classesJSON *[]byte = getStatic(testRegion, "playable-class/index")
-	var classes []Class = parseClasses(classesJSON)
+	var classes []class = parseClasses(classesJSON)
 
 	if classes == nil || len(classes) == 0 {
 		t.Error("Parsing classes failed")
@@ -55,7 +55,7 @@ func TestParseClasses(t *testing.T) {
 
 func TestParseSpecsTalents(t *testing.T) {
 	var specsJSON *[]byte = getStatic(testRegion, "playable-specialization/index")
-	var specs []Spec = parseSpecs(specsJSON)
+	var specs []spec = parseSpecs(specsJSON)
 
 	if specs == nil || len(specs) == 0 {
 		t.Error("Parsing specs failed")
@@ -73,7 +73,7 @@ func TestParseSpecsTalents(t *testing.T) {
 
 func TestParsePvPTalents(t *testing.T) {
 	var talentsJSON *[]byte = getStatic(region, "pvp-talent/index")
-	var pvpTalents []PvPTalent = parsePvPTalents(talentsJSON)
+	var pvpTalents []pvpTalent = parsePvPTalents(talentsJSON)
 
 	if pvpTalents == nil || len(pvpTalents) == 0 {
 		t.Error("Parsing PvP Talents failed")
@@ -83,7 +83,7 @@ func TestParsePvPTalents(t *testing.T) {
 
 func TestParseAchievements(t *testing.T) {
 	var achievementsJSON *[]byte = getStatic(testRegion, "achievement-category/15270")
-	var achievements []Achievement = parseAchievements(achievementsJSON)
+	var achievements []achievement = parseAchievements(achievementsJSON)
 
 	if achievements == nil || len(achievements) == 0 {
 		t.Error("Parsing achievements failed")
@@ -112,7 +112,7 @@ func TestGetLeaderboard(t *testing.T) {
 func TestGetPlayersFromLeaderboards(t *testing.T) {
 	var a = getLeaderboard("2v2", testSeason)
 	var b = getLeaderboard("3v3", testSeason)
-	var players = getPlayersFromLeaderboards(map[string][]LeaderboardEntry{"2v2": a, "3v3": b})
+	var players = getPlayersFromLeaderboards(map[string][]leaderboardEntry{"2v2": a, "3v3": b})
 
 	if players == nil || len(players) == 0 {
 		t.Error("Getting leaderboard players failed")
@@ -122,9 +122,9 @@ func TestGetPlayersFromLeaderboards(t *testing.T) {
 
 func TestSliceSplitting(t *testing.T) {
 	max := 100
-	slice := make([]*Player, 0)
+	slice := make([]*player, 0)
 	for i := 0; i < max; i++ {
-		slice = append(slice, &Player{BlizzardID: i})
+		slice = append(slice, &player{BlizzardID: i})
 	}
 
 	groups := split(slice, len(slice))
@@ -134,7 +134,7 @@ func TestSliceSplitting(t *testing.T) {
 	validateSplitting(t, groups, len(slice)/10, 10)
 }
 
-func validateSplitting(t *testing.T, groups [][]*Player, expectedNumGroups, maxGroupSize int) {
+func validateSplitting(t *testing.T, groups [][]*player, expectedNumGroups, maxGroupSize int) {
 	if len(groups) != expectedNumGroups {
 		t.Errorf("Returned %d groups, but expected %d", len(groups), expectedNumGroups)
 	}
@@ -146,7 +146,7 @@ func validateSplitting(t *testing.T, groups [][]*Player, expectedNumGroups, maxG
 }
 
 func TestGetPlayerProfileDetails(t *testing.T) {
-	player := Player{Path: testPlayerPath}
+	player := player{Path: testPlayerPath}
 	setPlayerDetails(&player)
 
 	if player.ClassID == 0 {

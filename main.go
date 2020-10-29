@@ -29,7 +29,7 @@ func main() {
 	groupSize := groupSize()
 	season := getCurrentSeason()
 	// TODO HANDLE REGIONS
-	leaderboards := make(map[string][]LeaderboardEntry)
+	leaderboards := make(map[string][]leaderboardEntry)
 	// brackets := []string{"2v2", "3v3", "rbg"}
 	// for _, bracket := range brackets {
 	bracket := "2v2" // TODO DELME
@@ -75,18 +75,18 @@ func groupSize() int {
 	return i
 }
 
-func split(slice []*Player, groupSize int) [][]*Player {
-	groups := make([][]*Player, 0)
+func split(slice []*player, groupSize int) [][]*player {
+	groups := make([][]*player, 0)
 	if len(slice) <= groupSize {
 		return append(groups, slice)
 	}
 
-	group := make([]*Player, 0)
+	group := make([]*player, 0)
 	for i, p := range slice {
 		group = append(group, p)
 		if (i+1)%groupSize == 0 {
 			groups = append(groups, group)
-			group = make([]*Player, 0)
+			group = make([]*player, 0)
 		}
 	}
 
@@ -95,8 +95,8 @@ func split(slice []*Player, groupSize int) [][]*Player {
 
 func getCurrentSeason() int {
 	type Seasons struct {
-		Seasons       []KeyedID
-		CurrentSeason KeyedID `json:"current_season"`
+		Seasons       []keyedValue
+		CurrentSeason keyedValue `json:"current_season"`
 	}
 	var seasonsJSON *[]byte = getDynamic(region, "pvp-season/index")
 	var seasons Seasons
@@ -108,7 +108,7 @@ func getCurrentSeason() int {
 	return seasons.CurrentSeason.ID
 }
 
-func getLeaderboard(bracket string, season int) []LeaderboardEntry {
+func getLeaderboard(bracket string, season int) []leaderboardEntry {
 	type RealmJSON struct {
 		Slug string
 		ID   int
@@ -136,13 +136,13 @@ func getLeaderboard(bracket string, season int) []LeaderboardEntry {
 		season, bracket))
 	var leaderboard LeaderBoardJSON
 	err := json.Unmarshal(*leaderboardJSON, &leaderboard)
-	var leaderboardEntries []LeaderboardEntry = make([]LeaderboardEntry, 0)
+	var leaderboardEntries []leaderboardEntry = make([]leaderboardEntry, 0)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return leaderboardEntries
 	}
 	for _, entry := range leaderboard.Entries {
-		leaderboardEntry := LeaderboardEntry{
+		leaderboardEntry := leaderboardEntry{
 			entry.Character.Name,
 			entry.Character.Realm.ID,
 			entry.Character.ID,
@@ -159,8 +159,8 @@ func getLeaderboard(bracket string, season int) []LeaderboardEntry {
 	return leaderboardEntries
 }
 
-func getPlayersFromLeaderboards(leaderboards map[string][]LeaderboardEntry) []*Player {
-	players := make(map[string]*Player, 0)
+func getPlayersFromLeaderboards(leaderboards map[string][]leaderboardEntry) []*player {
+	players := make(map[string]*player, 0)
 	for _, entries := range leaderboards {
 		for _, entry := range entries {
 			key := playerKey(entry.RealmID, entry.BlizzardID)
@@ -170,7 +170,7 @@ func getPlayersFromLeaderboards(leaderboards map[string][]LeaderboardEntry) []*P
 			}
 			path := fmt.Sprintf("%s/%s",
 				getRealmSlug(entry.RealmID), url.QueryEscape(strings.ToLower(entry.Name)))
-			player := Player{
+			player := player{
 				Name:       entry.Name,
 				BlizzardID: entry.BlizzardID,
 				RealmID:    entry.RealmID,
@@ -178,7 +178,7 @@ func getPlayersFromLeaderboards(leaderboards map[string][]LeaderboardEntry) []*P
 			players[key] = &player
 		}
 	}
-	var p []*Player = make([]*Player, 0)
+	var p []*player = make([]*player, 0)
 	for _, player := range players {
 		p = append(p, player)
 	}
@@ -189,12 +189,12 @@ func playerKey(realmID, blizzardID int) string {
 	return fmt.Sprintf("%d-%d", realmID, blizzardID)
 }
 
-func importPlayers(players []*Player, waitGroup *sync.WaitGroup) {
+func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
 	for _, player := range players {
 		setPlayerDetails(player)
 	}
-	foundPlayers := make([]*Player, 0)
+	foundPlayers := make([]*player, 0)
 	for _, player := range players {
 		if player.ClassID == 0 {
 			logger.Printf("No details found for %s, skipping", player.Path)
@@ -214,14 +214,14 @@ func importPlayers(players []*Player, waitGroup *sync.WaitGroup) {
 	// TODO IMPORT/INSERT ACHIEVS
 }
 
-func setPlayerDetails(player *Player) {
+func setPlayerDetails(player *player) {
 	type ProfileJSON struct {
-		Gender         TypedName
-		Faction        TypedName
-		Race           KeyedValue
-		CharacterClass KeyedValue `json:"character_class"`
-		ActiveSpec     KeyedValue `json:"active_spec"`
-		Guild          KeyedValue
+		Gender         typedName
+		Faction        typedName
+		Race           keyedValue
+		CharacterClass keyedValue `json:"character_class"`
+		ActiveSpec     keyedValue `json:"active_spec"`
+		Guild          keyedValue
 	}
 	var profileJSON *[]byte = getProfile(region, player.Path)
 	if profileJSON == nil {
@@ -254,19 +254,19 @@ func setPlayerDetails(player *Player) {
 
 func getPlayerTalents(path string) playerTalents {
 	type Talent struct {
-		Talent KeyedValue
+		Talent keyedValue
 	}
 	type PvPTalent struct {
 		Selected Talent
 	}
 	type Specialization struct {
-		Specialization KeyedValue
+		Specialization keyedValue
 		Talents        []Talent
 		PvPTalentSlots []PvPTalent `json:"pvp_talent_slots"`
 	}
 	type Specializations struct {
 		Specializations      []Specialization
-		ActiveSpecialization KeyedValue `json:"active_specialization"`
+		ActiveSpecialization keyedValue `json:"active_specialization"`
 	}
 	talentPath := path + "/specializations"
 	var talentJSON *[]byte = getProfile(region, talentPath)
