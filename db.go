@@ -125,23 +125,9 @@ func addPlayers(players []*Player) {
 	logger.Printf("Added or updated %d players", numInserted)
 }
 
-func updatePlayers(players *map[int]*Player) bool {
-	updated := updatePlayerDetails(players)
-	if updated > 0 {
-		updatePlayerTalents(players)
-		updatePlayerStats(players)
-		updatePlayerAchievements(players)
-		updatePlayerItems(players)
-		return true
-	}
-
-	logger.Printf("%s Updated NO player details (%d expected)", errPrefix, len(*players))
-	return false
-}
-
-func getPlayerIDMap(players []*Player) *map[int]*Player {
-	var m map[int]*Player = make(map[int]*Player)
-	rows, err := db.Query("SELECT id, name, realm_slug FROM players")
+func getPlayerIDs(players []*Player) map[string]int {
+	var m map[string]int = make(map[string]int)
+	rows, err := db.Query("SELECT id, realm_id, blizzard_id FROM players")
 	if err != nil {
 		logger.Printf("%s %s", errPrefix, err)
 	}
@@ -149,22 +135,24 @@ func getPlayerIDMap(players []*Player) *map[int]*Player {
 	var t map[string]int = make(map[string]int)
 	for rows.Next() {
 		var id int
-		var name string
-		var realmSlug string
-		err := rows.Scan(&id, &name, &realmSlug)
+		var realmID int
+		var blizzardID int
+		err := rows.Scan(&id, &realmID, &blizzardID)
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
 		}
-		t[name+realmSlug] = id
+		key := playerKey(realmID, blizzardID)
+		t[key] = id
 	}
 
-	// for _, player := range players {
-	// var id int = t[player.Name+player.RealmSlug]
-	// if id > 0 {
-	// 	m[id] = player
-	// }
-	// }
-	return &m
+	for _, player := range players {
+		tKey := playerKey(player.RealmID, player.BlizzardID)
+		var id int = t[tKey]
+		if id > 0 {
+			m[player.Path] = id
+		}
+	}
+	return m
 }
 
 func updatePlayerDetails(players *map[int]*Player) int {

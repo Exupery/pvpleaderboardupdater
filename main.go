@@ -203,7 +203,14 @@ func importPlayers(players []*Player, waitGroup *sync.WaitGroup) {
 		foundPlayers = append(foundPlayers, player)
 	}
 	addPlayers(foundPlayers)
-	// TODO IMPORT/INSERT TALENTS
+	var playerIDs map[string]int = getPlayerIDs(foundPlayers)
+	logger.Printf("%v", playerIDs) // TODO DELME
+	var playersTalents map[int]playerTalents = make(map[int]playerTalents, 0)
+	for profilePath, dbID := range playerIDs {
+		playersTalents[dbID] = getPlayerTalents(profilePath)
+	}
+	logger.Printf("%v", playersTalents) // TODO DELME
+	// TODO ADD TALENTS
 	// TODO IMPORT/INSERT STATS
 	// TODO IMPORT/INSERT ITEMS
 	// TODO IMPORT/INSERT ACHIEVS
@@ -245,4 +252,62 @@ func setPlayerDetails(player *Player) {
 	player.ClassID = profile.CharacterClass.ID
 	player.SpecID = profile.ActiveSpec.ID
 	player.Guild = profile.Guild.Name
+}
+
+func getPlayerTalents(path string) playerTalents {
+	type Talent struct {
+		Talent KeyedValue
+	}
+	type PvPTalent struct {
+		Selected Talent
+	}
+	type Specialization struct {
+		Specialization KeyedValue
+		Talents        []Talent
+		PvPTalentSlots []PvPTalent `json:"pvp_talent_slots"`
+	}
+	type Specializations struct {
+		Specializations      []Specialization
+		ActiveSpecialization KeyedValue `json:"active_specialization"`
+	}
+	talentPath := path + "/specializations"
+	var talentJSON *[]byte = getProfile(region, talentPath)
+	if talentJSON == nil {
+		return playerTalents{}
+	}
+	var specializations Specializations
+	err := json.Unmarshal(*talentJSON, &specializations)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return playerTalents{}
+	}
+
+	activeSpecID := specializations.ActiveSpecialization.ID
+	talents := make([]int, 0)
+	pvpTalents := make([]int, 0)
+	for _, spec := range specializations.Specializations {
+		if spec.Specialization.ID != activeSpecID {
+			continue
+		}
+		for _, talent := range spec.Talents {
+			id := talent.Talent.ID
+			if id > 0 {
+				talents = append(talents, id)
+			}
+		}
+		for _, pvpTalent := range spec.PvPTalentSlots {
+			id := pvpTalent.Selected.Talent.ID
+			if id > 0 {
+				pvpTalents = append(pvpTalents, id)
+			}
+		}
+		break
+	}
+
+	return playerTalents{talents, pvpTalents}
+}
+
+type playerTalents struct {
+	Talents    []int
+	PvPTalents []int
 }

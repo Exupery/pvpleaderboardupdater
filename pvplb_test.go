@@ -6,6 +6,7 @@ import (
 
 const testRegion = "US"
 const testSeason = 29
+const testPlayerPath = "emerald-dream/exupery"
 
 func TestCreateToken(t *testing.T) {
 	var token string = createToken()
@@ -145,7 +146,7 @@ func validateSplitting(t *testing.T, groups [][]*Player, expectedNumGroups, maxG
 }
 
 func TestGetPlayerProfileDetails(t *testing.T) {
-	player := Player{Path: "emerald-dream/exupery"}
+	player := Player{Path: testPlayerPath}
 	setPlayerDetails(&player)
 
 	if player.ClassID == 0 {
@@ -160,4 +161,12 @@ func TestGetPlayerProfileDetails(t *testing.T) {
 	if player.RaceID == 0 {
 		t.Error("Player race NOT set")
 	}
+}
+
+func TestGetPlayerTalents(t *testing.T) {
+	talents := getPlayerTalents(testPlayerPath)
+	if len(talents.Talents) == 0 || len(talents.PvPTalents) == 0 {
+		t.Error("Getting player talents failed")
+	}
+	t.Logf("Found %d talents and %d PvP talents", len(talents.Talents), len(talents.PvPTalents))
 }
