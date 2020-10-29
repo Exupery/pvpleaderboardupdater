@@ -213,7 +213,7 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 		playersStats[dbID] = getPlayerStats(profilePath)
 	}
 	addPlayerTalents(playersTalents)
-	// TODO ADD STATS
+	addPlayerStats(playersStats)
 	// TODO IMPORT/INSERT ITEMS
 	// TODO IMPORT/INSERT ACHIEVS
 }

@@ -208,35 +208,31 @@ func updatePlayerAchievements(players *map[int]*player) {
 	logger.Printf("Mapped %d players=>achievements", numInserted)
 }
 
-func updatePlayerStats(players *map[int]*player) {
+func addPlayerStats(playersStats map[int]stats) {
 	const qry string = `INSERT INTO players_stats
-		(player_id, strength, agility, intellect, stamina, spirit, critical_strike, haste,
-		attack_power, mastery, multistrike, versatility, leech, dodge, parry)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
+		(player_id, strength, agility, intellect, stamina, critical_strike, haste,
+		versatility, mastery, leech, dodge, parry)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT(player_id)
+		DO UPDATE SET strength=$2, agility=$3, intellect=$4, stamina=$5, critical_strike=$6,
+		haste=$7, versatility=$8, mastery=$9, leech=$10, dodge=$11, parry=$12`
 	args := make([][]interface{}, 0)
 
-	// var ctr int = 1
-	// for id, player := range *players {
-	// ps := player.Stats
-	// stats := []interface{}{
-	// 	id,
-	// 	ps.Str,
-	// 	ps.Agi,
-	// 	ps.Int,
-	// 	ps.Sta,
-	// 	ps.Spr,
-	// 	ps.CritRating,
-	// 	ps.HasteRating,
-	// 	ps.AttackPower,
-	// 	int(ps.MasteryRating),
-	// 	int(ps.MultistrikeRating),
-	// 	int(ps.Versatility),
-	// 	int(ps.LeechRating),
-	// 	int(ps.DodgeRating),
-	// 	int(ps.ParryRating)}
-	// args = append(args, stats)
-	// ctr++
-	// }
+	for id, ps := range playersStats {
+		stats := []interface{}{
+			id,
+			ps.Strength,
+			ps.Agility,
+			ps.Intellect,
+			ps.Stamina,
+			ps.CriticalStrike,
+			ps.Haste,
+			ps.Versatility,
+			ps.Mastery,
+			ps.Leech,
+			ps.Dodge,
+			ps.Parry}
+		args = append(args, stats)
+	}
 
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>stats", numInserted)
