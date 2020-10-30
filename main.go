@@ -205,19 +205,22 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 
 	addPlayers(foundPlayers)
 	var playerIDs map[string]int = getPlayerIDs(foundPlayers)
+	var pvpAchievements map[int]bool = getAchievementIds()
 
 	var playersTalents map[int]playerTalents = make(map[int]playerTalents, 0)
 	var playersStats map[int]stats = make(map[int]stats, 0)
 	var playersItems map[int]items = make(map[int]items, 0)
+	var playersAchievements map[int][]int = make(map[int][]int, 0)
 	for profilePath, dbID := range playerIDs {
 		playersTalents[dbID] = getPlayerTalents(profilePath)
 		playersStats[dbID] = getPlayerStats(profilePath)
 		playersItems[dbID] = getPlayerItems(profilePath)
+		playersAchievements[dbID] = getPlayerAchievements(profilePath, pvpAchievements)
 	}
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
 	addPlayerItems(playersItems)
-	// TODO IMPORT/INSERT ACHIEVS
+	// addPlayerAchievements(playersAchievements)
 }
 
 func setPlayerDetails(player *player) {
@@ -409,6 +412,34 @@ func getPlayerItems(path string) items {
 		Trinket2: equippedItems["TRINKET_2"],
 		MainHand: equippedItems["MAIN_HAND"],
 		OffHand:  equippedItems["OFF_HAND"]}
+}
+
+func getPlayerAchievements(path string, pvpAchievements map[int]bool) []int {
+	type AchievementJSON struct {
+		ID                 int
+		CompletedTimestamp int64 `json:"completed_timestamp"`
+	}
+	type AchievedJSON struct {
+		Achievements []AchievementJSON
+	}
+	var achievedJSON *[]byte = getProfile(region, path+"/achievements")
+	if achievedJSON == nil {
+		return make([]int, 0)
+	}
+	var achieved AchievedJSON
+	err := json.Unmarshal(*achievedJSON, &achieved)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return make([]int, 0)
+	}
+	achievedIDs := make([]int, 0)
+	for _, achievement := range achieved.Achievements {
+		id := achievement.ID
+		if pvpAchievements[id] && achievement.CompletedTimestamp > 0 {
+			achievedIDs = append(achievedIDs, id)
+		}
+	}
+	return achievedIDs
 }
 
 func highestStat(a, b, c int) int {

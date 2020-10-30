@@ -419,7 +419,7 @@ func addAchievements(achievements *[]achievement) {
 	logger.Printf("Inserted %d achievements", numInserted)
 }
 
-func getAchievementIds() *map[int]bool {
+func getAchievementIds() map[int]bool {
 	var m map[int]bool = make(map[int]bool)
 	rows, err := db.Query("SELECT id FROM achievements")
 	if err != nil {
@@ -434,7 +434,7 @@ func getAchievementIds() *map[int]bool {
 		}
 		m[id] = true
 	}
-	return &m
+	return m
 }
 
 func getRealmSlug(id int) string {

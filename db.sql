@@ -97,7 +97,6 @@ CREATE INDEX ON leaderboards (rating);
 CREATE TABLE players_achievements (
   player_id INTEGER NOT NULL REFERENCES players (id),
   achievement_id INTEGER NOT NULL REFERENCES achievements (id),
-  achieved_at TIMESTAMP,
   PRIMARY KEY (player_id, achievement_id)
 );
 

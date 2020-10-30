@@ -211,3 +211,11 @@ func TestGetPlayerItems(t *testing.T) {
 	}
 	t.Logf("Found items: %v", items)
 }
+
+func TestGetPlayerAchievements(t *testing.T) {
+	achieved := getPlayerAchievements(testPlayerPath, map[int]bool{2092: true, 13989: true})
+	if achieved == nil || len(achieved) == 0 {
+		t.Error("Getting player achievements failed")
+	}
+	t.Logf("Found achievements: %v", achieved)
+}
