@@ -16,7 +16,9 @@ var achievementIDs = []int{
 
 func importStaticData() {
 	logger.Println("Beginning import of static data")
-	importRealms(region) // TODO IMPORT FOR EACH REGION
+	for _, r := range regions {
+		importRealms(r)
+	}
 	importRaces()
 	importClasses()
 	importSpecsAndTalents()
