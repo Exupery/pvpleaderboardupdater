@@ -188,20 +188,16 @@ func addPlayerTalents(playersTalents map[int]playerTalents) {
 	logger.Printf("Mapped %d players=>PvP talents", numInserted)
 }
 
-func updatePlayerAchievements(players *map[int]*player) {
-	const qry string = `INSERT INTO players_achievements (player_id, achievement_id, achieved_at) SELECT $1, $2, $3
-		WHERE NOT EXISTS (SELECT 1 FROM players_achievements WHERE player_id=$4 AND achievement_id=$5)`
+func addPlayerAchievements(playerAchievements map[int][]int) {
+	const qry string = `INSERT INTO players_achievements (player_id, achievement_id) VALUES ($1, $2)
+		ON CONFLICT (player_id, achievement_id) DO NOTHING`
 	args := make([][]interface{}, 0)
 
-	// validIds := getAchievementIds()
-	// for id, player := range *players {
-	// for idx, achievID := range player.AchievementIDs {
-	// 	if (*validIds)[achievID] {
-	// 		achievedAt := time.Unix(player.AchievementTimestamps[idx]/1000, 0)
-	// 		args = append(args, []interface{}{id, achievID, achievedAt, id, achievID})
-	// 	}
-	// }
-	// }
+	for id, achievements := range playerAchievements {
+		for _, achievID := range achievements {
+			args = append(args, []interface{}{id, achievID})
+		}
+	}
 
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>achievements", numInserted)

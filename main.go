@@ -220,7 +220,7 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
 	addPlayerItems(playersItems)
-	// addPlayerAchievements(playersAchievements)
+	addPlayerAchievements(playersAchievements)
 }
 
 func setPlayerDetails(player *player) {
