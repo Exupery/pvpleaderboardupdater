@@ -216,7 +216,7 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 	}
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
-	// TODO addPlayerItems(playersItems)
+	addPlayerItems(playersItems)
 	// TODO IMPORT/INSERT ACHIEVS
 }
 

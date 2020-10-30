@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
@@ -238,71 +237,75 @@ func addPlayerStats(playersStats map[int]stats) {
 	logger.Printf("Mapped %d players=>stats", numInserted)
 }
 
-func updatePlayerItems(players *map[int]*player) {
+func addPlayerItems(playersItems map[int]items) {
 	const qry string = `INSERT INTO players_items
-		(player_id, average_item_level, average_item_level_equipped, head, neck, shoulder, back, chest, shirt,
+		(player_id, head, neck, shoulder, back, chest, shirt,
 		tabard, wrist, hands, waist, legs, feet, finger1, finger2, trinket1, trinket2, mainhand, offhand)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+		ON CONFLICT (player_id) DO UPDATE SET head=$2, neck=$3, shoulder=$4, back=$5, chest=$6,
+		shirt=$7, tabard=$8, wrist=$9, hands=$10, waist=$11, legs=$12, feet=$13, finger1=$14,
+		finger2=$15, trinket1=$16, trinket2=$17, mainhand=$18, offhand=$19`
 	args := make([][]interface{}, 0)
-	items := make(map[int]item)
 
-	// var ctr int = 1
-	// for id, player := range *players {
-	// pi := player.Items
-	// playerItems := []interface{}{
-	// 	id,
-	// 	pi.AverageItemLevel,
-	// 	pi.AverageItemLevelEquipped,
-	// 	pi.Head.ID,
-	// 	pi.Neck.ID,
-	// 	pi.Shoulder.ID,
-	// 	pi.Back.ID,
-	// 	pi.Chest.ID,
-	// 	pi.Shirt.ID,
-	// 	pi.Tabard.ID,
-	// 	pi.Wrist.ID,
-	// 	pi.Hands.ID,
-	// 	pi.Waist.ID,
-	// 	pi.Legs.ID,
-	// 	pi.Feet.ID,
-	// 	pi.Finger1.ID,
-	// 	pi.Finger2.ID,
-	// 	pi.Trinket1.ID,
-	// 	pi.Trinket2.ID,
-	// 	pi.MainHand.ID,
-	// 	pi.OffHand.ID}
-	// args = append(args, playerItems)
-	// apppendItems(&items, pi)
-	// 	ctr++
-	// }
+	for id, pi := range playersItems {
+		playerItems := []interface{}{
+			id,
+			pi.Head.ID,
+			pi.Neck.ID,
+			pi.Shoulder.ID,
+			pi.Back.ID,
+			pi.Chest.ID,
+			pi.Shirt.ID,
+			pi.Tabard.ID,
+			pi.Wrist.ID,
+			pi.Hands.ID,
+			pi.Waist.ID,
+			pi.Legs.ID,
+			pi.Feet.ID,
+			pi.Finger1.ID,
+			pi.Finger2.ID,
+			pi.Trinket1.ID,
+			pi.Trinket2.ID,
+			pi.MainHand.ID,
+			pi.OffHand.ID}
+		args = append(args, playerItems)
+	}
 
-	updateItems(&items)
+	addItems(playersItems)
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>items", numInserted)
 }
 
-func apppendItems(itemsMap *map[int]item, itemsToAdd items) {
-	items := []item{itemsToAdd.Head, itemsToAdd.Neck, itemsToAdd.Shoulder, itemsToAdd.Back, itemsToAdd.Chest,
-		itemsToAdd.Shirt, itemsToAdd.Tabard, itemsToAdd.Wrist, itemsToAdd.Hands, itemsToAdd.Waist,
-		itemsToAdd.Legs, itemsToAdd.Feet, itemsToAdd.Finger1, itemsToAdd.Finger2, itemsToAdd.Trinket1,
-		itemsToAdd.Trinket2, itemsToAdd.MainHand, itemsToAdd.OffHand}
+func addItems(playersItems map[int]items) {
+	const qry string = `INSERT INTO items (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`
 
-	for _, item := range items {
-		if item.ID > 0 {
-			(*itemsMap)[item.ID] = item
-		}
+	items := make(map[int]string, 0)
+	for _, pi := range playersItems {
+		items[pi.Head.ID] = pi.Head.Name
+		items[pi.Neck.ID] = pi.Neck.Name
+		items[pi.Shoulder.ID] = pi.Shoulder.Name
+		items[pi.Back.ID] = pi.Back.Name
+		items[pi.Chest.ID] = pi.Chest.Name
+		items[pi.Shirt.ID] = pi.Shirt.Name
+		items[pi.Tabard.ID] = pi.Tabard.Name
+		items[pi.Wrist.ID] = pi.Wrist.Name
+		items[pi.Hands.ID] = pi.Hands.Name
+		items[pi.Waist.ID] = pi.Waist.Name
+		items[pi.Legs.ID] = pi.Legs.Name
+		items[pi.Feet.ID] = pi.Feet.Name
+		items[pi.Finger1.ID] = pi.Finger1.Name
+		items[pi.Finger2.ID] = pi.Finger2.Name
+		items[pi.Trinket1.ID] = pi.Trinket1.Name
+		items[pi.MainHand.ID] = pi.MainHand.Name
+		items[pi.OffHand.ID] = pi.OffHand.Name
 	}
-}
 
-func updateItems(items *map[int]item) {
-	const qry string = `INSERT INTO items (id, name, icon, item_level)
-		SELECT $1, $2, $3, $4
-		WHERE NOT EXISTS (SELECT 1 FROM items WHERE id=$5)`
 	args := make([][]interface{}, 0)
-
-	for _, item := range *items {
-		params := []interface{}{item.ID, item.Name}
-		args = append(args, params)
+	for id, name := range items {
+		if id == 0 {
+			continue
+		}
+		args = append(args, []interface{}{id, name})
 	}
 
 	numInserted := insert(query{SQL: qry, Args: args})
@@ -414,26 +417,6 @@ func addAchievements(achievements *[]achievement) {
 
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d achievements", numInserted)
-}
-
-func classIDSpecNameToSpecIDMap() *map[string]int {
-	var m map[string]int = make(map[string]int)
-	rows, err := db.Query("SELECT id, class_id, name FROM specs")
-	if err != nil {
-		logger.Printf("%s %s", errPrefix, err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id int
-		var classID int
-		var name string
-		err := rows.Scan(&id, &classID, &name)
-		if err != nil {
-			logger.Printf("%s %s", errPrefix, err)
-		}
-		m[strconv.Itoa(classID)+name] = id
-	}
-	return &m
 }
 
 func getAchievementIds() *map[int]bool {
