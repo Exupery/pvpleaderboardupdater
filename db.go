@@ -329,6 +329,10 @@ func setUpdateTime() {
 	execute("UPDATE metadata SET last_update=NOW() WHERE key='update_time'")
 }
 
+func purgeStalePlayers() {
+	execute("SELECT purge_old_players()")
+}
+
 func addRealms(realms *[]realm, region string) {
 	const qry string = `INSERT INTO realms (id, slug, name, region)
 	VALUES($1, $2, $3, $4) ON CONFLICT DO NOTHING`

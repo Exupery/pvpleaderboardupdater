@@ -51,7 +51,7 @@ func main() {
 			updateLeaderboard(bracket, leaderboard)
 		}
 	}
-	// TODO PURGE STALE DATA
+	purgeStalePlayers()
 	// setUpdateTime()
 	end := time.Now()
 	logger.Printf("Updating PvPLeaderBoard Complete after %v", end.Sub(start))
