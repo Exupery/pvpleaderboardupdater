@@ -52,7 +52,7 @@ func main() {
 		}
 	}
 	purgeStalePlayers()
-	// setUpdateTime()
+	setUpdateTime()
 	end := time.Now()
 	logger.Printf("Updating PvPLeaderBoard Complete after %v", end.Sub(start))
 }

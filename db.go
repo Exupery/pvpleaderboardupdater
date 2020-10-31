@@ -322,11 +322,8 @@ func addItems(playersItems map[int]items) {
 }
 
 func setUpdateTime() {
-	execute(`INSERT INTO metadata (key, last_update)
-		SELECT 'update_time', NOW()
-		WHERE NOT EXISTS (SELECT 1 FROM metadata WHERE key='update_time')`)
-
-	execute("UPDATE metadata SET last_update=NOW() WHERE key='update_time'")
+	execute(`INSERT INTO metadata (key, last_update) VALUES ('update_time', NOW())
+		ON CONFLICT (key) DO UPDATE SET last_update=NOW()`)
 }
 
 func purgeStalePlayers() {
