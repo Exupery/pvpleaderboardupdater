@@ -1,3 +1,8 @@
 language: go
 go: 1.15
-
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database pvp;' -U postgres
+  - psql pvp -U postgres -c 'CREATE TABLE realms(id INTEGER PRIMARY KEY,slug VARCHAR(64) NOT NULL);'
+script: go test -short -v ./...
