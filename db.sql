@@ -81,15 +81,15 @@ CREATE INDEX ON players (faction_id, race_id);
 CREATE INDEX ON players (guild);
 
 CREATE TABLE leaderboards (
-  bracket CHAR(3) NOT NULL,
   region CHAR(2) NOT NULL,
+  bracket CHAR(3) NOT NULL,
   player_id INTEGER NOT NULL REFERENCES players (id),
   ranking SMALLINT NOT NULL,
   rating SMALLINT NOT NULL,
   season_wins SMALLINT,
   season_losses SMALLINT,
   last_update TIMESTAMP DEFAULT NOW(),
-  PRIMARY KEY (bracket, region, player_id)
+  PRIMARY KEY (region, bracket, player_id)
 );
 CREATE INDEX ON leaderboards (ranking);
 CREATE INDEX ON leaderboards (rating);

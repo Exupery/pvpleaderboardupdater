@@ -21,6 +21,7 @@ const warnPrefix string = "[WARN]"
 const defaultGroupSize int = 100
 
 var region = "US"
+var regions = []string{"EU", "US"}
 
 func main() {
 	start := time.Now()
@@ -28,24 +29,28 @@ func main() {
 	importStaticData()
 	groupSize := groupSize()
 	season := getCurrentSeason()
-	// TODO HANDLE REGIONS
-	leaderboards := make(map[string][]leaderboardEntry)
-	// brackets := []string{"2v2", "3v3", "rbg"}
-	// for _, bracket := range brackets {
-	bracket := "2v2" // TODO DELME
-	leaderboard := getLeaderboard(bracket, season)
-	logger.Printf("Found %d players on %s %s leaderboard", len(leaderboard), region, bracket)
-	leaderboards[bracket] = leaderboard
-	players := getPlayersFromLeaderboards(leaderboards)
-	logger.Printf("Found %d unique players across %s leaderboards", len(players), region)
-	groups := split(players, groupSize)
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(len(groups))
-	for _, group := range groups {
-		go importPlayers(group, &waitGroup)
+	for _, r := range regions {
+		region = r
+		leaderboards := make(map[string][]leaderboardEntry)
+		brackets := []string{"2v2", "3v3", "rbg"}
+		for _, bracket := range brackets {
+			leaderboard := getLeaderboard(bracket, season)
+			logger.Printf("Found %d players on %s %s leaderboard", len(leaderboard), region, bracket)
+			leaderboards[bracket] = leaderboard
+		}
+		players := getPlayersFromLeaderboards(leaderboards)
+		logger.Printf("Found %d unique players across %s leaderboards", len(players), region)
+		groups := split(players, groupSize)
+		var waitGroup sync.WaitGroup
+		waitGroup.Add(len(groups))
+		for _, group := range groups {
+			go importPlayers(group, &waitGroup)
+		}
+		waitGroup.Wait()
+		for bracket, leaderboard := range leaderboards {
+			updateLeaderboard(bracket, leaderboard)
+		}
 	}
-	waitGroup.Wait()
-	// }
 	// TODO PURGE STALE DATA
 	// setUpdateTime()
 	end := time.Now()

@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
@@ -59,9 +60,7 @@ func insert(qry query) int64 {
 		if len(qry.BeforeArgs) == 0 {
 			_, err = bStmt.Exec()
 		} else {
-			for _, param := range qry.BeforeArgs {
-				_, err = bStmt.Exec(param)
-			}
+			_, err = bStmt.Exec(qry.BeforeArgs...)
 		}
 		if err != nil {
 			logger.Printf("%s Before query failed: %s", errPrefix, err)
@@ -91,27 +90,31 @@ func execute(sql string) {
 	}
 }
 
-func setLeaderboard(bracket string, entries *map[string]*leaderboardEntry, playerSlugIDMap *map[string]int) {
-	qry := fmt.Sprintf(`INSERT INTO bracket_%s
-		(ranking, player_id, rating, season_wins, season_losses, last_update)
-		VALUES ($1, $2, $3, $4, $5, NOW())`, bracket)
+func updateLeaderboard(bracket string, leaderboard []leaderboardEntry) {
+	const deleteQuery string = `DELETE FROM leaderboards WHERE region=$1 AND bracket=$2`
+	const qry string = `INSERT INTO leaderboards
+		(region, bracket, player_id, ranking, rating, season_wins, season_losses)
+		SELECT $1, $2, (SELECT id FROM players WHERE realm_id=$3 AND blizzard_id=$4), $5, $6, $7, $8
+		WHERE EXISTS (SELECT 1 FROM players WHERE realm_id=$3 AND blizzard_id=$4)`
+
+	deleteArgs := []interface{}{region, bracket}
 	args := make([][]interface{}, 0)
 
-	for slug, entry := range *entries {
-		id := (*playerSlugIDMap)[slug]
-		if id > 0 {
-			params := []interface{}{
-				entry.Rank,
-				id,
-				entry.Rating,
-				entry.SeasonWins,
-				entry.SeasonLosses}
-			args = append(args, params)
-		}
+	for _, entry := range leaderboard {
+		params := []interface{}{
+			region,
+			bracket,
+			entry.RealmID,
+			entry.BlizzardID,
+			entry.Rank,
+			entry.Rating,
+			entry.SeasonWins,
+			entry.SeasonLosses}
+		args = append(args, params)
 	}
 
-	numInserted := insert(query{SQL: qry, Args: args})
-	logger.Printf("%s leaderboard set with %d entries", bracket, numInserted)
+	numInserted := insert(query{SQL: qry, Args: args, Before: deleteQuery, BeforeArgs: deleteArgs})
+	logger.Printf("%s %s leaderboard set with %d entries", region, bracket, numInserted)
 }
 
 func addPlayers(players []*player) {
@@ -162,15 +165,20 @@ func getPlayerIDs(players []*player) map[string]int {
 }
 
 func addPlayerTalents(playersTalents map[int]playerTalents) {
-	const deleteTalentQuery string = `DELETE FROM players_talents WHERE player_id=$1`
-	const talentQuery string = `INSERT INTO players_talents (player_id, talent_id) VALUES ($1, $2)`
-	const deletePvPTalentQuery string = `DELETE FROM players_pvp_talents WHERE player_id=$1`
-	const pvpTalentQuery string = `INSERT INTO players_pvp_talents (player_id, pvp_talent_id) VALUES ($1, $2)`
+	var deleteTalentQuery string = `DELETE FROM players_talents WHERE player_id IN (`
+	const talentQuery string = `INSERT INTO players_talents (player_id, talent_id)
+		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM talents WHERE id=$2)`
+	var deletePvPTalentQuery string = `DELETE FROM players_pvp_talents WHERE player_id IN (`
+	const pvpTalentQuery string = `INSERT INTO players_pvp_talents (player_id, pvp_talent_id)
+		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM pvp_talents WHERE id=$2)`
 	deleteArgs := make([]interface{}, 0)
 	talentArgs := make([][]interface{}, 0)
 	pvpTalentArgs := make([][]interface{}, 0)
 
+	ctr := 1
 	for id, talents := range playersTalents {
+		deleteTalentQuery += fmt.Sprintf("$%d,", ctr)
+		deletePvPTalentQuery += fmt.Sprintf("$%d,", ctr)
 		deleteArgs = append(deleteArgs, id)
 		for _, talent := range talents.Talents {
 			talentArgs = append(talentArgs, []interface{}{id, talent})
@@ -178,7 +186,12 @@ func addPlayerTalents(playersTalents map[int]playerTalents) {
 		for _, pvptalent := range talents.PvPTalents {
 			pvpTalentArgs = append(pvpTalentArgs, []interface{}{id, pvptalent})
 		}
+		ctr++
 	}
+	deleteTalentQuery = strings.TrimRight(deleteTalentQuery, ",")
+	deletePvPTalentQuery = strings.TrimRight(deletePvPTalentQuery, ",")
+	deleteTalentQuery += ")"
+	deletePvPTalentQuery += ")"
 
 	numInserted := insert(query{SQL: talentQuery, Args: talentArgs,
 		Before: deleteTalentQuery, BeforeArgs: deleteArgs})
