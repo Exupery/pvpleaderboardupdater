@@ -111,6 +111,9 @@ func TestGetLeaderboard(t *testing.T) {
 }
 
 func TestGetPlayersFromLeaderboards(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
 	var a = getLeaderboard("2v2", testSeason)
 	var b = getLeaderboard("3v3", testSeason)
 	var players = getPlayersFromLeaderboards(map[string][]leaderboardEntry{"2v2": a, "3v3": b})
