@@ -1,1 +1,1 @@
-run: pvpleaderboard
+run: updater
