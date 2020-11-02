@@ -27,7 +27,7 @@ func main() {
 	start := time.Now()
 	logger.Println("Updating PvPLeaderBoard DB")
 	importStaticData()
-	groupSize := groupSize()
+	groupSize := getEnvVarOrDefault("GROUP_SIZE", defaultGroupSize)
 	season := getCurrentSeason()
 	for _, r := range regions {
 		region = r
@@ -66,16 +66,16 @@ func getEnvVar(envVar string) string {
 	return value
 }
 
-func groupSize() int {
-	var size = os.Getenv("GROUP_SIZE")
+func getEnvVarOrDefault(envVar string, defaultValue int) int {
+	var size = os.Getenv(envVar)
 	if size == "" {
-		return defaultGroupSize
+		return defaultValue
 	}
 	i, err := strconv.Atoi(size)
 	if err != nil {
-		logger.Printf("%s Cannot convert '%s' to int, using default group size (%d).",
-			warnPrefix, size, defaultGroupSize)
-		return defaultGroupSize
+		logger.Printf("%s Cannot convert '%s' to int, using %s default (%d).",
+			warnPrefix, size, envVar, defaultValue)
+		return defaultValue
 	}
 	return i
 }

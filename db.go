@@ -8,6 +8,8 @@ import (
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
+const defaultMaxDbConnections int = 15
+
 var db *sql.DB = dbConnect()
 
 var realmSlugs = make(map[int]string)
@@ -23,6 +25,8 @@ func dbConnect() *sql.DB {
 	if err != nil {
 		logger.Fatalf("%s Unable to access database: %s", fatalPrefix, err)
 	}
+	maxConnections := getEnvVarOrDefault("MAX_DB_CONNECTIONS", defaultMaxDbConnections)
+	db.SetMaxOpenConns(maxConnections)
 	return db
 }
 
