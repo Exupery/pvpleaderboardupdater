@@ -419,6 +419,46 @@ func addPvPTalents(pvpTalents *[]pvpTalent) {
 	logger.Printf("Inserted %d PvP talents", numInserted)
 }
 
+func addCovenants(covenants *[]covenant) {
+	const qry string = `INSERT INTO covenants (id, name, icon) VALUES($1, $2, $3) ON CONFLICT
+		(id) DO UPDATE SET icon=$3`
+	args := make([][]interface{}, 0)
+
+	for _, covenant := range *covenants {
+		params := []interface{}{covenant.ID, covenant.Name, covenant.Icon}
+		args = append(args, params)
+	}
+
+	numInserted := insert(query{SQL: qry, Args: args})
+	logger.Printf("Inserted %d covenants", numInserted)
+}
+
+func addSoulbinds(soulbinds *[]soulbind) {
+	const qry string = `INSERT INTO soulbinds (id, name) VALUES($1, $2) ON CONFLICT DO NOTHING`
+	args := make([][]interface{}, 0)
+
+	for _, soulbind := range *soulbinds {
+		params := []interface{}{soulbind.ID, soulbind.Name}
+		args = append(args, params)
+	}
+
+	numInserted := insert(query{SQL: qry, Args: args})
+	logger.Printf("Inserted %d soulbinds", numInserted)
+}
+
+func addConduits(conduits *[]conduit) {
+	const qry string = `INSERT INTO conduits (id, spell_id, name) VALUES($1, $2, $3) ON CONFLICT DO NOTHING`
+	args := make([][]interface{}, 0)
+
+	for _, conduit := range *conduits {
+		params := []interface{}{conduit.ID, conduit.SpellID, conduit.Name}
+		args = append(args, params)
+	}
+
+	numInserted := insert(query{SQL: qry, Args: args})
+	logger.Printf("Inserted %d conduits", numInserted)
+}
+
 func addAchievements(achievements *[]achievement) {
 	const qry string = `INSERT INTO achievements (id, name, description)
 		VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`

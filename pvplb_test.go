@@ -222,3 +222,38 @@ func TestGetPlayerAchievements(t *testing.T) {
 	}
 	t.Logf("Found achievements: %v", achieved)
 }
+
+func TestParseCovenants(t *testing.T) {
+	var covenantJSON *[]byte = getStatic(testRegion, "covenant/index")
+	var covenants []covenant = parseCovenants(covenantJSON)
+
+	if covenants == nil || len(covenants) == 0 {
+		t.Error("Parsing covenants failed")
+	}
+	t.Logf("Found and parsed %v covenants", len(covenants))
+}
+
+func TestParseSoulbinds(t *testing.T) {
+	var soulbindJSON *[]byte = getStatic(testRegion, "covenant/soulbind/index")
+	var soulbinds []soulbind = parseSoulbinds(soulbindJSON)
+
+	if soulbinds == nil || len(soulbinds) == 0 {
+		t.Error("Parsing soulbinds failed")
+	}
+	t.Logf("Found and parsed %v soulbinds", len(soulbinds))
+}
+
+func TestParseConduits(t *testing.T) {
+	var conduitJSON *[]byte = getStatic(testRegion, "covenant/conduit/index")
+	var conduits []conduit = parseConduits(conduitJSON)
+
+	if conduits == nil || len(conduits) == 0 {
+		t.Error("Parsing conduits failed")
+	}
+	for _, conduit := range conduits {
+		if conduit.SpellID == 0 {
+			t.Errorf("Parsing conduit spell ID failed for %d: %s", conduit.ID, conduit.Name)
+		}
+	}
+	t.Logf("Found and parsed %v conduits", len(conduits))
+}

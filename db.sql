@@ -160,6 +160,42 @@ CREATE TABLE metadata (
   last_update TIMESTAMP DEFAULT NOW()
 );
 
+-- Tables added for Shadowlands
+CREATE TABLE covenants (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(32) NOT NULL,
+  icon VARCHAR(128)
+);
+
+CREATE TABLE players_covenants (
+  player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
+  covenant_id INTEGER NOT NULL REFERENCES covenants (id),
+  PRIMARY KEY (player_id, covenant_id)
+);
+
+CREATE TABLE soulbinds (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE players_soulbinds (
+  player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
+  soulbind_id INTEGER NOT NULL REFERENCES soulbinds (id),
+  PRIMARY KEY (player_id, soulbind_id)
+);
+
+CREATE TABLE conduits (
+  id INTEGER PRIMARY KEY,
+  spell_id INTEGER NOT NULL,
+  name VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE players_conduits (
+  player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
+  conduit_id INTEGER NOT NULL REFERENCES conduits (id),
+  PRIMARY KEY (player_id, conduit_id)
+);
+
 -- create a stored proc to remove players (and associated data) for those
 -- that are not currently on a leaderboard
 CREATE OR REPLACE FUNCTION purge_old_players()
