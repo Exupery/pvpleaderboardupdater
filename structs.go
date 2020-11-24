@@ -160,3 +160,10 @@ type conduit struct {
 	SpellID int
 	Name    string
 }
+
+// playerSoulbind : the active soulbind and conduits for a player
+type playerSoulbind struct {
+	Covenant int
+	Soulbind int
+	Conduits []int
+}

@@ -168,9 +168,8 @@ CREATE TABLE covenants (
 );
 
 CREATE TABLE players_covenants (
-  player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
-  covenant_id INTEGER NOT NULL REFERENCES covenants (id),
-  PRIMARY KEY (player_id, covenant_id)
+  player_id INTEGER PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
+  covenant_id INTEGER NOT NULL REFERENCES covenants (id)
 );
 
 CREATE TABLE soulbinds (
@@ -179,9 +178,8 @@ CREATE TABLE soulbinds (
 );
 
 CREATE TABLE players_soulbinds (
-  player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
-  soulbind_id INTEGER NOT NULL REFERENCES soulbinds (id),
-  PRIMARY KEY (player_id, soulbind_id)
+  player_id INTEGER PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
+  soulbind_id INTEGER NOT NULL REFERENCES soulbinds (id)
 );
 
 CREATE TABLE conduits (

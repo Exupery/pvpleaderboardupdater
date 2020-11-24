@@ -325,6 +325,50 @@ func addItems(playersItems map[int]items) {
 	logger.Printf("Inserted %d items", numInserted)
 }
 
+func addPlayerSoulbinds(playerSoulbinds map[int]playerSoulbind) {
+	const covQry string = `INSERT INTO players_covenants (player_id, covenant_id) VALUES ($1, $2)
+		ON CONFLICT (player_id) DO UPDATE SET covenant_id=$2`
+	covArgs := make([][]interface{}, 0)
+	const soulbindQry string = `INSERT INTO players_soulbinds (player_id, soulbind_id) VALUES ($1, $2)
+		ON CONFLICT (player_id) DO UPDATE SET soulbind_id=$2`
+	soulbindArgs := make([][]interface{}, 0)
+	var deleteConduitQuery string = `DELETE FROM players_conduits WHERE player_id IN (`
+	deleteArgs := make([]interface{}, 0)
+	const conduitQry string = `INSERT INTO players_conduits (player_id, conduit_id) VALUES ($1, $2)
+		ON CONFLICT (player_id, conduit_id) DO NOTHING`
+	conduitArgs := make([][]interface{}, 0)
+
+	ctr := 1
+	for id, soulbind := range playerSoulbinds {
+		if soulbind.Covenant == 0 {
+			continue
+		}
+		covArgs = append(covArgs, []interface{}{id, soulbind.Covenant})
+
+		if soulbind.Soulbind == 0 {
+			continue
+		}
+		soulbindArgs = append(soulbindArgs, []interface{}{id, soulbind.Soulbind})
+
+		deleteConduitQuery += fmt.Sprintf("$%d,", ctr)
+		deleteArgs = append(deleteArgs, id)
+		for _, conduitID := range soulbind.Conduits {
+			conduitArgs = append(conduitArgs, []interface{}{id, conduitID})
+		}
+		ctr++
+	}
+	deleteConduitQuery = strings.TrimRight(deleteConduitQuery, ",")
+	deleteConduitQuery += ")"
+
+	numInserted := insert(query{SQL: covQry, Args: covArgs})
+	logger.Printf("Mapped %d players=>covenants", numInserted)
+	numInserted = insert(query{SQL: soulbindQry, Args: soulbindArgs})
+	logger.Printf("Mapped %d players=>soulbinds", numInserted)
+	numInserted = insert(query{SQL: conduitQry, Args: conduitArgs,
+		Before: deleteConduitQuery, BeforeArgs: deleteArgs})
+	logger.Printf("Mapped %d players=>conduits", numInserted)
+}
+
 func setUpdateTime() {
 	execute(`INSERT INTO metadata (key, last_update) VALUES ('update_time', NOW())
 		ON CONFLICT (key) DO UPDATE SET last_update=NOW()`)

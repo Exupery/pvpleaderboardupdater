@@ -216,16 +216,19 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 	var playersStats map[int]stats = make(map[int]stats, 0)
 	var playersItems map[int]items = make(map[int]items, 0)
 	var playersAchievements map[int][]int = make(map[int][]int, 0)
+	var playersSoulbinds map[int]playerSoulbind = make(map[int]playerSoulbind, 0)
 	for profilePath, dbID := range playerIDs {
 		playersTalents[dbID] = getPlayerTalents(profilePath)
 		playersStats[dbID] = getPlayerStats(profilePath)
 		playersItems[dbID] = getPlayerItems(profilePath)
 		playersAchievements[dbID] = getPlayerAchievements(profilePath, pvpAchievements)
+		playersSoulbinds[dbID] = getPlayerSoulbind(profilePath)
 	}
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
 	addPlayerItems(playersItems)
 	addPlayerAchievements(playersAchievements)
+	addPlayerSoulbinds(playersSoulbinds)
 }
 
 func setPlayerDetails(player *player) {
@@ -445,6 +448,54 @@ func getPlayerAchievements(path string, pvpAchievements map[int]bool) []int {
 		}
 	}
 	return achievedIDs
+}
+
+func getPlayerSoulbind(path string) playerSoulbind {
+	type SocketJSON struct {
+		Conduit keyedValue
+	}
+	type ConduitSocketJSON struct {
+		Socket SocketJSON
+	}
+	type TraitJSON struct {
+		ConduitSocket ConduitSocketJSON `json:"conduit_socket"`
+	}
+	type SoulbindJSON struct {
+		Soulbind keyedValue
+		Traits   []TraitJSON
+		IsActive bool `json:"is_active"`
+	}
+	type SoulbindsJSON struct {
+		Covenant  keyedValue `json:"chosen_covenant"`
+		Soulbinds []SoulbindJSON
+	}
+	var soulbindJSON *[]byte = getProfile(region, path+"/soulbinds")
+	if soulbindJSON == nil {
+		return playerSoulbind{}
+	}
+	var soulbinds SoulbindsJSON
+	err := json.Unmarshal(*soulbindJSON, &soulbinds)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return playerSoulbind{}
+	}
+
+	for _, soulbind := range soulbinds.Soulbinds {
+		if !soulbind.IsActive {
+			continue
+		}
+		var soulbindID int = soulbind.Soulbind.ID
+		conduitIDs := make([]int, 0)
+		for _, conduit := range soulbind.Traits {
+			id := conduit.ConduitSocket.Socket.Conduit.ID
+			if id == 0 {
+				continue
+			}
+			conduitIDs = append(conduitIDs, id)
+		}
+		return playerSoulbind{soulbinds.Covenant.ID, soulbindID, conduitIDs}
+	}
+	return playerSoulbind{Covenant: soulbinds.Covenant.ID}
 }
 
 func highestStat(a, b, c int) int {
