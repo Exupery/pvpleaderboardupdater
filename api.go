@@ -77,6 +77,7 @@ func get(region, namespace, path string) *[]byte {
 		logger.Printf("%s GET '%s' failed: %s", errPrefix, path, err)
 		return nil
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode == 429 {
 		logger.Printf("Received 429 - retrying '%s' after %d seconds", path, rateLimitRetryWaitSeconds)
 		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
