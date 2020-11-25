@@ -334,7 +334,8 @@ func addPlayerSoulbinds(playerSoulbinds map[int]playerSoulbind) {
 	soulbindArgs := make([][]interface{}, 0)
 	var deleteConduitQuery string = `DELETE FROM players_conduits WHERE player_id IN (`
 	deleteArgs := make([]interface{}, 0)
-	const conduitQry string = `INSERT INTO players_conduits (player_id, conduit_id) VALUES ($1, $2)
+	const conduitQry string = `INSERT INTO players_conduits (player_id, conduit_id)
+		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM conduits WHERE id=$2)
 		ON CONFLICT (player_id, conduit_id) DO NOTHING`
 	conduitArgs := make([][]interface{}, 0)
 
