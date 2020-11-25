@@ -360,13 +360,19 @@ func addPlayerSoulbinds(playerSoulbinds map[int]playerSoulbind) {
 	deleteConduitQuery = strings.TrimRight(deleteConduitQuery, ",")
 	deleteConduitQuery += ")"
 
-	numInserted := insert(query{SQL: covQry, Args: covArgs})
-	logger.Printf("Mapped %d players=>covenants", numInserted)
-	numInserted = insert(query{SQL: soulbindQry, Args: soulbindArgs})
-	logger.Printf("Mapped %d players=>soulbinds", numInserted)
-	numInserted = insert(query{SQL: conduitQry, Args: conduitArgs,
-		Before: deleteConduitQuery, BeforeArgs: deleteArgs})
-	logger.Printf("Mapped %d players=>conduits", numInserted)
+	if len(covArgs) > 0 {
+		numInserted := insert(query{SQL: covQry, Args: covArgs})
+		logger.Printf("Mapped %d players=>covenants", numInserted)
+	}
+	if len(soulbindArgs) > 0 {
+		numInserted := insert(query{SQL: soulbindQry, Args: soulbindArgs})
+		logger.Printf("Mapped %d players=>soulbinds", numInserted)
+	}
+	if len(conduitArgs) > 0 {
+		numInserted := insert(query{SQL: conduitQry, Args: conduitArgs,
+			Before: deleteConduitQuery, BeforeArgs: deleteArgs})
+		logger.Printf("Mapped %d players=>conduits", numInserted)
+	}
 }
 
 func setUpdateTime() {
