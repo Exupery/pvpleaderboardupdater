@@ -14,6 +14,7 @@ const baseURI string = "https://%s.api.blizzard.com/%s%s"
 const oauthURI string = "https://us.battle.net/oauth/token"
 const requiredParams string = "?locale=en_US&access_token=%s&namespace=%s"
 const rateLimitRetryWaitSeconds int = 2
+const maxRetryAttempts = 3
 
 var clienID string = getEnvVar("BATTLE_NET_CLIENT_ID")
 var secret string = getEnvVar("BATTLE_NET_SECRET")
@@ -70,6 +71,10 @@ func getIcon(region, path string) string {
 }
 
 func get(region, namespace, path string) *[]byte {
+	return getWithRetry(region, namespace, path, 1)
+}
+
+func getWithRetry(region, namespace, path string, attempt int) *[]byte {
 	var params string = fmt.Sprintf(requiredParams, token, strings.ToLower(namespace))
 	var url string = fmt.Sprintf(baseURI, strings.ToLower(region), path, params)
 	resp, err := http.Get(url)
@@ -82,6 +87,14 @@ func get(region, namespace, path string) *[]byte {
 		logger.Printf("Received 429 - retrying '%s' after %d seconds", path, rateLimitRetryWaitSeconds)
 		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
 		return get(region, namespace, path)
+	}
+	if resp.StatusCode == 500 {
+		if attempt > maxRetryAttempts {
+			logger.Printf("Received 500 for '%s' %d times, NOT retrying", path, attempt)
+			return nil
+		}
+		logger.Printf("Received 500 - retrying '%s'", path)
+		return getWithRetry(region, namespace, path, attempt+1)
 	}
 	if resp.StatusCode != 200 {
 		logger.Printf("%s non-200 status code for '%s': %v", warnPrefix, path, resp.StatusCode)
