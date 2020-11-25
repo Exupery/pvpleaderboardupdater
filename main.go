@@ -104,6 +104,9 @@ func getCurrentSeason() int {
 		CurrentSeason keyedValue `json:"current_season"`
 	}
 	var seasonsJSON *[]byte = getDynamic(region, "pvp-season/index")
+	if seasonsJSON == nil {
+		return 0
+	}
 	var seasons Seasons
 	err := json.Unmarshal(*seasonsJSON, &seasons)
 	if err != nil {
@@ -137,11 +140,14 @@ func getLeaderboard(bracket string, season int) []leaderboardEntry {
 	type LeaderBoardJSON struct {
 		Entries []LeaderboardEntryJSON
 	}
+	var leaderboardEntries []leaderboardEntry = make([]leaderboardEntry, 0)
 	var leaderboardJSON *[]byte = getDynamic(region, fmt.Sprintf("pvp-season/%d/pvp-leaderboard/%s",
 		season, bracket))
+	if leaderboardJSON == nil {
+		return leaderboardEntries
+	}
 	var leaderboard LeaderBoardJSON
 	err := json.Unmarshal(*leaderboardJSON, &leaderboard)
-	var leaderboardEntries []leaderboardEntry = make([]leaderboardEntry, 0)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return leaderboardEntries
