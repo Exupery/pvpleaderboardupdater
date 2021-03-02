@@ -290,35 +290,36 @@ func addPlayerItems(playersItems map[int]items) {
 }
 
 func addItems(playersItems map[int]items) {
-	const qry string = `INSERT INTO items (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`
+	const qry string = `INSERT INTO items (id, name, quality) VALUES ($1, $2, $3) ON CONFLICT (id)
+		DO UPDATE SET name=$2, quality=$3`
 
-	items := make(map[int]string, 0)
+	items := make(map[int]item, 0)
 	for _, pi := range playersItems {
-		items[pi.Head.ID] = pi.Head.Name
-		items[pi.Neck.ID] = pi.Neck.Name
-		items[pi.Shoulder.ID] = pi.Shoulder.Name
-		items[pi.Back.ID] = pi.Back.Name
-		items[pi.Chest.ID] = pi.Chest.Name
-		items[pi.Shirt.ID] = pi.Shirt.Name
-		items[pi.Tabard.ID] = pi.Tabard.Name
-		items[pi.Wrist.ID] = pi.Wrist.Name
-		items[pi.Hands.ID] = pi.Hands.Name
-		items[pi.Waist.ID] = pi.Waist.Name
-		items[pi.Legs.ID] = pi.Legs.Name
-		items[pi.Feet.ID] = pi.Feet.Name
-		items[pi.Finger1.ID] = pi.Finger1.Name
-		items[pi.Finger2.ID] = pi.Finger2.Name
-		items[pi.Trinket1.ID] = pi.Trinket1.Name
-		items[pi.MainHand.ID] = pi.MainHand.Name
-		items[pi.OffHand.ID] = pi.OffHand.Name
+		items[pi.Head.ID] = pi.Head
+		items[pi.Neck.ID] = pi.Neck
+		items[pi.Shoulder.ID] = pi.Shoulder
+		items[pi.Back.ID] = pi.Back
+		items[pi.Chest.ID] = pi.Chest
+		items[pi.Shirt.ID] = pi.Shirt
+		items[pi.Tabard.ID] = pi.Tabard
+		items[pi.Wrist.ID] = pi.Wrist
+		items[pi.Hands.ID] = pi.Hands
+		items[pi.Waist.ID] = pi.Waist
+		items[pi.Legs.ID] = pi.Legs
+		items[pi.Feet.ID] = pi.Feet
+		items[pi.Finger1.ID] = pi.Finger1
+		items[pi.Finger2.ID] = pi.Finger2
+		items[pi.Trinket1.ID] = pi.Trinket1
+		items[pi.MainHand.ID] = pi.MainHand
+		items[pi.OffHand.ID] = pi.OffHand
 	}
 
 	args := make([][]interface{}, 0)
-	for id, name := range items {
+	for id, item := range items {
 		if id == 0 {
 			continue
 		}
-		args = append(args, []interface{}{id, name})
+		args = append(args, []interface{}{id, item.Name, item.Quality})
 	}
 
 	numInserted := insert(query{SQL: qry, Args: args})

@@ -115,8 +115,9 @@ type player struct {
 
 // item : an equippable item
 type item struct {
-	ID   int
-	Name string
+	ID      int
+	Name    string
+	Quality string
 }
 
 // items : a player's equipped items

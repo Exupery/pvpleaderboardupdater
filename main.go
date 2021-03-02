@@ -383,9 +383,10 @@ func getPlayerStats(path string) stats {
 
 func getPlayerItems(path string) items {
 	type ItemJSON struct {
-		Item keyedValue
-		Slot typedName
-		Name string
+		Item    keyedValue
+		Slot    typedName
+		Name    string
+		Quality typedName
 	}
 	type ItemsJSON struct {
 		EquippedItems []ItemJSON `json:"equipped_items"`
@@ -405,7 +406,7 @@ func getPlayerItems(path string) items {
 		if i.Name == "" {
 			continue
 		}
-		equippedItems[i.Slot.Type] = item{i.Item.ID, i.Name}
+		equippedItems[i.Slot.Type] = item{i.Item.ID, i.Name, i.Quality.Type}
 	}
 	return items{
 		Head:     equippedItems["HEAD"],

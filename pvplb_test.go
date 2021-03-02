@@ -7,7 +7,7 @@ import (
 
 const testRegion = "US"
 const testSeason = 29
-const testPlayerPath = "emerald-dream/exupery"
+const testPlayerPath = "emerald-dream/exuperjun"
 
 func TestCreateToken(t *testing.T) {
 	var token string = createToken()
