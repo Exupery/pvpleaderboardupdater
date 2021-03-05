@@ -230,6 +230,7 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 		playersAchievements[dbID] = getPlayerAchievements(profilePath, pvpAchievements)
 		playersSoulbinds[dbID] = getPlayerSoulbind(profilePath)
 	}
+	addItems(squashItems(playersItems))
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
 	addPlayerItems(playersItems)
@@ -427,6 +428,64 @@ func getPlayerItems(path string) items {
 		Trinket2: equippedItems["TRINKET_2"],
 		MainHand: equippedItems["MAIN_HAND"],
 		OffHand:  equippedItems["OFF_HAND"]}
+}
+
+func squashItems(playersItems map[int]items) map[int]item {
+	items := make(map[int]item, 0)
+
+	for _, pi := range playersItems {
+		addItem(items, pi.Head)
+		addItem(items, pi.Neck)
+		addItem(items, pi.Shoulder)
+		addItem(items, pi.Back)
+		addItem(items, pi.Chest)
+		addItem(items, pi.Shirt)
+		addItem(items, pi.Tabard)
+		addItem(items, pi.Wrist)
+		addItem(items, pi.Hands)
+		addItem(items, pi.Waist)
+		addItem(items, pi.Legs)
+		addItem(items, pi.Feet)
+		addItem(items, pi.Finger1)
+		addItem(items, pi.Finger2)
+		addItem(items, pi.Trinket1)
+		addItem(items, pi.Trinket2)
+		addItem(items, pi.MainHand)
+		addItem(items, pi.OffHand)
+	}
+
+	return items
+}
+
+func addItem(items map[int]item, itemToAdd item) {
+	if itemToAdd.ID == 0 {
+		return
+	}
+
+	if _, exists := items[itemToAdd.ID]; exists {
+		// Checking if exists instead of adding anyway to avoid unnecessary API calls for legendaries
+		return
+	}
+
+	if itemToAdd.Quality == "LEGENDARY" {
+		var json *[]byte = getStatic(region, fmt.Sprintf("item/%d", itemToAdd.ID))
+		itemToAdd.Name = parseItemName(json)
+	}
+
+	items[itemToAdd.ID] = itemToAdd
+}
+
+func parseItemName(data *[]byte) string {
+	type Item struct {
+		Name string
+	}
+	var item Item
+	err := json.Unmarshal(*data, &item)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return ""
+	}
+	return item.Name
 }
 
 func getPlayerAchievements(path string, pvpAchievements map[int]bool) []int {

@@ -215,6 +215,34 @@ func TestGetPlayerItems(t *testing.T) {
 	t.Logf("Found items: %v", items)
 }
 
+func TestSquashPlayerItems(t *testing.T) {
+	itemsA := items{Neck: item{178927, "Clouded Focus", "LEGENDARY"}, Shoulder: item{}}
+	itemsB := items{Neck: item{1, "Foo", "EPIC"}, Shoulder: item{2, "Bar", "EPIC"}}
+	itemsC := items{Neck: item{1, "Foo", "EPIC"}, Shoulder: item{3, "Baz", "EPIC"}}
+
+	playersItems := map[int]items{47: itemsA, 1138: itemsB, 1701: itemsC}
+	squashedItems := squashItems(playersItems)
+	seen := make(map[string]bool, 0)
+
+	for id, item := range squashedItems {
+		if id == 0 {
+			t.Error("Invalid item present after squashing")
+		}
+		if seen[item.Name] {
+			t.Error("Duplicate items not squished")
+		}
+		seen[item.Name] = true
+		if item.Quality != "LEGENDARY" {
+			continue
+		}
+		if item.Name == "Clouded Focus" {
+			t.Errorf("Non legendary base-item name found: %s", item.Name)
+		}
+	}
+
+	t.Logf("Squashed items: %v", squashedItems)
+}
+
 func TestGetPlayerAchievements(t *testing.T) {
 	achieved := getPlayerAchievements(testPlayerPath, map[int]bool{2092: true, 13989: true})
 	if achieved == nil || len(achieved) == 0 {

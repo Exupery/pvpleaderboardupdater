@@ -284,38 +284,16 @@ func addPlayerItems(playersItems map[int]items) {
 		args = append(args, playerItems)
 	}
 
-	addItems(playersItems)
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>items", numInserted)
 }
 
-func addItems(playersItems map[int]items) {
+func addItems(equippedItems map[int]item) {
 	const qry string = `INSERT INTO items (id, name, quality) VALUES ($1, $2, $3) ON CONFLICT (id)
 		DO UPDATE SET name=$2, quality=$3`
 
-	items := make(map[int]item, 0)
-	for _, pi := range playersItems {
-		items[pi.Head.ID] = pi.Head
-		items[pi.Neck.ID] = pi.Neck
-		items[pi.Shoulder.ID] = pi.Shoulder
-		items[pi.Back.ID] = pi.Back
-		items[pi.Chest.ID] = pi.Chest
-		items[pi.Shirt.ID] = pi.Shirt
-		items[pi.Tabard.ID] = pi.Tabard
-		items[pi.Wrist.ID] = pi.Wrist
-		items[pi.Hands.ID] = pi.Hands
-		items[pi.Waist.ID] = pi.Waist
-		items[pi.Legs.ID] = pi.Legs
-		items[pi.Feet.ID] = pi.Feet
-		items[pi.Finger1.ID] = pi.Finger1
-		items[pi.Finger2.ID] = pi.Finger2
-		items[pi.Trinket1.ID] = pi.Trinket1
-		items[pi.MainHand.ID] = pi.MainHand
-		items[pi.OffHand.ID] = pi.OffHand
-	}
-
 	args := make([][]interface{}, 0)
-	for id, item := range items {
+	for id, item := range equippedItems {
 		if id == 0 {
 			continue
 		}
