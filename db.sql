@@ -205,6 +205,8 @@ BEGIN
   DELETE FROM players_stats WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_items WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
+  DELETE FROM items WHERE DATE_PART('day', NOW() - items.last_update) > 30;
 END; $proc$;
 
 ALTER TABLE items ADD COLUMN quality VARCHAR(64);
+ALTER TABLE items ADD COLUMN last_update TIMESTAMP DEFAULT NOW();

@@ -290,7 +290,7 @@ func addPlayerItems(playersItems map[int]items) {
 
 func addItems(equippedItems map[int]item) {
 	const qry string = `INSERT INTO items (id, name, quality) VALUES ($1, $2, $3) ON CONFLICT (id)
-		DO UPDATE SET name=$2, quality=$3`
+		DO UPDATE SET name=$2, quality=$3, last_update=NOW()`
 
 	args := make([][]interface{}, 0)
 	for id, item := range equippedItems {
