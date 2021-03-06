@@ -234,6 +234,7 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
 	addPlayerItems(playersItems)
+	addPlayerLegendaries(playersItems)
 	addPlayerAchievements(playersAchievements)
 	addPlayerSoulbinds(playersSoulbinds)
 }
@@ -383,11 +384,16 @@ func getPlayerStats(path string) stats {
 }
 
 func getPlayerItems(path string) items {
+	type SpellJSON struct {
+		Spell       keyedValue
+		Description string
+	}
 	type ItemJSON struct {
 		Item    keyedValue
 		Slot    typedName
 		Name    string
 		Quality typedName
+		Spells  []SpellJSON
 	}
 	type ItemsJSON struct {
 		EquippedItems []ItemJSON `json:"equipped_items"`
@@ -407,27 +413,34 @@ func getPlayerItems(path string) items {
 		if i.Name == "" {
 			continue
 		}
+		if i.Quality.Type == "LEGENDARY" && len(i.Spells) > 0 {
+			spell := i.Spells[0].Spell
+			spellID := spell.ID
+			name := spell.Name
+			equippedItems["LEGENDARY_SPELL"] = item{spellID, name, i.Quality.Type}
+		}
 		equippedItems[i.Slot.Type] = item{i.Item.ID, i.Name, i.Quality.Type}
 	}
 	return items{
-		Head:     equippedItems["HEAD"],
-		Neck:     equippedItems["NECK"],
-		Shoulder: equippedItems["SHOULDER"],
-		Back:     equippedItems["BACK"],
-		Chest:    equippedItems["CHEST"],
-		Shirt:    equippedItems["SHIRT"],
-		Tabard:   equippedItems["TABARD"],
-		Wrist:    equippedItems["WRIST"],
-		Hands:    equippedItems["HANDS"],
-		Waist:    equippedItems["WAIST"],
-		Legs:     equippedItems["LEGS"],
-		Feet:     equippedItems["FEET"],
-		Finger1:  equippedItems["FINGER_1"],
-		Finger2:  equippedItems["FINGER_2"],
-		Trinket1: equippedItems["TRINKET_1"],
-		Trinket2: equippedItems["TRINKET_2"],
-		MainHand: equippedItems["MAIN_HAND"],
-		OffHand:  equippedItems["OFF_HAND"]}
+		Head:      equippedItems["HEAD"],
+		Neck:      equippedItems["NECK"],
+		Shoulder:  equippedItems["SHOULDER"],
+		Back:      equippedItems["BACK"],
+		Chest:     equippedItems["CHEST"],
+		Shirt:     equippedItems["SHIRT"],
+		Tabard:    equippedItems["TABARD"],
+		Wrist:     equippedItems["WRIST"],
+		Hands:     equippedItems["HANDS"],
+		Waist:     equippedItems["WAIST"],
+		Legs:      equippedItems["LEGS"],
+		Feet:      equippedItems["FEET"],
+		Finger1:   equippedItems["FINGER_1"],
+		Finger2:   equippedItems["FINGER_2"],
+		Trinket1:  equippedItems["TRINKET_1"],
+		Trinket2:  equippedItems["TRINKET_2"],
+		MainHand:  equippedItems["MAIN_HAND"],
+		OffHand:   equippedItems["OFF_HAND"],
+		Legendary: equippedItems["LEGENDARY_SPELL"]}
 }
 
 func squashItems(playersItems map[int]items) map[int]item {

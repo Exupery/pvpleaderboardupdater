@@ -122,24 +122,25 @@ type item struct {
 
 // items : a player's equipped items
 type items struct {
-	Head     item
-	Neck     item
-	Shoulder item
-	Back     item
-	Chest    item
-	Shirt    item
-	Tabard   item
-	Wrist    item
-	Hands    item
-	Waist    item
-	Legs     item
-	Feet     item
-	Finger1  item
-	Finger2  item
-	Trinket1 item
-	Trinket2 item
-	MainHand item
-	OffHand  item
+	Head      item
+	Neck      item
+	Shoulder  item
+	Back      item
+	Chest     item
+	Shirt     item
+	Tabard    item
+	Wrist     item
+	Hands     item
+	Waist     item
+	Legs      item
+	Feet      item
+	Finger1   item
+	Finger2   item
+	Trinket1  item
+	Trinket2  item
+	MainHand  item
+	OffHand   item
+	Legendary item
 }
 
 // covenant : a Shadowlands covenant

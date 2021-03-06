@@ -288,6 +288,23 @@ func addPlayerItems(playersItems map[int]items) {
 	logger.Printf("Mapped %d players=>items", numInserted)
 }
 
+func addPlayerLegendaries(playersItems map[int]items) {
+	const qry string = `INSERT INTO players_legendaries (player_id, spell_id, legendary_name) VALUES ($1, $2, $3)
+		ON CONFLICT (player_id) DO UPDATE SET spell_id=$2, legendary_name=$3`
+	args := make([][]interface{}, 0)
+
+	for id, equippedItems := range playersItems {
+		legendary := equippedItems.Legendary
+		if legendary.ID == 0 {
+			continue
+		}
+		args = append(args, []interface{}{id, legendary.ID, legendary.Name})
+	}
+
+	numInserted := insert(query{SQL: qry, Args: args})
+	logger.Printf("Mapped %d players=>legendaries", numInserted)
+}
+
 func addItems(equippedItems map[int]item) {
 	const qry string = `INSERT INTO items (id, name, quality) VALUES ($1, $2, $3) ON CONFLICT (id)
 		DO UPDATE SET name=$2, quality=$3, last_update=NOW()`
