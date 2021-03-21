@@ -14,9 +14,11 @@ var achievementIDs = []int{
 	// RBG achievements
 	5329, 5326, 5339, 5353, 5341, 5355, 5343, 5356, 6942, 6941}
 
+var realmRegions = []string{"EU", "US", "KR", "TW"}
+
 func importStaticData() {
 	logger.Println("Beginning import of static data")
-	for _, r := range regions {
+	for _, r := range realmRegions {
 		importRealms(r)
 	}
 	importRaces()
