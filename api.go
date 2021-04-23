@@ -88,17 +88,14 @@ func getWithRetry(region, namespace, path string, attempt int) *[]byte {
 		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
 		return get(region, namespace, path)
 	}
-	if resp.StatusCode == 500 {
+	if resp.StatusCode != 200 {
 		if attempt > maxRetryAttempts {
-			logger.Printf("Received 500 for '%s' %d times, NOT retrying", path, attempt)
+			logger.Printf("%s Received %d for '%s' %d times, NOT retrying", warnPrefix, resp.StatusCode, path, attempt)
 			return nil
 		}
-		logger.Printf("Received 500 - retrying '%s'", path)
+		logger.Printf("Received %d - retrying '%s'", resp.StatusCode, path)
+		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
 		return getWithRetry(region, namespace, path, attempt+1)
-	}
-	if resp.StatusCode != 200 {
-		logger.Printf("%s non-200 status code for '%s': %v", warnPrefix, path, resp.StatusCode)
-		return nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
