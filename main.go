@@ -493,6 +493,9 @@ func parseItemName(data *[]byte) string {
 		Name string
 	}
 	var item Item
+	if data == nil {
+		return ""
+	}
 	err := json.Unmarshal(*data, &item)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
