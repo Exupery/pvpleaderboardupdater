@@ -24,6 +24,23 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestSafeUnmarshal(t *testing.T) {
+	type EmptyInterface struct {
+	}
+	var empty EmptyInterface
+	err := safeUnmarshal(nil, &empty)
+	if err == nil {
+		t.Error("Error should be returned when unmarshalling nil")
+	}
+
+	var realmJSON *[]byte = getDynamic(testRegion, "realm/index")
+	realmSlice := (*realmJSON)[1:4]
+	err = safeUnmarshal(&realmSlice, &empty)
+	if err == nil {
+		t.Error("Error should be returned when unmarshalling partial JSON")
+	}
+}
+
 func TestParseRealms(t *testing.T) {
 	var realmJSON *[]byte = getDynamic(testRegion, "realm/index")
 	var realms []realm = parseRealms(realmJSON)

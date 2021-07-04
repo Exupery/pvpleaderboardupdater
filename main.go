@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -108,7 +109,7 @@ func getCurrentSeason() int {
 		return 0
 	}
 	var seasons Seasons
-	err := json.Unmarshal(*seasonsJSON, &seasons)
+	err := safeUnmarshal(seasonsJSON, &seasons)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return 0
@@ -147,7 +148,7 @@ func getLeaderboard(bracket string, season int) []leaderboardEntry {
 		return leaderboardEntries
 	}
 	var leaderboard LeaderBoardJSON
-	err := json.Unmarshal(*leaderboardJSON, &leaderboard)
+	err := safeUnmarshal(leaderboardJSON, &leaderboard)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return leaderboardEntries
@@ -253,7 +254,7 @@ func setPlayerDetails(player *player) {
 		return
 	}
 	var profile ProfileJSON
-	err := json.Unmarshal(*profileJSON, &profile)
+	err := safeUnmarshal(profileJSON, &profile)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return
@@ -299,7 +300,7 @@ func getPlayerTalents(path string) playerTalents {
 		return playerTalents{}
 	}
 	var specializations Specializations
-	err := json.Unmarshal(*talentJSON, &specializations)
+	err := safeUnmarshal(talentJSON, &specializations)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return playerTalents{}
@@ -362,7 +363,7 @@ func getPlayerStats(path string) stats {
 		return stats{}
 	}
 	var s StatJSON
-	err := json.Unmarshal(*statsJSON, &s)
+	err := safeUnmarshal(statsJSON, &s)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return stats{}
@@ -403,7 +404,7 @@ func getPlayerItems(path string) items {
 		return items{}
 	}
 	var equipped ItemsJSON
-	err := json.Unmarshal(*itemsJSON, &equipped)
+	err := safeUnmarshal(itemsJSON, &equipped)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return items{}
@@ -496,7 +497,7 @@ func parseItemName(data *[]byte) string {
 	if data == nil {
 		return ""
 	}
-	err := json.Unmarshal(*data, &item)
+	err := safeUnmarshal(data, &item)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return ""
@@ -517,7 +518,7 @@ func getPlayerAchievements(path string, pvpAchievements map[int]bool) []int {
 		return make([]int, 0)
 	}
 	var achieved AchievedJSON
-	err := json.Unmarshal(*achievedJSON, &achieved)
+	err := safeUnmarshal(achievedJSON, &achieved)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return make([]int, 0)
@@ -556,7 +557,7 @@ func getPlayerSoulbind(path string) playerSoulbind {
 		return playerSoulbind{}
 	}
 	var soulbinds SoulbindsJSON
-	err := json.Unmarshal(*soulbindJSON, &soulbinds)
+	err := safeUnmarshal(soulbindJSON, &soulbinds)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return playerSoulbind{}
@@ -588,6 +589,20 @@ func highestStat(a, b, c int) int {
 		return b
 	}
 	return c
+}
+
+func safeUnmarshal(data *[]byte, v interface{}) error {
+	if data == nil {
+		return errors.New("Data is nil, nothing to unmarshal")
+	}
+
+	err := json.Unmarshal(*data, &v)
+	if err != nil {
+		logger.Printf("%s JSON parsing failed: %s", errPrefix, err)
+		return err
+	}
+
+	return nil
 }
 
 type playerTalents struct {

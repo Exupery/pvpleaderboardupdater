@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -54,7 +53,7 @@ func getIcon(region, path string) string {
 	}
 	var data *[]byte = getMedia(region, path)
 	var iconJSON IconJSON
-	err := json.Unmarshal(*data, &iconJSON)
+	err := safeUnmarshal(data, &iconJSON)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return ""
@@ -133,7 +132,7 @@ func createToken() string {
 		return ""
 	}
 	var accessTokenResponse = new(accessTokenResponse)
-	err = json.Unmarshal(body, &accessTokenResponse)
+	err = safeUnmarshal(&body, &accessTokenResponse)
 	if err != nil {
 		logger.Printf("%s unmarshalling token response failed: %s", errPrefix, err)
 		return ""

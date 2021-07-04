@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -38,7 +37,7 @@ func parseRealms(data *[]byte) []realm {
 		Realms []realm
 	}
 	var realms Realms
-	err := json.Unmarshal(*data, &realms)
+	err := safeUnmarshal(data, &realms)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return make([]realm, 0)
@@ -58,7 +57,7 @@ func parseRaces(data *[]byte) []race {
 		Races []race
 	}
 	var races Races
-	err := json.Unmarshal(*data, &races)
+	err := safeUnmarshal(data, &races)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return make([]race, 0)
@@ -78,7 +77,7 @@ func parseClasses(data *[]byte) []class {
 		Classes []class
 	}
 	var classes Classes
-	err := json.Unmarshal(*data, &classes)
+	err := safeUnmarshal(data, &classes)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return make([]class, 0)
@@ -113,7 +112,7 @@ func parseSpecs(data *[]byte) []spec {
 		CharacterSpecializations []CharacterSpecializationJSON `json:"character_specializations"`
 	}
 	var specsJSON SpecsJSON
-	err := json.Unmarshal(*data, &specsJSON)
+	err := safeUnmarshal(data, &specsJSON)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return make([]spec, 0)
@@ -153,7 +152,7 @@ func getSpec(ch chan spec, specID int) {
 	var icon = getIcon(region, path)
 	var specJSON *[]byte = getStatic(region, path)
 	var s SpecJSON
-	json.Unmarshal(*specJSON, &s)
+	safeUnmarshal(specJSON, &s)
 	ch <- spec{
 		s.ID,
 		s.PlayableClass.ID,
@@ -177,7 +176,7 @@ func getFullSpecTalents(specID int, talentTiers []talentTierJSON) []talent {
 			id := talentEntry.Talent.ID
 			var talentJSON *[]byte = getStatic(region, fmt.Sprintf("talent/%d", id))
 			var talentDetails TalentJSON
-			json.Unmarshal(*talentJSON, &talentDetails)
+			safeUnmarshal(talentJSON, &talentDetails)
 			icon := getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
 			talent := talent{
 				id,
@@ -206,7 +205,7 @@ func parsePvPTalents(data *[]byte) []pvpTalent {
 		PvPTalents []keyedValue `json:"pvp_talents"`
 	}
 	var pvpTalentsJSON PvPTalentsJSON
-	err := json.Unmarshal(*data, &pvpTalentsJSON)
+	err := safeUnmarshal(data, &pvpTalentsJSON)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return make([]pvpTalent, 0)
@@ -229,7 +228,7 @@ func getPvPTalent(ch chan pvpTalent, id int) {
 	}
 	var pvpTalentJSON *[]byte = getStatic(region, fmt.Sprintf("pvp-talent/%d", id))
 	var talentDetails PvPTalentJSON
-	json.Unmarshal(*pvpTalentJSON, &talentDetails)
+	safeUnmarshal(pvpTalentJSON, &talentDetails)
 	icon := getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
 	ch <- pvpTalent{
 		id,
@@ -247,7 +246,7 @@ func parseAchievements(data *[]byte) []achievement {
 	}
 
 	var achievements Achievements
-	err := json.Unmarshal(*data, &achievements)
+	err := safeUnmarshal(data, &achievements)
 	var pvpAchievements []achievement = make([]achievement, 0)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
@@ -283,7 +282,7 @@ func getAchievement(id int) achievement {
 	}
 	var pvpAchievementJSON *[]byte = getStatic(region, fmt.Sprintf("achievement/%d", id))
 	var pvpAchievementJSONDetails PvPAchievementJSON
-	json.Unmarshal(*pvpAchievementJSON, &pvpAchievementJSONDetails)
+	safeUnmarshal(pvpAchievementJSON, &pvpAchievementJSONDetails)
 	return achievement{
 		id,
 		pvpAchievementJSONDetails.Name,
@@ -316,7 +315,7 @@ func parseCovenants(data *[]byte) []covenant {
 	}
 	var covenantsJSON Covenants
 	var covenants []covenant = make([]covenant, 0)
-	err := json.Unmarshal(*data, &covenantsJSON)
+	err := safeUnmarshal(data, &covenantsJSON)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return covenants
@@ -341,7 +340,7 @@ func parseSoulbinds(data *[]byte) []soulbind {
 	}
 	var soulbindsJSON Soulbinds
 	var soulbinds []soulbind = make([]soulbind, 0)
-	err := json.Unmarshal(*data, &soulbindsJSON)
+	err := safeUnmarshal(data, &soulbindsJSON)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return soulbinds
@@ -365,7 +364,7 @@ func parseConduits(data *[]byte) []conduit {
 	}
 	var conduitsJSON Conduits
 	var conduits []conduit = make([]conduit, 0)
-	err := json.Unmarshal(*data, &conduitsJSON)
+	err := safeUnmarshal(data, &conduitsJSON)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return conduits
@@ -393,7 +392,7 @@ func getConduitSpellID(conduitID int) int {
 	}
 	var conduitJSON Conduit
 	var data *[]byte = getStatic(region, fmt.Sprintf("covenant/conduit/%d", conduitID))
-	err := json.Unmarshal(*data, &conduitJSON)
+	err := safeUnmarshal(data, &conduitJSON)
 	if err != nil {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return 0
