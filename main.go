@@ -30,6 +30,7 @@ func main() {
 	importStaticData()
 	groupSize := getEnvVarOrDefault("GROUP_SIZE", defaultGroupSize)
 	season := getCurrentSeason()
+	foundPlayers := false
 	for _, r := range regions {
 		region = r
 		leaderboards := make(map[string][]leaderboardEntry)
@@ -46,6 +47,8 @@ func main() {
 		logger.Printf("Found %d unique players across %s leaderboards", len(players), region)
 		if len(players) == 0 {
 			continue
+		} else {
+			foundPlayers = true
 		}
 		groups := split(players, groupSize)
 		var waitGroup sync.WaitGroup
@@ -59,7 +62,10 @@ func main() {
 		}
 	}
 	purgeStalePlayers()
-	setUpdateTime()
+	if foundPlayers {
+		// Only set update time if there was an actual leaderboard update
+		setUpdateTime()
+	}
 	end := time.Now()
 	logger.Printf("Updating PvPLeaderBoard Complete after %v", end.Sub(start))
 }
