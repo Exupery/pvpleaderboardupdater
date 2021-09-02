@@ -95,6 +95,9 @@ func execute(sql string) {
 }
 
 func updateLeaderboard(bracket string, leaderboard []leaderboardEntry) {
+	if len(leaderboard) == 0 {
+		return
+	}
 	const deleteQuery string = `DELETE FROM leaderboards WHERE region=$1 AND bracket=$2`
 	const qry string = `INSERT INTO leaderboards
 		(region, bracket, player_id, ranking, rating, season_wins, season_losses)
@@ -169,6 +172,9 @@ func getPlayerIDs(players []*player) map[string]int {
 }
 
 func addPlayerTalents(playersTalents map[int]playerTalents) {
+	if len(playersTalents) == 0 {
+		return
+	}
 	var deleteTalentQuery string = `DELETE FROM players_talents WHERE player_id IN (`
 	const talentQuery string = `INSERT INTO players_talents (player_id, talent_id)
 		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM talents WHERE id=$2)`
@@ -322,6 +328,9 @@ func addItems(equippedItems map[int]item) {
 }
 
 func addPlayerSoulbinds(playerSoulbinds map[int]playerSoulbind) {
+	if len(playerSoulbinds) == 0 {
+		return
+	}
 	const covQry string = `INSERT INTO players_covenants (player_id, covenant_id) VALUES ($1, $2)
 		ON CONFLICT (player_id) DO UPDATE SET covenant_id=$2`
 	covArgs := make([][]interface{}, 0)
@@ -436,6 +445,9 @@ func addSpecs(specs *[]spec) {
 }
 
 func addTalents(talents *[]talent) {
+	if len(*talents) == 0 {
+		return
+	}
 	const deleteQuery string = `TRUNCATE TABLE talents CASCADE`
 	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon, tier, col)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET spec_id = NULL`
@@ -452,6 +464,9 @@ func addTalents(talents *[]talent) {
 }
 
 func addPvPTalents(pvpTalents *[]pvpTalent) {
+	if len(*pvpTalents) == 0 {
+		return
+	}
 	const deleteQuery string = `TRUNCATE TABLE pvp_talents CASCADE`
 	const qry string = `INSERT INTO pvp_talents (id, spell_id, spec_id, name, icon)
 		VALUES ($1, $2, $3, $4, $5)`

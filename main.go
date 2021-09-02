@@ -37,10 +37,16 @@ func main() {
 		for _, bracket := range brackets {
 			leaderboard := getLeaderboard(bracket, season)
 			logger.Printf("Found %d players on %s %s leaderboard", len(leaderboard), region, bracket)
+			if len(leaderboard) == 0 {
+				continue
+			}
 			leaderboards[bracket] = leaderboard
 		}
 		players := getPlayersFromLeaderboards(leaderboards)
 		logger.Printf("Found %d unique players across %s leaderboards", len(players), region)
+		if len(players) == 0 {
+			continue
+		}
 		groups := split(players, groupSize)
 		var waitGroup sync.WaitGroup
 		waitGroup.Add(len(groups))
