@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"sync"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
@@ -11,6 +12,8 @@ import (
 const defaultMaxDbConnections int = 15
 
 var db *sql.DB = dbConnect()
+
+var lock sync.Mutex
 
 var realmSlugs = make(map[int]string)
 
@@ -312,6 +315,11 @@ func addPlayerLegendaries(playersItems map[int]items) {
 }
 
 func addItems(equippedItems map[int]item) {
+	// Make this method effectively single-threaded since so many players are
+	// wearing many of the same items - this avoids deadlocks at the DB level
+	lock.Lock()
+	defer lock.Unlock()
+
 	const qry string = `INSERT INTO items (id, name, quality) VALUES ($1, $2, $3) ON CONFLICT (id)
 		DO UPDATE SET name=$2, quality=$3, last_update=NOW()`
 
