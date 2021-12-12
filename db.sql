@@ -217,3 +217,5 @@ CREATE TABLE players_legendaries (
   spell_id INTEGER NOT NULL,
   legendary_name VARCHAR(256) NOT NULL
 );
+
+ALTER TABLE players ADD COLUMN last_login TIMESTAMP NOT NULL DEFAULT '0001-01-01';

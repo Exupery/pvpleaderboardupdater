@@ -260,6 +260,7 @@ func setPlayerDetails(player *player) {
 		CharacterClass keyedValue `json:"character_class"`
 		ActiveSpec     keyedValue `json:"active_spec"`
 		Guild          keyedValue
+		LastLogin      int64 `json:"last_login_timestamp"`
 	}
 	var profileJSON *[]byte = getProfile(region, player.Path)
 	if profileJSON == nil {
@@ -288,6 +289,7 @@ func setPlayerDetails(player *player) {
 	player.ClassID = profile.CharacterClass.ID
 	player.SpecID = profile.ActiveSpec.ID
 	player.Guild = profile.Guild.Name
+	player.LastLogin = profile.LastLogin / 1000
 }
 
 func getPlayerTalents(path string) playerTalents {

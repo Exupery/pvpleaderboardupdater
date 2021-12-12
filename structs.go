@@ -111,6 +111,7 @@ type player struct {
 	Gender     int
 	Guild      string
 	Path       string
+	LastLogin  int64
 }
 
 // item : an equippable item

@@ -182,6 +182,10 @@ func TestGetPlayerProfileDetails(t *testing.T) {
 	if player.RaceID == 0 {
 		t.Error("Player race NOT set")
 	}
+	if player.LastLogin == 0 {
+		t.Error("Last login time NOT set")
+	}
+	t.Logf("Last login %d", player.LastLogin)
 }
 
 func TestGetPlayerTalents(t *testing.T) {

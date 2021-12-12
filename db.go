@@ -129,14 +129,14 @@ func updateLeaderboard(bracket string, leaderboard []leaderboardEntry) {
 
 func addPlayers(players []*player) {
 	const qry string = `INSERT INTO players (name, realm_id, blizzard_id, class_id, spec_id,
-		faction_id, race_id, gender, guild) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		faction_id, race_id, gender, guild, last_login) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10))
 		ON CONFLICT (realm_id, blizzard_id) DO UPDATE SET name=$1, spec_id=$5, faction_id=$6,
-		race_id=$7, gender=$8, guild=$9, last_update=NOW()`
+		race_id=$7, gender=$8, guild=$9, last_login=to_timestamp($10), last_update=NOW()`
 	args := make([][]interface{}, 0)
 
 	for _, player := range players {
 		params := []interface{}{player.Name, player.RealmID, player.BlizzardID, player.ClassID,
-			player.SpecID, player.FactionID, player.RaceID, player.Gender, player.Guild}
+			player.SpecID, player.FactionID, player.RaceID, player.Gender, player.Guild, player.LastLogin}
 		args = append(args, params)
 	}
 
