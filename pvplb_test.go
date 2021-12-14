@@ -272,6 +272,20 @@ func TestGetPlayerAchievements(t *testing.T) {
 	t.Logf("Found achievements: %v", achieved)
 }
 
+func TestDetermineAlt(t *testing.T) {
+	var altPlayerPath = "tichondrius/padatika"
+	altID := getProfileIdentifier(altPlayerPath)
+	mainID := getProfileIdentifier(testPlayerPath)
+	if mainID == "" {
+		t.Error("Unable to generate valid ID")
+	}
+	if mainID != altID {
+		t.Error("IDs do NOT match for main and alt characters")
+	}
+	t.Logf("Main ID: %s", mainID)
+	t.Logf("Alt ID: %s", altID)
+}
+
 func TestParseCovenants(t *testing.T) {
 	var covenantJSON *[]byte = getStatic(testRegion, "covenant/index")
 	var covenants []covenant = parseCovenants(covenantJSON)

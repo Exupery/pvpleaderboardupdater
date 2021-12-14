@@ -219,3 +219,5 @@ CREATE TABLE players_legendaries (
 );
 
 ALTER TABLE players ADD COLUMN last_login TIMESTAMP NOT NULL DEFAULT '0001-01-01';
+
+ALTER TABLE players ADD COLUMN profile_id TEXT;

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -290,6 +291,34 @@ func setPlayerDetails(player *player) {
 	player.SpecID = profile.ActiveSpec.ID
 	player.Guild = profile.Guild.Name
 	player.LastLogin = profile.LastLogin / 1000
+	profileID := getProfileIdentifier(player.Path)
+	if profileID != "" {
+		player.ProfileID = profileID
+	} else {
+		// Fallback to avoid false-positives (will only guarantee uniquness
+		// within a region but that's fine as leaderboards are per region)
+		player.ProfileID = player.Path
+	}
+}
+
+func getProfileIdentifier(path string) string {
+	// All pets are present account-wide (even on characters that cannot use certain pets)
+	// so the hash of the pets JSON can serve as a profile thumbprint
+	petPath := path + "/collections/pets"
+	var petJSON *[]byte = getProfile(region, petPath)
+	if petJSON == nil {
+		return ""
+	}
+	jsonStr := string(*petJSON)
+	start := strings.Index(jsonStr, "\"pets\":")
+	if start < 0 || !strings.Contains(jsonStr, "species") {
+		// Player has no pets
+		return ""
+	}
+	pets := jsonStr[start:]
+
+	hash := sha256.Sum256([]byte(pets))
+	return fmt.Sprintf("%x", hash)
 }
 
 func getPlayerTalents(path string) playerTalents {
