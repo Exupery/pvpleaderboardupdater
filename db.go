@@ -135,6 +135,9 @@ func addPlayers(players []*player) {
 	args := make([][]interface{}, 0)
 
 	for _, player := range players {
+		if player.SpecID == 0 {
+			continue
+		}
 		params := []interface{}{player.Name, player.RealmID, player.BlizzardID, player.ClassID,
 			player.SpecID, player.FactionID, player.RaceID, player.Gender, player.Guild,
 			player.LastLogin, player.ProfileID}
