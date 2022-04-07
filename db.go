@@ -449,7 +449,10 @@ func addSpecs(specs *[]spec) {
 
 	for _, spec := range *specs {
 		params := []interface{}{spec.ID, spec.ClassID, spec.Name, spec.Role, spec.Icon}
-		args = append(args, params)
+		// Do not unset icon if we couldn't retrieve it due to Blizzard API flakiness
+		if spec.Icon != "" {
+			args = append(args, params)
+		}
 	}
 
 	numInserted := insert(query{SQL: qry, Args: args})
