@@ -457,7 +457,7 @@ func getPlayerItems(path string) items {
 		if i.Name == "" {
 			continue
 		}
-		if i.Quality.Type == "LEGENDARY" && len(i.Spells) > 0 {
+		if i.Quality.Type == "LEGENDARY" && len(i.Spells) > 0 && i.Spells[0].Spell.Name != "Unity" {
 			spell := i.Spells[0].Spell
 			spellID := spell.ID
 			name := spell.Name
