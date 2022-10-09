@@ -64,15 +64,19 @@ func insert(qry query) int64 {
 	if qry.Before != "" {
 		bStmt, _ := txn.Prepare(qry.Before)
 		var err error = nil
+		var bRes sql.Result
 		if len(qry.BeforeArgs) == 0 {
-			_, err = bStmt.Exec()
+			bRes, err = bStmt.Exec()
 		} else {
-			_, err = bStmt.Exec(qry.BeforeArgs...)
+			bRes, err = bStmt.Exec(qry.BeforeArgs...)
 		}
 		if err != nil {
 			logger.Printf("%s Before query failed: %s", errPrefix, err)
 			return 0
 		}
+		bQuery := qry.Before[0:24]
+		bAffected, _ := bRes.RowsAffected()
+		logger.Printf("Before query '%s' impacted %d rows", bQuery, bAffected)
 	}
 
 	for _, params := range qry.Args {
