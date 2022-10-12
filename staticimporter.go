@@ -8,10 +8,13 @@ import (
 const pvpFeatsOfStrengthCategory int = 15270
 
 var achievementIDs = []int{
-	// Arena achievements
-	399, 400, 401, 402, 403, 405, 404, 1159, 1160, 1161, 5266, 5267, 876, 2090, 2093, 2092, 2091,
+	// 2v2
+	399, 400, 401, 1159,
+	// 3v3
+	402, 403, 405, 1160, 5266, 5267, 2091,
 	// RBG achievements
-	5329, 5326, 5339, 5353, 5341, 5355, 5343, 5356, 6942, 6941}
+	5341, 5355, 5343, 5356, 6942, 6941,
+}
 
 var realmRegions = []string{"EU", "US", "KR", "TW"}
 
