@@ -71,6 +71,7 @@ type achievement struct {
 	ID          int
 	Title       string
 	Description string
+	Icon        string
 }
 
 // stats : player stat info

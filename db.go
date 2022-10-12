@@ -541,12 +541,12 @@ func addConduits(conduits *[]conduit) {
 }
 
 func addAchievements(achievements *[]achievement) {
-	const qry string = `INSERT INTO achievements (id, name, description)
-		VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
+	const qry string = `INSERT INTO achievements (id, name, description, icon)
+		VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET icon = $4`
 	args := make([][]interface{}, 0)
 
 	for _, achiev := range *achievements {
-		params := []interface{}{achiev.ID, achiev.Title, achiev.Description}
+		params := []interface{}{achiev.ID, achiev.Title, achiev.Description, achiev.Icon}
 		args = append(args, params)
 	}
 

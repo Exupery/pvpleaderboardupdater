@@ -286,10 +286,12 @@ func getAchievement(id int) achievement {
 	var pvpAchievementJSON *[]byte = getStatic(region, fmt.Sprintf("achievement/%d", id))
 	var pvpAchievementJSONDetails PvPAchievementJSON
 	safeUnmarshal(pvpAchievementJSON, &pvpAchievementJSONDetails)
+	icon := getIcon(region, fmt.Sprintf("achievement/%d", id))
 	return achievement{
 		id,
 		pvpAchievementJSONDetails.Name,
-		pvpAchievementJSONDetails.Description}
+		pvpAchievementJSONDetails.Description,
+		icon}
 }
 
 func importAchievements() {
