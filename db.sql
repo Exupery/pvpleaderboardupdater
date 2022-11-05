@@ -40,9 +40,7 @@ CREATE TABLE talents (
   class_id INTEGER NOT NULL REFERENCES classes (id),
   spec_id INTEGER REFERENCES specs (id),
   name VARCHAR(128) NOT NULL,
-  icon VARCHAR(128),
-  tier SMALLINT,
-  col SMALLINT
+  icon VARCHAR(128)
 );
 CREATE INDEX ON talents (tier, col);
 CREATE INDEX ON talents (class_id, spec_id);
@@ -204,7 +202,6 @@ BEGIN
   DELETE FROM players_talents WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_stats WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_items WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM players_legendaries WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM items WHERE DATE_PART('day', NOW() - items.last_update) > 30;
 END; $proc$;
@@ -223,3 +220,18 @@ ALTER TABLE players ADD COLUMN last_login TIMESTAMP NOT NULL DEFAULT '0001-01-01
 ALTER TABLE players ADD COLUMN profile_id TEXT;
 
 ALTER TABLE achievements ADD COLUMN icon VARCHAR(128);
+
+-- Dragonflight schema changes
+
+ALTER TABLE talents DROP COLUMN tier;
+ALTER TABLE talents DROP COLUMN col;
+ALTER TABLE talents DROP CONSTRAINT talents_spec_id_fkey;
+ALTER TABLE talents ALTER COLUMN spec_id SET NOT NULL;
+
+DROP TABLE players_legendaries;
+DROP TABLE players_conduits;
+DROP TABLE players_soulbinds;
+DROP TABLE players_covenants;
+DROP TABLE conduits;
+DROP TABLE soulbinds;
+DROP TABLE covenants;

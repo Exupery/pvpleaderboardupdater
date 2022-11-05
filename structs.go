@@ -42,7 +42,6 @@ type spec struct {
 	Name    string
 	Role    string
 	Icon    string
-	Talents []talent
 }
 
 // talent : talent info
@@ -53,8 +52,6 @@ type talent struct {
 	SpecID  int
 	Name    string
 	Icon    string
-	Tier    int
-	Column  int
 }
 
 // pvpTalent : PvP talent info
@@ -144,31 +141,4 @@ type items struct {
 	MainHand  item
 	OffHand   item
 	Legendary item
-}
-
-// covenant : a Shadowlands covenant
-type covenant struct {
-	ID   int
-	Name string
-	Icon string
-}
-
-// soulbind : a covenant's available soulbind
-type soulbind struct {
-	ID   int
-	Name string
-}
-
-// conduit : a selectable conduit for a soulbind
-type conduit struct {
-	ID      int
-	SpellID int
-	Name    string
-}
-
-// playerSoulbind : the active soulbind and conduits for a player
-type playerSoulbind struct {
-	Covenant int
-	Soulbind int
-	Conduits []int
 }

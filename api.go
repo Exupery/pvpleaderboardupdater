@@ -83,7 +83,6 @@ func getWithRetry(region, namespace, path string, attempt int) *[]byte {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 429 {
-		logger.Printf("Received 429 - retrying '%s' after %d seconds", path, rateLimitRetryWaitSeconds)
 		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
 		return get(region, namespace, path)
 	}

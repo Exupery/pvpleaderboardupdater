@@ -188,10 +188,10 @@ func addPlayerTalents(playersTalents map[int]playerTalents) {
 	}
 	var deleteTalentQuery string = `DELETE FROM players_talents WHERE player_id IN (`
 	const talentQuery string = `INSERT INTO players_talents (player_id, talent_id)
-		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM talents WHERE id=$2)`
+		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM talents WHERE id=$2) ON CONFLICT (player_id, talent_id) DO NOTHING`
 	var deletePvPTalentQuery string = `DELETE FROM players_pvp_talents WHERE player_id IN (`
 	const pvpTalentQuery string = `INSERT INTO players_pvp_talents (player_id, pvp_talent_id)
-		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM pvp_talents WHERE id=$2)`
+		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM pvp_talents WHERE id=$2) ON CONFLICT (player_id, pvp_talent_id) DO NOTHING`
 	deleteArgs := make([]interface{}, 0)
 	talentArgs := make([][]interface{}, 0)
 	pvpTalentArgs := make([][]interface{}, 0)
@@ -305,23 +305,6 @@ func addPlayerItems(playersItems map[int]items) {
 	logger.Printf("Mapped %d players=>items", numInserted)
 }
 
-func addPlayerLegendaries(playersItems map[int]items) {
-	const qry string = `INSERT INTO players_legendaries (player_id, spell_id, legendary_name) VALUES ($1, $2, $3)
-		ON CONFLICT (player_id) DO UPDATE SET spell_id=$2, legendary_name=$3`
-	args := make([][]interface{}, 0)
-
-	for id, equippedItems := range playersItems {
-		legendary := equippedItems.Legendary
-		if legendary.ID == 0 {
-			continue
-		}
-		args = append(args, []interface{}{id, legendary.ID, legendary.Name})
-	}
-
-	numInserted := insert(query{SQL: qry, Args: args})
-	logger.Printf("Mapped %d players=>legendaries", numInserted)
-}
-
 func addItems(equippedItems map[int]item) {
 	// Make this method effectively single-threaded since so many players are
 	// wearing many of the same items - this avoids deadlocks at the DB level
@@ -341,60 +324,6 @@ func addItems(equippedItems map[int]item) {
 
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d items", numInserted)
-}
-
-func addPlayerSoulbinds(playerSoulbinds map[int]playerSoulbind) {
-	if len(playerSoulbinds) == 0 {
-		return
-	}
-	const covQry string = `INSERT INTO players_covenants (player_id, covenant_id) VALUES ($1, $2)
-		ON CONFLICT (player_id) DO UPDATE SET covenant_id=$2`
-	covArgs := make([][]interface{}, 0)
-	const soulbindQry string = `INSERT INTO players_soulbinds (player_id, soulbind_id) VALUES ($1, $2)
-		ON CONFLICT (player_id) DO UPDATE SET soulbind_id=$2`
-	soulbindArgs := make([][]interface{}, 0)
-	var deleteConduitQuery string = `DELETE FROM players_conduits WHERE player_id IN (`
-	deleteArgs := make([]interface{}, 0)
-	const conduitQry string = `INSERT INTO players_conduits (player_id, conduit_id)
-		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM conduits WHERE id=$2)
-		ON CONFLICT (player_id, conduit_id) DO NOTHING`
-	conduitArgs := make([][]interface{}, 0)
-
-	ctr := 1
-	for id, soulbind := range playerSoulbinds {
-		if soulbind.Covenant == 0 {
-			continue
-		}
-		covArgs = append(covArgs, []interface{}{id, soulbind.Covenant})
-
-		if soulbind.Soulbind == 0 {
-			continue
-		}
-		soulbindArgs = append(soulbindArgs, []interface{}{id, soulbind.Soulbind})
-
-		deleteConduitQuery += fmt.Sprintf("$%d,", ctr)
-		deleteArgs = append(deleteArgs, id)
-		for _, conduitID := range soulbind.Conduits {
-			conduitArgs = append(conduitArgs, []interface{}{id, conduitID})
-		}
-		ctr++
-	}
-	deleteConduitQuery = strings.TrimRight(deleteConduitQuery, ",")
-	deleteConduitQuery += ")"
-
-	if len(covArgs) > 0 {
-		numInserted := insert(query{SQL: covQry, Args: covArgs})
-		logger.Printf("Mapped %d players=>covenants", numInserted)
-	}
-	if len(soulbindArgs) > 0 {
-		numInserted := insert(query{SQL: soulbindQry, Args: soulbindArgs})
-		logger.Printf("Mapped %d players=>soulbinds", numInserted)
-	}
-	if len(conduitArgs) > 0 {
-		numInserted := insert(query{SQL: conduitQry, Args: conduitArgs,
-			Before: deleteConduitQuery, BeforeArgs: deleteArgs})
-		logger.Printf("Mapped %d players=>conduits", numInserted)
-	}
 }
 
 func setUpdateTime() {
@@ -468,18 +397,17 @@ func addTalents(talents *[]talent) {
 		return
 	}
 	const deleteQuery string = `TRUNCATE TABLE talents CASCADE`
-	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon, tier, col)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET spec_id = NULL`
+	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon)
+		VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO UPDATE SET name = $5, icon = $6`
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
-		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name,
-			talent.Icon, talent.Tier, talent.Column}
+		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name, talent.Icon}
 		args = append(args, params)
 	}
 
 	numInserted := insert(query{SQL: qry, Args: args, Before: deleteQuery})
-	logger.Printf("Inserted %d talents", numInserted)
+	logger.Printf("Inserted or updated %d talents", numInserted)
 }
 
 func addPvPTalents(pvpTalents *[]pvpTalent) {
@@ -498,46 +426,6 @@ func addPvPTalents(pvpTalents *[]pvpTalent) {
 
 	numInserted := insert(query{SQL: qry, Args: args, Before: deleteQuery})
 	logger.Printf("Inserted %d PvP talents", numInserted)
-}
-
-func addCovenants(covenants *[]covenant) {
-	const qry string = `INSERT INTO covenants (id, name, icon) VALUES($1, $2, $3) ON CONFLICT
-		(id) DO UPDATE SET icon=$3`
-	args := make([][]interface{}, 0)
-
-	for _, covenant := range *covenants {
-		params := []interface{}{covenant.ID, covenant.Name, covenant.Icon}
-		args = append(args, params)
-	}
-
-	numInserted := insert(query{SQL: qry, Args: args})
-	logger.Printf("Inserted %d covenants", numInserted)
-}
-
-func addSoulbinds(soulbinds *[]soulbind) {
-	const qry string = `INSERT INTO soulbinds (id, name) VALUES($1, $2) ON CONFLICT DO NOTHING`
-	args := make([][]interface{}, 0)
-
-	for _, soulbind := range *soulbinds {
-		params := []interface{}{soulbind.ID, soulbind.Name}
-		args = append(args, params)
-	}
-
-	numInserted := insert(query{SQL: qry, Args: args})
-	logger.Printf("Inserted %d soulbinds", numInserted)
-}
-
-func addConduits(conduits *[]conduit) {
-	const qry string = `INSERT INTO conduits (id, spell_id, name) VALUES($1, $2, $3) ON CONFLICT DO NOTHING`
-	args := make([][]interface{}, 0)
-
-	for _, conduit := range *conduits {
-		params := []interface{}{conduit.ID, conduit.SpellID, conduit.Name}
-		args = append(args, params)
-	}
-
-	numInserted := insert(query{SQL: qry, Args: args})
-	logger.Printf("Inserted %d conduits", numInserted)
 }
 
 func addAchievements(achievements *[]achievement) {

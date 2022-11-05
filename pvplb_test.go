@@ -71,7 +71,7 @@ func TestParseClasses(t *testing.T) {
 	t.Logf("Found and parsed %v classes", len(classes))
 }
 
-func TestParseSpecsTalents(t *testing.T) {
+func TestParseSpecs(t *testing.T) {
 	var specsJSON *[]byte = getStatic(testRegion, "playable-specialization/index")
 	var specs []spec = parseSpecs(specsJSON)
 
@@ -81,11 +81,32 @@ func TestParseSpecsTalents(t *testing.T) {
 	t.Logf("Found and parsed %v specs", len(specs))
 
 	for _, spec := range specs {
-		talents := spec.Talents
-		if talents == nil || len(talents) == 0 {
-			t.Error("Parsing talents failed")
+		if len(spec.Icon) == 0 {
+			t.Error("Parsing specs failed")
 		}
-		t.Logf("Found and parsed %v talents for %s", len(talents), spec.Name)
+	}
+}
+
+func TestParseTalents(t *testing.T) {
+	var talentsJSON *[]byte = getStatic(testRegion, "talent/index")
+	var talentIds []int = parseTalents(talentsJSON)
+
+	if talentIds == nil || len(talentIds) == 0 {
+		t.Error("Parsing talent IDs failed")
+	}
+	t.Logf("Found and parsed %v talent IDs", len(talentIds))
+}
+
+func TestParseTalent(t *testing.T) {
+	var talentJSON *[]byte = getStatic(testRegion, "talent/96570")
+	var talent talent = parseTalentDetails(talentJSON)
+
+	if talent.ID != 96570 ||
+		talent.ClassID != 9 ||
+		talent.SpecID != 265 ||
+		talent.SpellID != 108558 ||
+		talent.Icon != "spell_shadow_twilight" {
+		t.Error("Parsing talent details failed")
 	}
 }
 
@@ -284,39 +305,4 @@ func TestDetermineAlt(t *testing.T) {
 	}
 	t.Logf("Main ID: %s", mainID)
 	t.Logf("Alt ID: %s", altID)
-}
-
-func TestParseCovenants(t *testing.T) {
-	var covenantJSON *[]byte = getStatic(testRegion, "covenant/index")
-	var covenants []covenant = parseCovenants(covenantJSON)
-
-	if covenants == nil || len(covenants) == 0 {
-		t.Error("Parsing covenants failed")
-	}
-	t.Logf("Found and parsed %v covenants", len(covenants))
-}
-
-func TestParseSoulbinds(t *testing.T) {
-	var soulbindJSON *[]byte = getStatic(testRegion, "covenant/soulbind/index")
-	var soulbinds []soulbind = parseSoulbinds(soulbindJSON)
-
-	if soulbinds == nil || len(soulbinds) == 0 {
-		t.Error("Parsing soulbinds failed")
-	}
-	t.Logf("Found and parsed %v soulbinds", len(soulbinds))
-}
-
-func TestParseConduits(t *testing.T) {
-	var conduitJSON *[]byte = getStatic(testRegion, "covenant/conduit/index")
-	var conduits []conduit = parseConduits(conduitJSON)
-
-	if conduits == nil || len(conduits) == 0 {
-		t.Error("Parsing conduits failed")
-	}
-	for _, conduit := range conduits {
-		if conduit.SpellID == 0 {
-			t.Errorf("Parsing conduit spell ID failed for %d: %s", conduit.ID, conduit.Name)
-		}
-	}
-	t.Logf("Found and parsed %v conduits", len(conduits))
 }

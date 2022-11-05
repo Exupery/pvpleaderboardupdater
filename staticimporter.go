@@ -25,12 +25,10 @@ func importStaticData() {
 	}
 	importRaces()
 	importClasses()
-	importSpecsAndTalents()
+	importSpecs()
+	importTalents()
 	importPvPTalents()
 	importAchievements()
-	importCovenants()
-	importSoulbinds()
-	importConduits()
 
 	logger.Println("Static data import complete")
 }
@@ -95,16 +93,11 @@ func importClasses() {
 	addClasses(&classes)
 }
 
-func importSpecsAndTalents() {
+func importSpecs() {
 	var specsJSON *[]byte = getStatic(region, "playable-specialization/index")
 	var specs []spec = parseSpecs(specsJSON)
 	logger.Printf("Found %d specializations", len(specs))
 	addSpecs(&specs)
-	var talents []talent = make([]talent, 0)
-	for _, spec := range specs {
-		talents = append(talents, spec.Talents...)
-	}
-	addTalents(&talents)
 }
 
 func parseSpecs(data *[]byte) []spec {
@@ -145,11 +138,12 @@ func getSpec(ch chan spec, specID int) {
 	}
 	type SpecJSON struct {
 		ID            int
-		PlayableClass class `json:"playable_class"`
+		PlayableClass keyedValue `json:"playable_class"`
 		Name          string
 		Media         keyedValue
 		Role          RoleJSON
-		TalentTiers   []talentTierJSON `json:"talent_tiers"`
+		PvpTalents    []interface{} `json:"pvp_talents"`
+		TalentTree    keyedValue    `json:"spec_talent_tree"`
 	}
 	var path string = fmt.Sprintf("playable-specialization/%d", specID)
 	var icon = getIcon(region, path)
@@ -161,39 +155,67 @@ func getSpec(ch chan spec, specID int) {
 		s.PlayableClass.ID,
 		s.Name,
 		s.Role.Role,
-		icon,
-		getFullSpecTalents(specID, s.TalentTiers)}
+		icon}
 }
 
-func getFullSpecTalents(specID int, talentTiers []talentTierJSON) []talent {
+func importTalents() {
+	var talentsJSON *[]byte = getStatic(region, "talent/index")
+	var talentIds []int = parseTalents(talentsJSON)
+	logger.Printf("Found %d talent IDs", len(talentIds))
 	var talents []talent = make([]talent, 0)
-	type TalentJSON struct {
-		ID            int
-		Spell         keyedValue
-		PlayableClass class `json:"playable_class"`
+	var ch chan talent = make(chan talent, len(talentIds))
+	for _, id := range talentIds {
+		go getTalent(ch, id)
 	}
-	for _, t := range talentTiers {
-		tier := t.TierIndex
-		for _, talentEntry := range t.Talents {
-			col := talentEntry.ColumnIndex
-			id := talentEntry.Talent.ID
-			var talentJSON *[]byte = getStatic(region, fmt.Sprintf("talent/%d", id))
-			var talentDetails TalentJSON
-			safeUnmarshal(talentJSON, &talentDetails)
-			icon := getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
-			talent := talent{
-				id,
-				talentDetails.Spell.ID,
-				talentDetails.PlayableClass.ID,
-				specID,
-				talentDetails.Spell.Name,
-				icon,
-				tier,
-				col}
-			talents = append(talents, talent)
+	for range talentIds {
+		talent := <-ch
+		if talent.ID == 0 {
+			continue
 		}
+		talents = append(talents, talent)
 	}
-	return talents
+	addTalents(&talents)
+}
+
+func parseTalents(data *[]byte) []int {
+	var ids []int = make([]int, 0)
+	type TalentsJSON struct {
+		Talents []keyedValue
+	}
+	var talentsIDs TalentsJSON
+	safeUnmarshal(data, &talentsIDs)
+	for _, talent := range talentsIDs.Talents {
+		ids = append(ids, talent.ID)
+	}
+	return ids
+}
+
+func getTalent(ch chan talent, id int) {
+	ch <- parseTalentDetails(getStatic(region, fmt.Sprintf("talent/%d", id)))
+}
+
+func parseTalentDetails(data *[]byte) talent {
+	type TalentJSON struct {
+		ID                     int
+		Spell                  keyedValue
+		PlayableClass          keyedValue `json:"playable_class"`
+		PlayableSpecialization keyedValue `json:"playable_specialization"`
+	}
+	var talentDetails TalentJSON
+	safeUnmarshal(data, &talentDetails)
+	var icon string
+	if talentDetails.PlayableClass.ID == 0 || talentDetails.Spell.ID == 0 {
+		return talent{0, 0, 0, 0, "", ""}
+	} else {
+		icon = getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
+	}
+	return talent{
+		talentDetails.ID,
+		talentDetails.Spell.ID,
+		talentDetails.PlayableClass.ID,
+		talentDetails.PlayableSpecialization.ID,
+		talentDetails.Spell.Name,
+		icon}
 }
 
 func importPvPTalents() {
@@ -305,105 +327,4 @@ func importAchievements() {
 	}
 	logger.Printf("Found %d non-seasonal achievements", len(achievements)-seasonalCount)
 	addAchievements(&achievements)
-}
-
-func importCovenants() {
-	var covenantsJSON *[]byte = getStatic(region, "covenant/index")
-	var covenants []covenant = parseCovenants(covenantsJSON)
-	logger.Printf("Found %d covenants", len(covenants))
-	addCovenants(&covenants)
-}
-
-func parseCovenants(data *[]byte) []covenant {
-	type Covenants struct {
-		Covenants []keyedValue
-	}
-	var covenantsJSON Covenants
-	var covenants []covenant = make([]covenant, 0)
-	err := safeUnmarshal(data, &covenantsJSON)
-	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return covenants
-	}
-	for _, c := range covenantsJSON.Covenants {
-		icon := getIcon(region, fmt.Sprintf("covenant/%d", c.ID))
-		covenants = append(covenants, covenant{c.ID, c.Name, icon})
-	}
-	return covenants
-}
-
-func importSoulbinds() {
-	var soulbindsJSON *[]byte = getStatic(region, "covenant/soulbind/index")
-	var soulbinds []soulbind = parseSoulbinds(soulbindsJSON)
-	logger.Printf("Found %d soulbinds", len(soulbinds))
-	addSoulbinds(&soulbinds)
-}
-
-func parseSoulbinds(data *[]byte) []soulbind {
-	type Soulbinds struct {
-		Soulbinds []keyedValue
-	}
-	var soulbindsJSON Soulbinds
-	var soulbinds []soulbind = make([]soulbind, 0)
-	err := safeUnmarshal(data, &soulbindsJSON)
-	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return soulbinds
-	}
-	for _, sb := range soulbindsJSON.Soulbinds {
-		soulbinds = append(soulbinds, soulbind{sb.ID, sb.Name})
-	}
-	return soulbinds
-}
-
-func importConduits() {
-	var conduitsJSON *[]byte = getStatic(region, "covenant/conduit/index")
-	var conduits []conduit = parseConduits(conduitsJSON)
-	logger.Printf("Found %d conduits", len(conduits))
-	addConduits(&conduits)
-}
-
-func parseConduits(data *[]byte) []conduit {
-	type Conduits struct {
-		Conduits []keyedValue
-	}
-	var conduitsJSON Conduits
-	var conduits []conduit = make([]conduit, 0)
-	err := safeUnmarshal(data, &conduitsJSON)
-	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return conduits
-	}
-	for _, c := range conduitsJSON.Conduits {
-		spellID := getConduitSpellID(c.ID)
-		conduits = append(conduits, conduit{c.ID, spellID, c.Name})
-	}
-	return conduits
-}
-
-func getConduitSpellID(conduitID int) int {
-	type ConduitSpellToolTip struct {
-		Spell keyedValue
-	}
-	type ConduitRank struct {
-		ID           int
-		Tier         int
-		SpellTooltip ConduitSpellToolTip `json:"spell_tooltip"`
-	}
-	type Conduit struct {
-		ID    int
-		Name  string
-		Ranks []ConduitRank
-	}
-	var conduitJSON Conduit
-	var data *[]byte = getStatic(region, fmt.Sprintf("covenant/conduit/%d", conduitID))
-	err := safeUnmarshal(data, &conduitJSON)
-	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
-		return 0
-	}
-	if conduitJSON.Ranks == nil || len(conduitJSON.Ranks) == 0 {
-		return 0
-	}
-	return conduitJSON.Ranks[0].SpellTooltip.Spell.ID
 }
