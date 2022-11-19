@@ -13,7 +13,7 @@ const baseURI string = "https://%s.api.blizzard.com/%s%s"
 const oauthURI string = "https://us.battle.net/oauth/token"
 const requiredParams string = "?locale=en_US&access_token=%s&namespace=%s"
 const rateLimitRetryWaitSeconds int = 2
-const maxRetryAttempts = 3
+const maxRetryAttempts = 2
 
 var clienID string = getEnvVar("BATTLE_NET_CLIENT_ID")
 var secret string = getEnvVar("BATTLE_NET_SECRET")
