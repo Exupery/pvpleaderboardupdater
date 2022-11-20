@@ -341,6 +341,8 @@ func getPlayerTalents(path string) playerTalents {
 		Specialization keyedValue
 		Loadouts       []Loadout
 		PvPTalentSlots []PvPTalent `json:"pvp_talent_slots"`
+		ClassTalents   []Talent    `json:"selected_class_talents"`
+		SpecTalents    []Talent    `json:"selected_spec_talents"`
 	}
 	type Specializations struct {
 		Specializations      []Specialization
@@ -361,34 +363,50 @@ func getPlayerTalents(path string) playerTalents {
 	activeSpecID := specializations.ActiveSpecialization.ID
 	talents := make([]int, 0)
 	pvpTalents := make([]int, 0)
+	var classTalents []Talent
+	var specTalents []Talent
 	for _, spec := range specializations.Specializations {
 		if spec.Specialization.ID != activeSpecID {
 			continue
 		}
+
+		// Players with a loadout will have class and spec talents there
 		for _, loadout := range spec.Loadouts {
 			if !loadout.Active {
 				continue
 			}
-			for _, talent := range loadout.ClassTalents {
-				id := talent.Tooltip.Talent.ID
-				if id > 0 {
-					talents = append(talents, id)
-				}
-			}
-			for _, talent := range loadout.SpecTalents {
-				id := talent.Tooltip.Talent.ID
-				if id > 0 {
-					talents = append(talents, id)
-				}
-			}
-			for _, pvpTalent := range spec.PvPTalentSlots {
-				id := pvpTalent.Selected.Talent.ID
-				if id > 0 {
-					pvpTalents = append(pvpTalents, id)
-				}
-			}
+			classTalents = loadout.ClassTalents
+			specTalents = loadout.SpecTalents
 			break
 		}
+		// Players not using loadouts have talents directly on the spec object
+		if len(spec.ClassTalents) > 0 {
+			classTalents = spec.ClassTalents
+		}
+		if len(spec.SpecTalents) > 0 {
+			specTalents = spec.SpecTalents
+		}
+
+		for _, talent := range classTalents {
+			id := talent.Tooltip.Talent.ID
+			if id > 0 {
+				talents = append(talents, id)
+			}
+		}
+		for _, talent := range specTalents {
+			id := talent.Tooltip.Talent.ID
+			if id > 0 {
+				talents = append(talents, id)
+			}
+		}
+
+		for _, pvpTalent := range spec.PvPTalentSlots {
+			id := pvpTalent.Selected.Talent.ID
+			if id > 0 {
+				pvpTalents = append(pvpTalents, id)
+			}
+		}
+		break
 	}
 
 	return playerTalents{talents, pvpTalents}
