@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
+	"sync"
 )
 
 const pvpFeatsOfStrengthCategory int = 15270
@@ -159,63 +161,151 @@ func getSpec(ch chan spec, specID int) {
 }
 
 func importTalents() {
-	var talentsJSON *[]byte = getStatic(region, "talent/index")
-	var talentIds []int = parseTalents(talentsJSON)
-	logger.Printf("Found %d talent IDs", len(talentIds))
-	var talents []talent = make([]talent, 0)
-	var ch chan talent = make(chan talent, len(talentIds))
-	for _, id := range talentIds {
-		go getTalent(ch, id)
-	}
-	for range talentIds {
-		talent := <-ch
-		if talent.ID == 0 {
-			continue
+	var paths = getTalentTreePaths()
+	talentMap := make(map[int]talent)
+	seenClasses := make(map[int]bool)
+	for path := range paths {
+		treeTalents := getTalentsFromTree(path, seenClasses)
+		if len(treeTalents) > 0 {
+			seenClasses[treeTalents[0].ClassID] = true
 		}
-		talents = append(talents, talent)
+		for _, talent := range treeTalents {
+			talentMap[talent.ID] = talent
+		}
 	}
+
+	talents := make([]talent, len(talentMap))
+	var waitGroup sync.WaitGroup
+	i := 0
+	for _, t := range talentMap {
+		waitGroup.Add(1)
+		go func(i int, tal talent) {
+			defer waitGroup.Done()
+			icon := getIcon(region, fmt.Sprintf("spell/%d", tal.SpellID))
+			talentWithIcon := talent{
+				tal.ID,
+				tal.SpellID,
+				tal.ClassID,
+				tal.SpecID,
+				tal.Name,
+				icon,
+				tal.NodeID,
+				tal.Row,
+				tal.Col}
+			talents[i] = talentWithIcon
+		}(i, t)
+		i++
+	}
+	waitGroup.Wait()
 	addTalents(&talents)
 }
 
-func parseTalents(data *[]byte) []int {
-	var ids []int = make([]int, 0)
-	type TalentsJSON struct {
-		Talents []keyedValue
+func getTalentTreePaths() map[string]string {
+	paths := make(map[string]string)
+	type TalentTreeJSON struct {
+		Key  key
+		Name string
 	}
-	var talentsIDs TalentsJSON
-	safeUnmarshal(data, &talentsIDs)
-	for _, talent := range talentsIDs.Talents {
-		ids = append(ids, talent.ID)
+	type TalentTreesJSON struct {
+		TalentTrees []TalentTreeJSON `json:"talent_trees"`
 	}
-	return ids
+	var talentTreesJSON *[]byte = getStatic(region, "talent-tree/index")
+	var talentTreePaths TalentTreesJSON
+	err := safeUnmarshal(talentTreesJSON, &talentTreePaths)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return paths
+	}
+
+	for _, talentTree := range talentTreePaths.TalentTrees {
+		path := parseTalentTreePath(talentTree.Key.Href)
+		if path != "" {
+			paths[path] = talentTree.Name
+		}
+	}
+
+	return paths
 }
 
-func getTalent(ch chan talent, id int) {
-	ch <- parseTalentDetails(getStatic(region, fmt.Sprintf("talent/%d", id)))
+func parseTalentTreePath(href string) string {
+	pattern := regexp.MustCompile(`\btalent-tree/[0-9]+/playable-specialization/[0-9]+`)
+	match := pattern.Find([]byte(href))
+	if match == nil {
+		logger.Printf("%s Talent tree path not found in %s", warnPrefix, href)
+		return ""
+	}
+	return string(match)
 }
 
-func parseTalentDetails(data *[]byte) talent {
-	type TalentJSON struct {
-		ID                     int
-		Spell                  keyedValue
-		PlayableClass          keyedValue `json:"playable_class"`
-		PlayableSpecialization keyedValue `json:"playable_specialization"`
+func getTalentsFromTree(path string, seenClasses map[int]bool) []talent {
+	type TalentTreeJSON struct {
+		Class        keyedValue       `json:"playable_class"`
+		Spec         keyedValue       `json:"playable_specialization"`
+		ClassTalents []TalentNodeJSON `json:"class_talent_nodes"`
+		SpecTalents  []TalentNodeJSON `json:"spec_talent_nodes"`
 	}
-	var talentDetails TalentJSON
-	safeUnmarshal(data, &talentDetails)
-	var icon string
-	if talentDetails.PlayableClass.ID == 0 || talentDetails.Spell.ID == 0 {
-		return talent{0, 0, 0, 0, "", ""}
-	} else {
-		icon = getIcon(region, fmt.Sprintf("spell/%d", talentDetails.Spell.ID))
+	var talentTreeJSON *[]byte = getStatic(region, path)
+	var talentTree TalentTreeJSON
+	err := safeUnmarshal(talentTreeJSON, &talentTree)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return []talent{}
 	}
-	return talent{
-		talentDetails.ID,
-		talentDetails.Spell.ID,
-		talentDetails.PlayableClass.ID,
-		talentDetails.PlayableSpecialization.ID,
-		talentDetails.Spell.Name,
-		icon}
+
+	var talents []talent = make([]talent, 0)
+
+	if !seenClasses[talentTree.Class.ID] {
+		classTalents := parseTalents(talentTree.Class.ID, 0, talentTree.ClassTalents)
+		talents = append(talents, classTalents...)
+	}
+
+	specTalents := parseTalents(talentTree.Class.ID, talentTree.Spec.ID, talentTree.SpecTalents)
+	talents = append(talents, specTalents...)
+
+	return talents
+}
+
+func parseTalents(classID int, specID int, talentNodes []TalentNodeJSON) []talent {
+	var talents []talent = make([]talent, 0)
+
+	for _, node := range talentNodes {
+		tooltips := extractTooltips(node.Ranks)
+		for _, tooltip := range tooltips {
+			spellID := tooltip.SpellTooltip.Spell.ID
+			if spellID == 0 {
+				continue
+			}
+			talent := talent{
+				tooltip.Talent.ID,
+				spellID,
+				classID,
+				specID,
+				tooltip.SpellTooltip.Spell.Name,
+				"",
+				node.ID,
+				node.Row,
+				node.Col}
+			talents = append(talents, talent)
+		}
+	}
+
+	return talents
+}
+
+func extractTooltips(ranks []RankJSON) []TooltipJSON {
+	var tooltips []TooltipJSON = make([]TooltipJSON, 0)
+	if len(ranks) == 0 {
+		return tooltips
+	}
+
+	head := ranks[0]
+	if head.Tooltip.Talent.ID != 0 {
+		tooltips = append(tooltips, head.Tooltip)
+	} else if len(head.Choice) > 0 {
+		return head.Choice
+	}
+
+	return tooltips
 }
 
 func importPvPTalents() {
@@ -327,4 +417,23 @@ func importAchievements() {
 	}
 	logger.Printf("Found %d non-seasonal achievements", len(achievements)-seasonalCount)
 	addAchievements(&achievements)
+}
+
+type SpellTooltipJSON struct {
+	Spell keyedValue
+}
+type TooltipJSON struct {
+	Talent       keyedValue
+	SpellTooltip SpellTooltipJSON `json:"spell_tooltip"`
+}
+type RankJSON struct {
+	Rank    int
+	Tooltip TooltipJSON
+	Choice  []TooltipJSON `json:"choice_of_tooltips"`
+}
+type TalentNodeJSON struct {
+	ID    int
+	Row   int `json:"display_row"`
+	Col   int `json:"display_col"`
+	Ranks []RankJSON
 }

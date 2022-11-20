@@ -87,27 +87,48 @@ func TestParseSpecs(t *testing.T) {
 	}
 }
 
-func TestParseTalents(t *testing.T) {
-	var talentsJSON *[]byte = getStatic(testRegion, "talent/index")
-	var talentIds []int = parseTalents(talentsJSON)
+func TestTalentTreePaths(t *testing.T) {
+	paths := getTalentTreePaths()
 
-	if talentIds == nil || len(talentIds) == 0 {
-		t.Error("Parsing talent IDs failed")
+	if paths == nil || len(paths) == 0 {
+		t.Error("Getting talent tree paths failed")
 	}
-	t.Logf("Found and parsed %v talent IDs", len(talentIds))
+	t.Logf("Found %v talent tree paths", len(paths))
 }
 
-func TestParseTalent(t *testing.T) {
-	var talentJSON *[]byte = getStatic(testRegion, "talent/96570")
-	var talent talent = parseTalentDetails(talentJSON)
-
-	if talent.ID != 96570 ||
-		talent.ClassID != 9 ||
-		talent.SpecID != 265 ||
-		talent.SpellID != 108558 ||
-		talent.Icon != "spell_shadow_twilight" {
-		t.Error("Parsing talent details failed")
+func TestExtractTalentTreePath(t *testing.T) {
+	var cases = map[string]string{
+		"https://a.b.c/d/e/talent-tree/781/playable-specialization/270?f": "talent-tree/781/playable-specialization/270",
+		"foo/talent-tree/1234/playable-specialization/5678/bar":           "talent-tree/1234/playable-specialization/5678",
+		"talent-tree/1/playable-specialization/2":                         "talent-tree/1/playable-specialization/2",
+		"talent-tree/11/playable-specialization/22":                       "talent-tree/11/playable-specialization/22",
+		"talent-tree/111/playable-specialization/222":                     "talent-tree/111/playable-specialization/222",
+		"talent-tree/1/invalid/playable-specialization/2":                 "",
+		"invalidtalent-tree/1/playable-specialization/2":                  "",
+		"talent-tree/1/playable-specializationinvalid/2":                  "",
+		"talent-tree/1/playable-specialization/invalid/2":                 "",
+		"talent-tree/1/invalid/2":                                         "",
+		"talent-tree/playable-specialization/2":                           "",
+		"talent-tree/1/playable-specialization":                           "",
+		"talent-tree/1/playable-specialization/invalid/":                  "",
 	}
+
+	for href, expected := range cases {
+		actual := parseTalentTreePath(href)
+		if actual != expected {
+			t.Errorf("Returned '%s' for '%s' but expected '%s'", actual, href, expected)
+		}
+	}
+}
+
+func TestGetTalentsFromTree(t *testing.T) {
+	path := "talent-tree/781/playable-specialization/270"
+	talents := getTalentsFromTree(path, map[int]bool{})
+
+	if talents == nil || len(talents) == 0 {
+		t.Error("Getting talents from talent tree failed")
+	}
+	t.Logf("Found and parsed %v talents", len(talents))
 }
 
 func TestParsePvPTalents(t *testing.T) {

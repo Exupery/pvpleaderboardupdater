@@ -397,12 +397,13 @@ func addTalents(talents *[]talent) {
 		return
 	}
 	const deleteQuery string = `TRUNCATE TABLE talents CASCADE`
-	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon)
-		VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO UPDATE SET name = $5, icon = $6`
+	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon,
+		node_id, display_row, display_col) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON
+		CONFLICT (id) DO UPDATE SET name = $5, icon = $6`
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
-		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name, talent.Icon}
+		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name, talent.Icon, talent.NodeID, talent.Row, talent.Col}
 		args = append(args, params)
 	}
 

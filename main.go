@@ -332,10 +332,14 @@ func getPlayerTalents(path string) playerTalents {
 	type PvPTalent struct {
 		Selected Selected
 	}
+	type Loadout struct {
+		Active       bool     `json:"is_active"`
+		ClassTalents []Talent `json:"selected_class_talents"`
+		SpecTalents  []Talent `json:"selected_spec_talents"`
+	}
 	type Specialization struct {
 		Specialization keyedValue
-		ClassTalents   []Talent    `json:"selected_class_talents"`
-		SpecTalents    []Talent    `json:"selected_spec_talents"`
+		Loadouts       []Loadout
 		PvPTalentSlots []PvPTalent `json:"pvp_talent_slots"`
 	}
 	type Specializations struct {
@@ -361,25 +365,30 @@ func getPlayerTalents(path string) playerTalents {
 		if spec.Specialization.ID != activeSpecID {
 			continue
 		}
-		for _, talent := range spec.ClassTalents {
-			id := talent.Tooltip.Talent.ID
-			if id > 0 {
-				talents = append(talents, id)
+		for _, loadout := range spec.Loadouts {
+			if !loadout.Active {
+				continue
 			}
-		}
-		for _, talent := range spec.SpecTalents {
-			id := talent.Tooltip.Talent.ID
-			if id > 0 {
-				talents = append(talents, id)
+			for _, talent := range loadout.ClassTalents {
+				id := talent.Tooltip.Talent.ID
+				if id > 0 {
+					talents = append(talents, id)
+				}
 			}
-		}
-		for _, pvpTalent := range spec.PvPTalentSlots {
-			id := pvpTalent.Selected.Talent.ID
-			if id > 0 {
-				pvpTalents = append(pvpTalents, id)
+			for _, talent := range loadout.SpecTalents {
+				id := talent.Tooltip.Talent.ID
+				if id > 0 {
+					talents = append(talents, id)
+				}
 			}
+			for _, pvpTalent := range spec.PvPTalentSlots {
+				id := pvpTalent.Selected.Talent.ID
+				if id > 0 {
+					pvpTalents = append(pvpTalents, id)
+				}
+			}
+			break
 		}
-		break
 	}
 
 	return playerTalents{talents, pvpTalents}

@@ -52,6 +52,9 @@ type talent struct {
 	SpecID  int
 	Name    string
 	Icon    string
+	NodeID  int
+	Row     int
+	Col     int
 }
 
 // pvpTalent : PvP talent info

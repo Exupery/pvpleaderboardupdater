@@ -235,3 +235,8 @@ DROP TABLE players_covenants;
 DROP TABLE conduits;
 DROP TABLE soulbinds;
 DROP TABLE covenants;
+
+ALTER TABLE talents ADD COLUMN node_id INTEGER;
+ALTER TABLE talents ADD COLUMN display_row INTEGER;
+ALTER TABLE talents ADD COLUMN display_col INTEGER;
+CREATE INDEX ON talents (node_id);
