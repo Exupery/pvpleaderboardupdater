@@ -2,8 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
-	"strings"
 	"sync"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -182,43 +180,39 @@ func getPlayerIDs(players []*player) map[string]int {
 	return m
 }
 
+// Mark all existing player_talent and player_pvp_talent entries
+// as stale so we can delete any that aren't set to false after
+// all the addPlayerTalents calls have concluded.
+func markStalePlayerTalents() {
+	const talentQuery string = `UPDATE players_talents SET stale=TRUE`
+	const pvpTalentQuery string = `UPDATE players_pvp_talents SET stale=TRUE`
+	execute(talentQuery)
+	execute(pvpTalentQuery)
+}
+
 func addPlayerTalents(playersTalents map[int]playerTalents) {
 	if len(playersTalents) == 0 {
 		return
 	}
-	var deleteTalentQuery string = `DELETE FROM players_talents WHERE player_id IN (`
-	const talentQuery string = `INSERT INTO players_talents (player_id, talent_id)
-		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM talents WHERE id=$2) ON CONFLICT (player_id, talent_id) DO NOTHING`
-	var deletePvPTalentQuery string = `DELETE FROM players_pvp_talents WHERE player_id IN (`
-	const pvpTalentQuery string = `INSERT INTO players_pvp_talents (player_id, pvp_talent_id)
-		SELECT $1, $2 WHERE EXISTS (SELECT 1 FROM pvp_talents WHERE id=$2) ON CONFLICT (player_id, pvp_talent_id) DO NOTHING`
-	deleteArgs := make([]interface{}, 0)
+	const talentQuery string = `INSERT INTO players_talents (player_id, talent_id, stale)
+		SELECT $1, $2, FALSE WHERE EXISTS (SELECT 1 FROM talents WHERE id=$2) ON CONFLICT (player_id, talent_id) DO UPDATE SET stale=FALSE`
+	const pvpTalentQuery string = `INSERT INTO players_pvp_talents (player_id, pvp_talent_id, stale)
+		SELECT $1, $2, FALSE WHERE EXISTS (SELECT 1 FROM pvp_talents WHERE id=$2) ON CONFLICT (player_id, pvp_talent_id) DO UPDATE SET stale=FALSE`
 	talentArgs := make([][]interface{}, 0)
 	pvpTalentArgs := make([][]interface{}, 0)
 
-	ctr := 1
 	for id, talents := range playersTalents {
-		deleteTalentQuery += fmt.Sprintf("$%d,", ctr)
-		deletePvPTalentQuery += fmt.Sprintf("$%d,", ctr)
-		deleteArgs = append(deleteArgs, id)
 		for _, talent := range talents.Talents {
 			talentArgs = append(talentArgs, []interface{}{id, talent})
 		}
 		for _, pvptalent := range talents.PvPTalents {
 			pvpTalentArgs = append(pvpTalentArgs, []interface{}{id, pvptalent})
 		}
-		ctr++
 	}
-	deleteTalentQuery = strings.TrimRight(deleteTalentQuery, ",")
-	deletePvPTalentQuery = strings.TrimRight(deletePvPTalentQuery, ",")
-	deleteTalentQuery += ")"
-	deletePvPTalentQuery += ")"
 
-	numInserted := insert(query{SQL: talentQuery, Args: talentArgs,
-		Before: deleteTalentQuery, BeforeArgs: deleteArgs})
+	numInserted := insert(query{SQL: talentQuery, Args: talentArgs})
 	logger.Printf("Mapped %d players=>talents", numInserted)
-	numInserted = insert(query{SQL: pvpTalentQuery, Args: pvpTalentArgs,
-		Before: deletePvPTalentQuery, BeforeArgs: deleteArgs})
+	numInserted = insert(query{SQL: pvpTalentQuery, Args: pvpTalentArgs})
 	logger.Printf("Mapped %d players=>PvP talents", numInserted)
 }
 

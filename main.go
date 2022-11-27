@@ -32,6 +32,7 @@ func main() {
 	groupSize := getEnvVarOrDefault("GROUP_SIZE", defaultGroupSize)
 	season := getCurrentSeason()
 	foundPlayers := false
+	markStalePlayerTalents()
 	for _, r := range regions {
 		region = r
 		leaderboards := make(map[string][]leaderboardEntry)
@@ -62,9 +63,8 @@ func main() {
 			updateLeaderboard(bracket, leaderboard)
 		}
 	}
-	purgeStalePlayers()
 	if foundPlayers {
-		// Only set update time if there was an actual leaderboard update
+		purgeStalePlayers()
 		setUpdateTime()
 	}
 	end := time.Now()
@@ -127,7 +127,9 @@ func getCurrentSeason() int {
 		logger.Printf("%s json parsing failed: %s", errPrefix, err)
 		return 0
 	}
-	return seasons.CurrentSeason.ID
+	season := seasons.CurrentSeason.ID
+	logger.Printf("Current season: %d", season)
+	return season
 }
 
 func getLeaderboard(bracket string, season int) []leaderboardEntry {

@@ -197,6 +197,8 @@ CREATE TABLE players_conduits (
 CREATE OR REPLACE FUNCTION purge_old_players()
 RETURNS VOID LANGUAGE plpgsql AS $proc$
 BEGIN
+  DELETE FROM players_pvp_talents WHERE stale=TRUE;
+  DELETE FROM players_talents WHERE stale=TRUE;
   DELETE FROM players_achievements WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_pvp_talents WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_talents WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
@@ -240,3 +242,6 @@ ALTER TABLE talents ADD COLUMN node_id INTEGER;
 ALTER TABLE talents ADD COLUMN display_row INTEGER;
 ALTER TABLE talents ADD COLUMN display_col INTEGER;
 CREATE INDEX ON talents (node_id);
+
+ALTER TABLE players_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
+ALTER TABLE players_pvp_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
