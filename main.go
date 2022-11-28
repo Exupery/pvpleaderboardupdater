@@ -268,7 +268,7 @@ func setPlayerDetails(player *player) {
 	var profile ProfileJSON
 	err := safeUnmarshal(profileJSON, &profile)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
 		return
 	}
 
@@ -358,7 +358,7 @@ func getPlayerTalents(path string) playerTalents {
 	var specializations Specializations
 	err := safeUnmarshal(talentJSON, &specializations)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
 		return playerTalents{}
 	}
 
@@ -448,7 +448,7 @@ func getPlayerStats(path string) stats {
 	var s StatJSON
 	err := safeUnmarshal(statsJSON, &s)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
 		return stats{}
 	}
 	crit := highestStat(int(s.MeleeCrit.Rating), int(s.RangedCrit.Rating), int(s.SpellCrit.Rating))
@@ -489,7 +489,7 @@ func getPlayerItems(path string) items {
 	var equipped ItemsJSON
 	err := safeUnmarshal(itemsJSON, &equipped)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
 		return items{}
 	}
 	equippedItems := make(map[string]item)
@@ -582,7 +582,7 @@ func parseItemName(data *[]byte) string {
 	}
 	err := safeUnmarshal(data, &item)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
 		return ""
 	}
 	return item.Name
@@ -603,7 +603,7 @@ func getPlayerAchievements(path string, pvpAchievements map[int]bool) []int {
 	var achieved AchievedJSON
 	err := safeUnmarshal(achievedJSON, &achieved)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
 		return make([]int, 0)
 	}
 	achievedIDs := make([]int, 0)
@@ -633,7 +633,7 @@ func safeUnmarshal(data *[]byte, v interface{}) error {
 
 	err := json.Unmarshal(*data, &v)
 	if err != nil {
-		logger.Printf("%s JSON parsing failed: %s", errPrefix, err)
+		logger.Printf("%s JSON parsing failed: %s", warnPrefix, err)
 		return err
 	}
 
