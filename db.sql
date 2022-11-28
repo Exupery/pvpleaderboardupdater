@@ -200,8 +200,6 @@ BEGIN
   DELETE FROM players_pvp_talents WHERE stale=TRUE;
   DELETE FROM players_talents WHERE stale=TRUE;
   DELETE FROM players_achievements WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM players_pvp_talents WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM players_talents WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_stats WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players_items WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
@@ -245,3 +243,11 @@ CREATE INDEX ON talents (node_id);
 
 ALTER TABLE players_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
 ALTER TABLE players_pvp_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
+ALTER TABLE players_talents DROP CONSTRAINT players_talents_talent_id_fkey,
+  ADD CONSTRAINT players_talents_talent_id_fkey
+  FOREIGN KEY ("talent_id") REFERENCES talents(id) ON DELETE CASCADE;
+ALTER TABLE players_pvp_talents DROP CONSTRAINT players_pvp_talents_pvp_talent_id_fkey,
+  ADD CONSTRAINT players_pvp_talents_pvp_talent_id_fkey
+  FOREIGN KEY ("pvp_talent_id") REFERENCES pvp_talents(id) ON DELETE CASCADE;
+ALTER TABLE talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
+ALTER TABLE pvp_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;

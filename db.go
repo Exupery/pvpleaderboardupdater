@@ -390,10 +390,12 @@ func addTalents(talents *[]talent) {
 	if len(*talents) == 0 {
 		return
 	}
-	const deleteQuery string = `TRUNCATE TABLE talents CASCADE`
+	const staleQuery string = `UPDATE talents SET stale=TRUE`
+	execute(staleQuery)
+
 	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon,
-		node_id, display_row, display_col) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON
-		CONFLICT (id) DO UPDATE SET name = $5, icon = $6`
+		node_id, display_row, display_col, stale) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE) ON
+		CONFLICT (id) DO UPDATE SET name = $5, icon = $6, stale = FALSE`
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
@@ -401,17 +403,23 @@ func addTalents(talents *[]talent) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(query{SQL: qry, Args: args, Before: deleteQuery})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted or updated %d talents", numInserted)
+
+	const deleteStaleQuery string = `DELETE FROM talents WHERE stale=TRUE`
+	execute(deleteStaleQuery)
 }
 
 func addPvPTalents(pvpTalents *[]pvpTalent) {
 	if len(*pvpTalents) == 0 {
 		return
 	}
-	const deleteQuery string = `TRUNCATE TABLE pvp_talents CASCADE`
-	const qry string = `INSERT INTO pvp_talents (id, spell_id, spec_id, name, icon)
-		VALUES ($1, $2, $3, $4, $5)`
+	const staleQuery string = `UPDATE pvp_talents SET stale=TRUE`
+	execute(staleQuery)
+
+	const qry string = `INSERT INTO pvp_talents (id, spell_id, spec_id, name, icon, stale)
+		VALUES ($1, $2, $3, $4, $5, FALSE)
+		ON CONFLICT (id) DO UPDATE SET name = $4, icon = $5, stale = FALSE`
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *pvpTalents {
@@ -419,8 +427,11 @@ func addPvPTalents(pvpTalents *[]pvpTalent) {
 		args = append(args, params)
 	}
 
-	numInserted := insert(query{SQL: qry, Args: args, Before: deleteQuery})
+	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d PvP talents", numInserted)
+
+	const deleteStaleQuery string = `DELETE FROM pvp_talents WHERE stale=TRUE`
+	execute(deleteStaleQuery)
 }
 
 func addAchievements(achievements *[]achievement) {
