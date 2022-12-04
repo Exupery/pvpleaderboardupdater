@@ -240,6 +240,7 @@ ALTER TABLE talents ADD COLUMN node_id INTEGER;
 ALTER TABLE talents ADD COLUMN display_row INTEGER;
 ALTER TABLE talents ADD COLUMN display_col INTEGER;
 CREATE INDEX ON talents (node_id);
+CREATE INDEX ON talents (display_col);
 
 ALTER TABLE players_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
 ALTER TABLE players_pvp_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
@@ -251,3 +252,6 @@ ALTER TABLE players_pvp_talents DROP CONSTRAINT players_pvp_talents_pvp_talent_i
   FOREIGN KEY ("pvp_talent_id") REFERENCES pvp_talents(id) ON DELETE CASCADE;
 ALTER TABLE talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
 ALTER TABLE pvp_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
+
+ALTER TABLE leaderboards ALTER COLUMN bracket TYPE VARCHAR(16);
+CREATE INDEX ON leaderboards (bracket);
