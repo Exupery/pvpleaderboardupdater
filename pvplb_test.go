@@ -6,7 +6,7 @@ import (
 )
 
 const testRegion = "US"
-const testSeason = 29
+const testSeason = 33
 const testPlayerPath = "emerald-dream/exuperjun"
 
 func TestCreateToken(t *testing.T) {
@@ -158,6 +158,35 @@ func TestGetCurrentSeason(t *testing.T) {
 		t.Error("Determining current season failed")
 	}
 	t.Logf("Current PvP season is %d", currentSeason)
+}
+
+func TestGetSoloLeaderboards(t *testing.T) {
+	var soloLeaderboards = getSoloLeaderboards(testSeason)
+	if len(soloLeaderboards) == 0 {
+		t.Error("No Solo Shuffle Leaderboards Found")
+	}
+
+	t.Logf("Found %d Solo Shuffle Leaderboards", len(soloLeaderboards))
+}
+
+func TestGetSpecIDFromSoloName(t *testing.T) {
+	var cases = map[string]int{
+		"2v2":                         0,
+		"rbg":                         0,
+		"some-invalid-string":         0,
+		"shuffle-deathknight-frost":   251,
+		"shuffle-hunter-beastmastery": 253,
+		"shuffle-warlock-affliction":  265,
+		"shuffle-monk-mistweaver":     270,
+		"shuffle-evoker-devastation":  1467,
+	}
+
+	for name, expected := range cases {
+		actual := getSpecIDFromSoloName(name)
+		if actual != expected {
+			t.Errorf("Returned '%d' for '%s' but expected '%d'", actual, name, expected)
+		}
+	}
 }
 
 func TestGetLeaderboard(t *testing.T) {

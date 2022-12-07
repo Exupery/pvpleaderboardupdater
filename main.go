@@ -36,6 +36,8 @@ func main() {
 	for _, r := range regions {
 		region = r
 		leaderboards := make(map[string][]leaderboardEntry)
+
+		// REGULAR BRACKETS
 		brackets := []string{"2v2", "3v3", "rbg"}
 		for _, bracket := range brackets {
 			leaderboard := getLeaderboard(bracket, season)
@@ -45,6 +47,18 @@ func main() {
 			}
 			leaderboards[bracket] = leaderboard
 		}
+		// SOLO SHUFFLE
+		soloLeaderboards := getSoloLeaderboards(season)
+		for specID, name := range soloLeaderboards {
+			leaderboard := getLeaderboard(name, season)
+			logger.Printf("Found %d players on %s %s leaderboard", len(leaderboard), region, name)
+			if len(leaderboard) == 0 {
+				continue
+			}
+			bracket := fmt.Sprintf("solo_%d", specID)
+			leaderboards[bracket] = leaderboard
+		}
+
 		players := getPlayersFromLeaderboards(leaderboards)
 		logger.Printf("Found %d unique players across %s leaderboards", len(players), region)
 		if len(players) == 0 {
@@ -130,6 +144,51 @@ func getCurrentSeason() int {
 	season := seasons.CurrentSeason.ID
 	logger.Printf("Current season: %d", season)
 	return season
+}
+
+func getSoloLeaderboards(season int) map[int]string {
+	type Leaderboards struct {
+		Leaderboards []keyedValue
+	}
+	soloLeaderboards := make(map[int]string, 0)
+
+	path := fmt.Sprintf("pvp-season/%d/pvp-leaderboard/index", season)
+	var leaderboardsJSON *[]byte = getDynamic(region, path)
+	if leaderboardsJSON == nil {
+		return soloLeaderboards
+	}
+
+	var leaderboards Leaderboards
+	err := safeUnmarshal(leaderboardsJSON, &leaderboards)
+	if err != nil {
+		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		return soloLeaderboards
+	}
+
+	for _, leaderboard := range leaderboards.Leaderboards {
+		name := leaderboard.Name
+		specID := getSpecIDFromSoloName(name)
+		if specID == 0 {
+			continue
+		}
+		soloLeaderboards[specID] = name
+	}
+
+	return soloLeaderboards
+}
+
+func getSpecIDFromSoloName(name string) int {
+	if !strings.HasPrefix(name, "shuffle") {
+		return 0
+	}
+
+	parts := strings.Split(name, "-")
+	if len(parts) != 3 {
+		logger.Printf("%s Unexpected solo shuffle name: %s", warnPrefix, name)
+		return 0
+	}
+
+	return getSpecIDForSolo(parts[1], parts[2])
 }
 
 func getLeaderboard(bracket string, season int) []leaderboardEntry {

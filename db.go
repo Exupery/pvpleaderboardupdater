@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"strings"
 	"sync"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -464,6 +465,34 @@ func getAchievementIds() map[int]bool {
 		m[id] = true
 	}
 	return m
+}
+
+func getSpecIDForSolo(clazz string, spec string) int {
+	// Can't simply lookup IDs via names because in the solo shuffle key
+	// they strip out spaces (i.e. without a placeholder)
+	rows, err := db.Query("SELECT specs.id AS id, classes.name AS c, specs.name AS s FROM specs JOIN classes ON specs.class_id=classes.id")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var c string
+		var s string
+		err := rows.Scan(&id, &c, &s)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+			return 0
+		}
+		clazzSlug := strings.ReplaceAll(strings.ToLower(c), " ", "")
+		specSlug := strings.ReplaceAll(strings.ToLower(s), " ", "")
+		if clazzSlug == clazz && specSlug == spec {
+			return id
+		}
+	}
+
+	return 0
 }
 
 func getRealmSlug(id int) string {
