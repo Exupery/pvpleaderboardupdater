@@ -138,7 +138,7 @@ func getCurrentSeason() int {
 	var seasons Seasons
 	err := safeUnmarshal(seasonsJSON, &seasons)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing season failed: %s", warnPrefix, err)
 		return 0
 	}
 	season := seasons.CurrentSeason.ID
@@ -161,7 +161,7 @@ func getSoloLeaderboards(season int) map[int]string {
 	var leaderboards Leaderboards
 	err := safeUnmarshal(leaderboardsJSON, &leaderboards)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing leaderboards failed: %s", warnPrefix, err)
 		return soloLeaderboards
 	}
 
@@ -224,7 +224,7 @@ func getLeaderboard(bracket string, season int) []leaderboardEntry {
 	var leaderboard LeaderBoardJSON
 	err := safeUnmarshal(leaderboardJSON, &leaderboard)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing leaderboard failed: %s", warnPrefix, err)
 		return leaderboardEntries
 	}
 	for _, entry := range leaderboard.Entries {

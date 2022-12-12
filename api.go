@@ -55,7 +55,7 @@ func getIcon(region, path string) string {
 	var iconJSON IconJSON
 	err := safeUnmarshal(data, &iconJSON)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing icon failed, using empty string: %s", warnPrefix, err)
 		return ""
 	}
 	for _, asset := range iconJSON.Assets {

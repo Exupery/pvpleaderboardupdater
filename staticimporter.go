@@ -42,7 +42,7 @@ func parseRealms(data *[]byte) []realm {
 	var realms Realms
 	err := safeUnmarshal(data, &realms)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing realms failed: %s", warnPrefix, err)
 		return make([]realm, 0)
 	}
 	return realms.Realms
@@ -62,7 +62,7 @@ func parseRaces(data *[]byte) []race {
 	var races Races
 	err := safeUnmarshal(data, &races)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing races failed: %s", warnPrefix, err)
 		return make([]race, 0)
 	}
 	return races.Races
@@ -82,7 +82,7 @@ func parseClasses(data *[]byte) []class {
 	var classes Classes
 	err := safeUnmarshal(data, &classes)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing classes failed: %s", warnPrefix, err)
 		return make([]class, 0)
 	}
 	return classes.Classes
@@ -112,7 +112,7 @@ func parseSpecs(data *[]byte) []spec {
 	var specsJSON SpecsJSON
 	err := safeUnmarshal(data, &specsJSON)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing specs failed: %s", warnPrefix, err)
 		return make([]spec, 0)
 	}
 	var specIDs []int = make([]int, 0)
@@ -213,7 +213,7 @@ func getTalentTreePaths() map[string]string {
 	var talentTreePaths TalentTreesJSON
 	err := safeUnmarshal(talentTreesJSON, &talentTreePaths)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing talent trees failed: %s", warnPrefix, err)
 		return paths
 	}
 
@@ -248,7 +248,7 @@ func getTalentsFromTree(path string, seenClasses map[int]bool) []talent {
 	var talentTree TalentTreeJSON
 	err := safeUnmarshal(talentTreeJSON, &talentTree)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing talents failed: %s", warnPrefix, err)
 		return []talent{}
 	}
 
@@ -322,7 +322,7 @@ func parsePvPTalents(data *[]byte) []pvpTalent {
 	var pvpTalentsJSON PvPTalentsJSON
 	err := safeUnmarshal(data, &pvpTalentsJSON)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing pvp talents failed: %s", warnPrefix, err)
 		return make([]pvpTalent, 0)
 	}
 	var pvpTalents []pvpTalent = make([]pvpTalent, 0)
@@ -364,7 +364,7 @@ func parseAchievements(data *[]byte) []achievement {
 	err := safeUnmarshal(data, &achievements)
 	var pvpAchievements []achievement = make([]achievement, 0)
 	if err != nil {
-		logger.Printf("%s json parsing failed: %s", errPrefix, err)
+		logger.Printf("%s parsing achievements failed: %s", warnPrefix, err)
 		return pvpAchievements
 	}
 
