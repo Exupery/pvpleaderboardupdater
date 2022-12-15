@@ -255,3 +255,5 @@ ALTER TABLE pvp_talents ADD COLUMN stale BOOLEAN DEFAULT TRUE;
 
 ALTER TABLE leaderboards ALTER COLUMN bracket TYPE VARCHAR(16);
 CREATE INDEX ON leaderboards (bracket);
+
+ALTER TABLE players ALTER COLUMN blizzard_id TYPE BIGINT;
