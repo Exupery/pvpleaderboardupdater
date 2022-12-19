@@ -298,7 +298,12 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 	var playersItems map[int]items = make(map[int]items, 0)
 	var playersAchievements map[int][]int = make(map[int][]int, 0)
 	for profilePath, dbID := range playerIDs {
-		playersTalents[dbID] = getPlayerTalents(profilePath)
+		playerTalents := getPlayerTalents(profilePath)
+		// If we couldn't get the player's talents don't bother attempting other data
+		if len(playerTalents.Talents) == 0 {
+			continue
+		}
+		playersTalents[dbID] = playerTalents
 		playersStats[dbID] = getPlayerStats(profilePath)
 		playersItems[dbID] = getPlayerItems(profilePath)
 		playersAchievements[dbID] = getPlayerAchievements(profilePath, pvpAchievements)
