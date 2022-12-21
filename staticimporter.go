@@ -207,7 +207,8 @@ func getTalentTreePaths() map[string]string {
 		Name string
 	}
 	type TalentTreesJSON struct {
-		TalentTrees []TalentTreeJSON `json:"talent_trees"`
+		SpecTalentTrees  []TalentTreeJSON `json:"spec_talent_trees"`
+		ClassTalentTrees []TalentTreeJSON `json:"class_talent_trees"`
 	}
 	var talentTreesJSON *[]byte = getStatic(region, "talent-tree/index")
 	var talentTreePaths TalentTreesJSON
@@ -217,8 +218,14 @@ func getTalentTreePaths() map[string]string {
 		return paths
 	}
 
-	for _, talentTree := range talentTreePaths.TalentTrees {
-		path := parseTalentTreePath(talentTree.Key.Href)
+	for _, talentTree := range talentTreePaths.SpecTalentTrees {
+		path := parseSpecTalentTreePath(talentTree.Key.Href)
+		if path != "" {
+			paths[path] = talentTree.Name
+		}
+	}
+	for _, talentTree := range talentTreePaths.ClassTalentTrees {
+		path := parseClassTalentTreePath(talentTree.Key.Href)
 		if path != "" {
 			paths[path] = talentTree.Name
 		}
@@ -227,8 +234,16 @@ func getTalentTreePaths() map[string]string {
 	return paths
 }
 
-func parseTalentTreePath(href string) string {
-	pattern := regexp.MustCompile(`\btalent-tree/[0-9]+/playable-specialization/[0-9]+`)
+func parseSpecTalentTreePath(href string) string {
+	return parseTalentTreePath(href, `\btalent-tree/[0-9]+/playable-specialization/[0-9]+`)
+}
+
+func parseClassTalentTreePath(href string) string {
+	return parseTalentTreePath(href, `\btalent-tree/[0-9]+`)
+}
+
+func parseTalentTreePath(href string, regexpPattern string) string {
+	pattern := regexp.MustCompile(regexpPattern)
 	match := pattern.Find([]byte(href))
 	if match == nil {
 		logger.Printf("%s Talent tree path not found in %s", warnPrefix, href)

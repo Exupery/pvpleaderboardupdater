@@ -97,7 +97,7 @@ func TestTalentTreePaths(t *testing.T) {
 }
 
 func TestExtractTalentTreePath(t *testing.T) {
-	var cases = map[string]string{
+	var specCases = map[string]string{
 		"https://a.b.c/d/e/talent-tree/781/playable-specialization/270?f": "talent-tree/781/playable-specialization/270",
 		"foo/talent-tree/1234/playable-specialization/5678/bar":           "talent-tree/1234/playable-specialization/5678",
 		"talent-tree/1/playable-specialization/2":                         "talent-tree/1/playable-specialization/2",
@@ -113,8 +113,24 @@ func TestExtractTalentTreePath(t *testing.T) {
 		"talent-tree/1/playable-specialization/invalid/":                  "",
 	}
 
-	for href, expected := range cases {
-		actual := parseTalentTreePath(href)
+	for href, expected := range specCases {
+		actual := parseSpecTalentTreePath(href)
+		if actual != expected {
+			t.Errorf("Returned '%s' for '%s' but expected '%s'", actual, href, expected)
+		}
+	}
+
+	var classCases = map[string]string{
+		"https://a.b.c/d/e/talent-tree/781?f":   "talent-tree/781",
+		"foo/talent-tree/1234/5678/bar":         "talent-tree/1234",
+		"talent-tree/1":                         "talent-tree/1",
+		"talent-tree/invalid/1":                 "",
+		"invalidtalent-tree/1":                  "",
+		"talent-tree/playable-specialization/2": "",
+	}
+
+	for href, expected := range classCases {
+		actual := parseClassTalentTreePath(href)
 		if actual != expected {
 			t.Errorf("Returned '%s' for '%s' but expected '%s'", actual, href, expected)
 		}
