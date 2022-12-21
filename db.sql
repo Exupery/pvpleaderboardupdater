@@ -257,3 +257,6 @@ ALTER TABLE leaderboards ALTER COLUMN bracket TYPE VARCHAR(16);
 CREATE INDEX ON leaderboards (bracket);
 
 ALTER TABLE players ALTER COLUMN blizzard_id TYPE BIGINT;
+
+CREATE INDEX ON players_talents (stale);
+CREATE INDEX ON players_pvp_talents (stale);
