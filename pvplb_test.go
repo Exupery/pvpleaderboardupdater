@@ -3,6 +3,8 @@ package main
 import (
 	"math"
 	"testing"
+
+	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
 const testRegion = "US"
@@ -324,12 +326,15 @@ func TestGetPlayerItems(t *testing.T) {
 }
 
 func TestSquashPlayerItems(t *testing.T) {
-	itemsA := items{Neck: item{178927, "Clouded Focus", "LEGENDARY"}, Shoulder: item{}}
+	itemsA := items{Neck: item{178927, "Clouded Focus", "RARE"}, Shoulder: item{}}
 	itemsB := items{Neck: item{1, "Foo", "EPIC"}, Shoulder: item{2, "Bar", "EPIC"}}
 	itemsC := items{Neck: item{1, "Foo", "EPIC"}, Shoulder: item{3, "Baz", "EPIC"}}
 
-	playersItems := map[int]items{47: itemsA, 1138: itemsB, 1701: itemsC}
-	squashedItems := squashItems(playersItems)
+	playersItems := cmap.New[items]()
+	playersItems.Set("47", itemsA)
+	playersItems.Set("1138", itemsB)
+	playersItems.Set("1701", itemsC)
+	squashedItems := squashItems(&playersItems)
 	seen := make(map[string]bool, 0)
 
 	for id, item := range squashedItems {
@@ -340,12 +345,6 @@ func TestSquashPlayerItems(t *testing.T) {
 			t.Error("Duplicate items not squished")
 		}
 		seen[item.Name] = true
-		if item.Quality != "LEGENDARY" {
-			continue
-		}
-		if item.Name == "Clouded Focus" {
-			t.Errorf("Non legendary base-item name found: %s", item.Name)
-		}
 	}
 
 	t.Logf("Squashed items: %v", squashedItems)
@@ -360,7 +359,7 @@ func TestGetPlayerAchievements(t *testing.T) {
 }
 
 func TestDetermineAlt(t *testing.T) {
-	var altPlayerPath = "tichondrius/padatika"
+	var altPlayerPath = "emerald-dream/exupery"
 	altID := getProfileIdentifier(altPlayerPath)
 	mainID := getProfileIdentifier(testPlayerPath)
 	if mainID == "" {

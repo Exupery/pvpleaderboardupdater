@@ -2,10 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"strconv"
 	"strings"
 	"sync"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
+	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
 const defaultMaxDbConnections int = 15
@@ -262,7 +264,7 @@ func addPlayerStats(playersStats map[int]stats) {
 	logger.Printf("Mapped %d players=>stats", numInserted)
 }
 
-func addPlayerItems(playersItems map[int]items) {
+func addPlayerItems(playersItems *cmap.ConcurrentMap[string, items]) {
 	const qry string = `INSERT INTO players_items
 		(player_id, head, neck, shoulder, back, chest, shirt,
 		tabard, wrist, hands, waist, legs, feet, finger1, finger2, trinket1, trinket2, mainhand, offhand)
@@ -272,7 +274,10 @@ func addPlayerItems(playersItems map[int]items) {
 		finger2=$15, trinket1=$16, trinket2=$17, mainhand=$18, offhand=$19`
 	args := make([][]interface{}, 0)
 
-	for id, pi := range playersItems {
+	// for id, pi := range playersItems {
+	for tpl := range playersItems.Iter() {
+		id, _ := strconv.Atoi(tpl.Key)
+		pi := tpl.Val
 		playerItems := []interface{}{
 			id,
 			pi.Head.ID,

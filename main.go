@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
 var logger *log.Logger = log.New(os.Stdout, "", log.Ltime|log.Lmicroseconds)
@@ -69,15 +71,26 @@ func main() {
 		groups := split(players, groupSize)
 		var waitGroup sync.WaitGroup
 		waitGroup.Add(len(groups))
+
+		// Player items/gear will have A LOT of overlap so use a
+		// singular global collection for that so all the upserts
+		// are minimized and happen only once per update.
+		playersItems := cmap.New[items]()
+
 		for _, group := range groups {
-			go importPlayers(group, &waitGroup)
+			go importPlayers(group, &waitGroup, &playersItems)
 		}
 		waitGroup.Wait()
+
+		addItems(squashItems(&playersItems))
+		addPlayerItems(&playersItems)
+
 		for bracket, leaderboard := range leaderboards {
 			updateLeaderboard(bracket, leaderboard)
 		}
 	}
 	if foundPlayers {
+		logger.Println("Cleaning up...")
 		purgeStalePlayers()
 		setUpdateTime()
 	}
@@ -275,7 +288,7 @@ func playerKey(realmID, blizzardID int) string {
 	return fmt.Sprintf("%d-%d", realmID, blizzardID)
 }
 
-func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
+func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *cmap.ConcurrentMap[string, items]) {
 	defer waitGroup.Done()
 	for _, player := range players {
 		setPlayerDetails(player)
@@ -295,7 +308,6 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 
 	var playersTalents map[int]playerTalents = make(map[int]playerTalents, 0)
 	var playersStats map[int]stats = make(map[int]stats, 0)
-	var playersItems map[int]items = make(map[int]items, 0)
 	var playersAchievements map[int][]int = make(map[int][]int, 0)
 	for profilePath, dbID := range playerIDs {
 		playerTalents := getPlayerTalents(profilePath)
@@ -305,13 +317,12 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup) {
 		}
 		playersTalents[dbID] = playerTalents
 		playersStats[dbID] = getPlayerStats(profilePath)
-		playersItems[dbID] = getPlayerItems(profilePath)
 		playersAchievements[dbID] = getPlayerAchievements(profilePath, pvpAchievements)
+
+		(*playersItems).SetIfAbsent(strconv.Itoa(dbID), getPlayerItems(profilePath))
 	}
-	addItems(squashItems(playersItems))
 	addPlayerTalents(playersTalents)
 	addPlayerStats(playersStats)
-	addPlayerItems(playersItems)
 	addPlayerAchievements(playersAchievements)
 }
 
@@ -591,10 +602,12 @@ func getPlayerItems(path string) items {
 		Legendary: equippedItems["LEGENDARY_SPELL"]}
 }
 
-func squashItems(playersItems map[int]items) map[int]item {
+func squashItems(playersItems *cmap.ConcurrentMap[string, items]) map[int]item {
 	items := make(map[int]item, 0)
 
-	for _, pi := range playersItems {
+	for tpl := range playersItems.Iter() {
+		pi := tpl.Val
+
 		addItem(items, pi.Head)
 		addItem(items, pi.Neck)
 		addItem(items, pi.Shoulder)
@@ -621,16 +634,6 @@ func squashItems(playersItems map[int]items) map[int]item {
 func addItem(items map[int]item, itemToAdd item) {
 	if itemToAdd.ID == 0 {
 		return
-	}
-
-	if _, exists := items[itemToAdd.ID]; exists {
-		// Checking if exists instead of adding anyway to avoid unnecessary API calls for legendaries
-		return
-	}
-
-	if itemToAdd.Quality == "LEGENDARY" {
-		var json *[]byte = getStatic(region, fmt.Sprintf("item/%d", itemToAdd.ID))
-		itemToAdd.Name = parseItemName(json)
 	}
 
 	items[itemToAdd.ID] = itemToAdd
