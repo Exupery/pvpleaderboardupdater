@@ -192,17 +192,6 @@ CREATE TABLE players_conduits (
   PRIMARY KEY (player_id, conduit_id)
 );
 
--- create a stored proc to remove players (and associated data) for those
--- that are not currently on a leaderboard
-CREATE OR REPLACE FUNCTION purge_old_players()
-RETURNS VOID LANGUAGE plpgsql AS $proc$
-BEGIN
-  DELETE FROM players_pvp_talents WHERE stale=TRUE;
-  DELETE FROM players_talents WHERE stale=TRUE;
-  DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM items WHERE DATE_PART('day', NOW() - items.last_update) > 30;
-END; $proc$;
-
 ALTER TABLE items ADD COLUMN quality VARCHAR(64);
 ALTER TABLE items ADD COLUMN last_update TIMESTAMP DEFAULT NOW();
 
@@ -270,3 +259,14 @@ ALTER TABLE players_stats DROP CONSTRAINT players_stats_player_id_fkey,
 ALTER TABLE players_items DROP CONSTRAINT players_items_player_id_fkey,
   ADD CONSTRAINT players_items_player_id_fkey
   FOREIGN KEY ("player_id") REFERENCES players(id) ON DELETE CASCADE;
+
+-- create a stored proc to remove players (and associated data) for those
+-- that are not currently on a leaderboard
+CREATE OR REPLACE FUNCTION purge_old_players()
+RETURNS VOID LANGUAGE plpgsql AS $proc$
+BEGIN
+  DELETE FROM players_pvp_talents WHERE stale=TRUE;
+  DELETE FROM players_talents WHERE stale=TRUE;
+  DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
+  DELETE FROM items WHERE DATE_PART('day', NOW() - items.last_update) > 30;
+END; $proc$;
