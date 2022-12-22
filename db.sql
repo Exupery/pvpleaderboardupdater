@@ -38,11 +38,10 @@ CREATE TABLE talents (
   id INTEGER PRIMARY KEY,
   spell_id INTEGER NOT NULL,
   class_id INTEGER NOT NULL REFERENCES classes (id),
-  spec_id INTEGER REFERENCES specs (id),
+  spec_id INTEGER NOT NULL DEFAULT 0,
   name VARCHAR(128) NOT NULL,
   icon VARCHAR(128)
 );
-CREATE INDEX ON talents (tier, col);
 CREATE INDEX ON talents (class_id, spec_id);
 
 CREATE TABLE pvp_talents (
@@ -158,70 +157,16 @@ CREATE TABLE metadata (
   last_update TIMESTAMP DEFAULT NOW()
 );
 
--- Tables added for Shadowlands
-CREATE TABLE covenants (
-  id INTEGER PRIMARY KEY,
-  name VARCHAR(32) NOT NULL,
-  icon VARCHAR(128)
-);
-
-CREATE TABLE players_covenants (
-  player_id INTEGER PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
-  covenant_id INTEGER NOT NULL REFERENCES covenants (id)
-);
-
-CREATE TABLE soulbinds (
-  id INTEGER PRIMARY KEY,
-  name VARCHAR(64) NOT NULL
-);
-
-CREATE TABLE players_soulbinds (
-  player_id INTEGER PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
-  soulbind_id INTEGER NOT NULL REFERENCES soulbinds (id)
-);
-
-CREATE TABLE conduits (
-  id INTEGER PRIMARY KEY,
-  spell_id INTEGER NOT NULL,
-  name VARCHAR(128) NOT NULL
-);
-
-CREATE TABLE players_conduits (
-  player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
-  conduit_id INTEGER NOT NULL REFERENCES conduits (id),
-  PRIMARY KEY (player_id, conduit_id)
-);
-
+-- Shadowlands schema changes
 ALTER TABLE items ADD COLUMN quality VARCHAR(64);
 ALTER TABLE items ADD COLUMN last_update TIMESTAMP DEFAULT NOW();
 
-CREATE TABLE players_legendaries (
-  player_id INTEGER PRIMARY KEY REFERENCES players (id) ON DELETE CASCADE,
-  spell_id INTEGER NOT NULL,
-  legendary_name VARCHAR(256) NOT NULL
-);
-
-ALTER TABLE players ADD COLUMN last_login TIMESTAMP NOT NULL DEFAULT '0001-01-01';
-
+ALTER TABLE players ADD COLUMN last_login TIMESTAMP NOT NULL DEFAULT '2004-11-23';
 ALTER TABLE players ADD COLUMN profile_id TEXT;
 
 ALTER TABLE achievements ADD COLUMN icon VARCHAR(128);
 
 -- Dragonflight schema changes
-
-ALTER TABLE talents DROP COLUMN tier;
-ALTER TABLE talents DROP COLUMN col;
-ALTER TABLE talents DROP CONSTRAINT talents_spec_id_fkey;
-ALTER TABLE talents ALTER COLUMN spec_id SET NOT NULL;
-
-DROP TABLE players_legendaries;
-DROP TABLE players_conduits;
-DROP TABLE players_soulbinds;
-DROP TABLE players_covenants;
-DROP TABLE conduits;
-DROP TABLE soulbinds;
-DROP TABLE covenants;
-
 ALTER TABLE talents ADD COLUMN node_id INTEGER;
 ALTER TABLE talents ADD COLUMN display_row INTEGER;
 ALTER TABLE talents ADD COLUMN display_col INTEGER;
