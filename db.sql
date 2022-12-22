@@ -199,9 +199,6 @@ RETURNS VOID LANGUAGE plpgsql AS $proc$
 BEGIN
   DELETE FROM players_pvp_talents WHERE stale=TRUE;
   DELETE FROM players_talents WHERE stale=TRUE;
-  DELETE FROM players_achievements WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM players_stats WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM players_items WHERE player_id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
   DELETE FROM items WHERE DATE_PART('day', NOW() - items.last_update) > 30;
 END; $proc$;
@@ -260,3 +257,16 @@ ALTER TABLE players ALTER COLUMN blizzard_id TYPE BIGINT;
 
 CREATE INDEX ON players_talents (stale);
 CREATE INDEX ON players_pvp_talents (stale);
+
+CREATE INDEX ON items (last_update);
+CREATE INDEX ON players (last_update);
+CREATE INDEX ON leaderboards (player_id);
+ALTER TABLE players_achievements DROP CONSTRAINT players_achievements_player_id_fkey,
+  ADD CONSTRAINT players_achievements_player_id_fkey
+  FOREIGN KEY ("player_id") REFERENCES players(id) ON DELETE CASCADE;
+ALTER TABLE players_stats DROP CONSTRAINT players_stats_player_id_fkey,
+  ADD CONSTRAINT players_stats_player_id_fkey
+  FOREIGN KEY ("player_id") REFERENCES players(id) ON DELETE CASCADE;
+ALTER TABLE players_items DROP CONSTRAINT players_items_player_id_fkey,
+  ADD CONSTRAINT players_items_player_id_fkey
+  FOREIGN KEY ("player_id") REFERENCES players(id) ON DELETE CASCADE;
