@@ -121,22 +121,6 @@ func TestExtractTalentTreePath(t *testing.T) {
 			t.Errorf("Returned '%s' for '%s' but expected '%s'", actual, href, expected)
 		}
 	}
-
-	var classCases = map[string]string{
-		"https://a.b.c/d/e/talent-tree/781?f":   "talent-tree/781",
-		"foo/talent-tree/1234/5678/bar":         "talent-tree/1234",
-		"talent-tree/1":                         "talent-tree/1",
-		"talent-tree/invalid/1":                 "",
-		"invalidtalent-tree/1":                  "",
-		"talent-tree/playable-specialization/2": "",
-	}
-
-	for href, expected := range classCases {
-		actual := parseClassTalentTreePath(href)
-		if actual != expected {
-			t.Errorf("Returned '%s' for '%s' but expected '%s'", actual, href, expected)
-		}
-	}
 }
 
 func TestGetTalentsFromTree(t *testing.T) {

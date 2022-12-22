@@ -224,22 +224,12 @@ func getTalentTreePaths() map[string]string {
 			paths[path] = talentTree.Name
 		}
 	}
-	for _, talentTree := range talentTreePaths.ClassTalentTrees {
-		path := parseClassTalentTreePath(talentTree.Key.Href)
-		if path != "" {
-			paths[path] = talentTree.Name
-		}
-	}
 
 	return paths
 }
 
 func parseSpecTalentTreePath(href string) string {
 	return parseTalentTreePath(href, `\btalent-tree/[0-9]+/playable-specialization/[0-9]+`)
-}
-
-func parseClassTalentTreePath(href string) string {
-	return parseTalentTreePath(href, `\btalent-tree/[0-9]+`)
 }
 
 func parseTalentTreePath(href string, regexpPattern string) string {
@@ -268,6 +258,9 @@ func getTalentsFromTree(path string, seenClasses map[int]bool) []talent {
 	}
 
 	var talents []talent = make([]talent, 0)
+	if len(talentTree.SpecTalents) == 0 {
+		return talents
+	}
 
 	if !seenClasses[talentTree.Class.ID] {
 		classTalents := parseTalents(talentTree.Class.ID, 0, talentTree.ClassTalents)
