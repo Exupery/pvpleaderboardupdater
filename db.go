@@ -213,8 +213,11 @@ func addPlayerTalents(playersTalents map[int]playerTalents) {
 		}
 	}
 
+	logger.Printf("Upserting up to %d players=>talents", len(playersTalents))
 	numInserted := insert(query{SQL: talentQuery, Args: talentArgs})
 	logger.Printf("Mapped %d players=>talents", numInserted)
+
+	logger.Printf("Upserting up to %d players=>PvP talents", len(playersTalents))
 	numInserted = insert(query{SQL: pvpTalentQuery, Args: pvpTalentArgs})
 	logger.Printf("Mapped %d players=>PvP talents", numInserted)
 }
@@ -230,6 +233,7 @@ func addPlayerAchievements(playerAchievements map[int][]int) {
 		}
 	}
 
+	logger.Printf("Upserting up to %d players=>achievements", len(playerAchievements))
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>achievements", numInserted)
 }
@@ -260,6 +264,7 @@ func addPlayerStats(playersStats map[int]stats) {
 		args = append(args, stats)
 	}
 
+	logger.Printf("Upserting up to %d players=>stats", len(playersStats))
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>stats", numInserted)
 }
@@ -301,6 +306,7 @@ func addPlayerItems(playersItems *cmap.ConcurrentMap[string, items]) {
 		args = append(args, playerItems)
 	}
 
+	logger.Println("Upserting players=>items")
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Mapped %d players=>items", numInserted)
 }
