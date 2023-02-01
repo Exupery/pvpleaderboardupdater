@@ -24,6 +24,8 @@ const warnPrefix string = "[WARN]"
 
 const defaultGroupSize int = 100
 
+var loginStaleSeconds int64 = int64(getEnvVarOrDefault("LAST_LOGIN_STALE_HOURS", 999) * 60 * 60)
+
 var region = "US"
 var regions = []string{"EU", "US"}
 
@@ -294,9 +296,13 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *c
 		setPlayerDetails(player)
 	}
 	foundPlayers := make([]*player, 0)
+	nowish := time.Now().Unix()
 	for _, player := range players {
 		if player.ClassID == 0 {
 			logger.Printf("No details found for %s, skipping", player.Path)
+			continue
+		}
+		if (nowish - player.LastLogin) > loginStaleSeconds {
 			continue
 		}
 		foundPlayers = append(foundPlayers, player)
