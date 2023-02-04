@@ -163,12 +163,8 @@ func getSpec(ch chan spec, specID int) {
 func importTalents() {
 	var paths = getTalentTreePaths()
 	talentMap := make(map[int]talent)
-	seenClasses := make(map[int]bool)
 	for path := range paths {
-		treeTalents := getTalentsFromTree(path, seenClasses)
-		if len(treeTalents) > 0 {
-			seenClasses[treeTalents[0].ClassID] = true
-		}
+		treeTalents := getTalentsFromTree(path)
 		for _, talent := range treeTalents {
 			talentMap[talent.ID] = talent
 		}
@@ -242,7 +238,7 @@ func parseTalentTreePath(href string, regexpPattern string) string {
 	return string(match)
 }
 
-func getTalentsFromTree(path string, seenClasses map[int]bool) []talent {
+func getTalentsFromTree(path string) []talent {
 	type TalentTreeJSON struct {
 		Class        keyedValue       `json:"playable_class"`
 		Spec         keyedValue       `json:"playable_specialization"`
@@ -262,10 +258,8 @@ func getTalentsFromTree(path string, seenClasses map[int]bool) []talent {
 		return talents
 	}
 
-	if !seenClasses[talentTree.Class.ID] {
-		classTalents := parseTalents(talentTree.Class.ID, 0, talentTree.ClassTalents)
-		talents = append(talents, classTalents...)
-	}
+	classTalents := parseTalents(talentTree.Class.ID, 0, talentTree.ClassTalents)
+	talents = append(talents, classTalents...)
 
 	specTalents := parseTalents(talentTree.Class.ID, talentTree.Spec.ID, talentTree.SpecTalents)
 	talents = append(talents, specTalents...)

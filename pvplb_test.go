@@ -125,7 +125,7 @@ func TestExtractTalentTreePath(t *testing.T) {
 
 func TestGetTalentsFromTree(t *testing.T) {
 	path := "talent-tree/781/playable-specialization/270"
-	talents := getTalentsFromTree(path, map[int]bool{})
+	talents := getTalentsFromTree(path)
 
 	if talents == nil || len(talents) == 0 {
 		t.Error("Getting talents from talent tree failed")
