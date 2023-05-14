@@ -76,17 +76,17 @@ type achievement struct {
 
 // stats : player stat info
 type stats struct {
-	Strength       int
-	Agility        int
-	Intellect      int
-	Stamina        int
-	CriticalStrike int
-	Haste          int
-	Versatility    int
-	Mastery        int
-	Leech          int
-	Dodge          int
-	Parry          int
+	Strength       int32
+	Agility        int32
+	Intellect      int32
+	Stamina        int32
+	CriticalStrike int32
+	Haste          int32
+	Versatility    int32
+	Mastery        int32
+	Leech          int32
+	Dodge          int32
+	Parry          int32
 }
 
 // leaderboardEntry : a singular listing on a leaderboard

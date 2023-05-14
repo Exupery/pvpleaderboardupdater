@@ -535,17 +535,17 @@ func getPlayerStats(path string) stats {
 	crit := highestStat(int(s.MeleeCrit.Rating), int(s.RangedCrit.Rating), int(s.SpellCrit.Rating))
 	haste := highestStat(int(s.MeleeHaste.Rating), int(s.RangedHaste.Rating), int(s.SpellHaste.Rating))
 	return stats{
-		Strength:       s.Strength.Effective,
-		Agility:        s.Agility.Effective,
-		Intellect:      s.Intellect.Effective,
-		Stamina:        s.Stamina.Effective,
-		CriticalStrike: int(crit),
-		Haste:          int(haste),
-		Versatility:    int(s.Versatility),
-		Mastery:        int(s.Mastery.Rating),
-		Leech:          int(s.Lifesteal.Rating),
-		Dodge:          int(s.Dodge.Rating),
-		Parry:          int(s.Parry.Rating)}
+		Strength:       int32(s.Strength.Effective),
+		Agility:        int32(s.Agility.Effective),
+		Intellect:      int32(s.Intellect.Effective),
+		Stamina:        int32(s.Stamina.Effective),
+		CriticalStrike: int32(crit),
+		Haste:          int32(haste),
+		Versatility:    int32(s.Versatility),
+		Mastery:        int32(s.Mastery.Rating),
+		Leech:          int32(s.Lifesteal.Rating),
+		Dodge:          int32(s.Dodge.Rating),
+		Parry:          int32(s.Parry.Rating)}
 }
 
 func getPlayerItems(path string) items {
