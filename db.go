@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	_ "github.com/lib/pq" // PostgreSQL driver
+	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL driver
 	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
@@ -21,7 +21,7 @@ var realmSlugs = make(map[int]string)
 func dbConnect() *sql.DB {
 	var dbURL string = getEnvVar("DB_URL")
 
-	db, err := sql.Open("postgres", dbURL)
+	db, err := sql.Open("pgx", dbURL)
 	if err != nil {
 		logger.Fatalf("%s Unable to connect to database: %s", fatalPrefix, err)
 	}
