@@ -418,8 +418,9 @@ func addTalents(talents *[]talent) {
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted or updated %d talents", numInserted)
 
-	const deleteStaleQuery string = `DELETE FROM talents WHERE stale=TRUE`
-	execute(deleteStaleQuery)
+	// TODO Avoid purging stale talents until Blizzard fixes talent tree endpoint
+	// const deleteStaleQuery string = `DELETE FROM talents WHERE stale=TRUE`
+	// execute(deleteStaleQuery)
 }
 
 func addPvPTalents(pvpTalents *[]pvpTalent) {
@@ -442,8 +443,9 @@ func addPvPTalents(pvpTalents *[]pvpTalent) {
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d PvP talents", numInserted)
 
-	const deleteStaleQuery string = `DELETE FROM pvp_talents WHERE stale=TRUE`
-	execute(deleteStaleQuery)
+	// TODO Avoid purging stale talents until Blizzard fixes talent tree endpoint
+	// const deleteStaleQuery string = `DELETE FROM pvp_talents WHERE stale=TRUE`
+	// execute(deleteStaleQuery)
 }
 
 func addAchievements(achievements *[]achievement) {
