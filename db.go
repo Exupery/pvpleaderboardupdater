@@ -407,7 +407,7 @@ func addTalents(talents *[]talent) {
 
 	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon,
 		node_id, display_row, display_col, stale) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE) ON
-		CONFLICT (id) DO UPDATE SET name = $5, icon = $6, stale = FALSE`
+		CONFLICT (id) DO UPDATE SET name = $5, icon = $6, node_id = $7, display_row = $8, display_col = $9, stale = FALSE`
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
