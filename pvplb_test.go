@@ -8,7 +8,7 @@ import (
 )
 
 const testRegion = "US"
-const testSeason = 33
+const testSeason = 37
 const testPlayerPath = "emerald-dream/exuperjun"
 
 func TestCreateToken(t *testing.T) {
@@ -47,7 +47,7 @@ func TestParseRealms(t *testing.T) {
 	var realmJSON *[]byte = getDynamic(testRegion, "realm/index")
 	var realms []realm = parseRealms(realmJSON)
 
-	if realms == nil || len(realms) == 0 {
+	if len(realms) == 0 {
 		t.Error("Parsing realms failed")
 	}
 	t.Logf("Found and parsed %v realms", len(realms))
@@ -57,7 +57,7 @@ func TestParseRaces(t *testing.T) {
 	var racesJSON *[]byte = getStatic(testRegion, "playable-race/index")
 	var races []race = parseRaces(racesJSON)
 
-	if races == nil || len(races) == 0 {
+	if len(races) == 0 {
 		t.Error("Parsing races failed")
 	}
 	t.Logf("Found and parsed %v races", len(races))
@@ -67,7 +67,7 @@ func TestParseClasses(t *testing.T) {
 	var classesJSON *[]byte = getStatic(testRegion, "playable-class/index")
 	var classes []class = parseClasses(classesJSON)
 
-	if classes == nil || len(classes) == 0 {
+	if len(classes) == 0 {
 		t.Error("Parsing classes failed")
 	}
 	t.Logf("Found and parsed %v classes", len(classes))
@@ -77,7 +77,7 @@ func TestParseSpecs(t *testing.T) {
 	var specsJSON *[]byte = getStatic(testRegion, "playable-specialization/index")
 	var specs []spec = parseSpecs(specsJSON)
 
-	if specs == nil || len(specs) == 0 {
+	if len(specs) == 0 {
 		t.Error("Parsing specs failed")
 	}
 	t.Logf("Found and parsed %v specs", len(specs))
@@ -92,7 +92,7 @@ func TestParseSpecs(t *testing.T) {
 func TestTalentTreePaths(t *testing.T) {
 	paths := getTalentTreePaths()
 
-	if paths == nil || len(paths) == 0 {
+	if len(paths) == 0 {
 		t.Error("Getting talent tree paths failed")
 	}
 	t.Logf("Found %v talent tree paths", len(paths))
@@ -124,10 +124,10 @@ func TestExtractTalentTreePath(t *testing.T) {
 }
 
 func TestGetTalentsFromTree(t *testing.T) {
-	path := "talent-tree/781/playable-specialization/270"
+	path := "talent-tree/1000/playable-specialization/270"
 	talents := getTalentsFromTree(path)
 
-	if talents == nil || len(talents) == 0 {
+	if len(talents) == 0 {
 		t.Error("Getting talents from talent tree failed")
 	}
 	t.Logf("Found and parsed %v talents", len(talents))
@@ -137,7 +137,7 @@ func TestParsePvPTalents(t *testing.T) {
 	var talentsJSON *[]byte = getStatic(region, "pvp-talent/index")
 	var pvpTalents []pvpTalent = parsePvPTalents(talentsJSON)
 
-	if pvpTalents == nil || len(pvpTalents) == 0 {
+	if len(pvpTalents) == 0 {
 		t.Error("Parsing PvP Talents failed")
 	}
 	t.Logf("Found and parsed %v PvP Talents", len(pvpTalents))
@@ -147,7 +147,7 @@ func TestParseAchievements(t *testing.T) {
 	var achievementsJSON *[]byte = getStatic(testRegion, "achievement-category/15270")
 	var achievements []achievement = parseAchievements(achievementsJSON)
 
-	if achievements == nil || len(achievements) == 0 {
+	if len(achievements) == 0 {
 		t.Error("Parsing achievements failed")
 	}
 	t.Logf("Found and parsed %v PvP achievements", len(achievements))
@@ -162,16 +162,23 @@ func TestGetCurrentSeason(t *testing.T) {
 	t.Logf("Current PvP season is %d", currentSeason)
 }
 
-func TestGetSoloLeaderboards(t *testing.T) {
-	var soloLeaderboards = getSoloLeaderboards(testSeason)
+func TestGetPrefixedLeaderboards(t *testing.T) {
+	var soloLeaderboards = getPrefixedLeaderboards(testSeason, "shuffle")
 	if len(soloLeaderboards) == 0 {
 		t.Error("No Solo Shuffle Leaderboards Found")
 	}
 
 	t.Logf("Found %d Solo Shuffle Leaderboards", len(soloLeaderboards))
+
+	var blitzLeaderboards = getPrefixedLeaderboards(testSeason, "blitz")
+	if len(blitzLeaderboards) == 0 {
+		t.Error("No Blitz Leaderboards Found")
+	}
+
+	t.Logf("Found %d Blitz Leaderboards", len(blitzLeaderboards))
 }
 
-func TestGetSpecIDFromSoloName(t *testing.T) {
+func TestGetSpecIDFromLeaderboardName(t *testing.T) {
 	var cases = map[string]int{
 		"2v2":                         0,
 		"rbg":                         0,
@@ -180,11 +187,11 @@ func TestGetSpecIDFromSoloName(t *testing.T) {
 		"shuffle-hunter-beastmastery": 253,
 		"shuffle-warlock-affliction":  265,
 		"shuffle-monk-mistweaver":     270,
-		"shuffle-evoker-devastation":  1467,
+		"blitz-evoker-devastation":    1467,
 	}
 
 	for name, expected := range cases {
-		actual := getSpecIDFromSoloName(name)
+		actual := getSpecIDFromLeaderboardName(name)
 		if actual != expected {
 			t.Errorf("Returned '%d' for '%s' but expected '%d'", actual, name, expected)
 		}
@@ -194,7 +201,7 @@ func TestGetSpecIDFromSoloName(t *testing.T) {
 func TestGetLeaderboard(t *testing.T) {
 	var leaderboard = getLeaderboard("2v2", testSeason)
 
-	if leaderboard == nil || len(leaderboard) == 0 {
+	if len(leaderboard) == 0 {
 		t.Error("Parsing current season failed")
 	}
 	t.Logf("Found %d players on leaderboard", len(leaderboard))
@@ -208,7 +215,7 @@ func TestGetPlayersFromLeaderboards(t *testing.T) {
 	var b = getLeaderboard("3v3", testSeason)
 	var players = getPlayersFromLeaderboards(map[string][]leaderboardEntry{"2v2": a, "3v3": b})
 
-	if players == nil || len(players) == 0 {
+	if len(players) == 0 {
 		t.Error("Getting leaderboard players failed")
 	}
 	t.Logf("Found %d players from leaderboards", len(players))
@@ -336,7 +343,7 @@ func TestSquashPlayerItems(t *testing.T) {
 
 func TestGetPlayerAchievements(t *testing.T) {
 	achieved := getPlayerAchievements(testPlayerPath, map[int]bool{2092: true, 13989: true})
-	if achieved == nil || len(achieved) == 0 {
+	if len(achieved) == 0 {
 		t.Error("Getting player achievements failed")
 	}
 	t.Logf("Found achievements: %v", achieved)

@@ -52,7 +52,7 @@ func main() {
 			leaderboards[bracket] = leaderboard
 		}
 		// SOLO SHUFFLE
-		soloLeaderboards := getSoloLeaderboards(season)
+		soloLeaderboards := getPrefixedLeaderboards(season, "shuffle")
 		for specID, name := range soloLeaderboards {
 			leaderboard := getLeaderboard(name, season)
 			logger.Printf("Found %d players on %s %s leaderboard", len(leaderboard), region, name)
@@ -60,6 +60,17 @@ func main() {
 				continue
 			}
 			bracket := fmt.Sprintf("solo_%d", specID)
+			leaderboards[bracket] = leaderboard
+		}
+		// BATTLEGROUND BLITZ
+		blitzLeaderboards := getPrefixedLeaderboards(season, "blitz")
+		for specID, name := range blitzLeaderboards {
+			leaderboard := getLeaderboard(name, season)
+			logger.Printf("Found %d players on %s %s leaderboard", len(leaderboard), region, name)
+			if len(leaderboard) == 0 {
+				continue
+			}
+			bracket := fmt.Sprintf("blitz_%d", specID)
 			leaderboards[bracket] = leaderboard
 		}
 
@@ -161,49 +172,52 @@ func getCurrentSeason() int {
 	return season
 }
 
-func getSoloLeaderboards(season int) map[int]string {
+func getPrefixedLeaderboards(season int, prefix string) map[int]string {
 	type Leaderboards struct {
 		Leaderboards []keyedValue
 	}
-	soloLeaderboards := make(map[int]string, 0)
+	leaderboardsWithPrefix := make(map[int]string, 0)
 
 	path := fmt.Sprintf("pvp-season/%d/pvp-leaderboard/index", season)
 	var leaderboardsJSON *[]byte = getDynamic(region, path)
 	if leaderboardsJSON == nil {
-		return soloLeaderboards
+		return leaderboardsWithPrefix
 	}
 
 	var leaderboards Leaderboards
 	err := safeUnmarshal(leaderboardsJSON, &leaderboards)
 	if err != nil {
 		logger.Printf("%s parsing leaderboards failed: %s", warnPrefix, err)
-		return soloLeaderboards
+		return leaderboardsWithPrefix
 	}
 
 	for _, leaderboard := range leaderboards.Leaderboards {
 		name := leaderboard.Name
-		specID := getSpecIDFromSoloName(name)
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+		specID := getSpecIDFromLeaderboardName(name)
 		if specID == 0 {
 			continue
 		}
-		soloLeaderboards[specID] = name
+		leaderboardsWithPrefix[specID] = name
 	}
 
-	return soloLeaderboards
+	return leaderboardsWithPrefix
 }
 
-func getSpecIDFromSoloName(name string) int {
-	if !strings.HasPrefix(name, "shuffle") {
+func getSpecIDFromLeaderboardName(name string) int {
+	if !strings.HasPrefix(name, "shuffle") && !strings.HasPrefix(name, "blitz") {
 		return 0
 	}
 
 	parts := strings.Split(name, "-")
 	if len(parts) != 3 {
-		logger.Printf("%s Unexpected solo shuffle name: %s", warnPrefix, name)
+		logger.Printf("%s Unexpected leaderboard name: %s", warnPrefix, name)
 		return 0
 	}
 
-	return getSpecIDForSolo(parts[1], parts[2])
+	return getSpecIDForClassSpec(parts[1], parts[2])
 }
 
 func getLeaderboard(bracket string, season int) []leaderboardEntry {

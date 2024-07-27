@@ -407,7 +407,7 @@ func addTalents(talents *[]talent) {
 
 	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon,
 		node_id, display_row, display_col, stale) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE) ON
-		CONFLICT (id) DO UPDATE SET name = $5, icon = $6, node_id = $7, display_row = $8, display_col = $9, stale = FALSE`
+		CONFLICT (id) DO UPDATE SET spell_id = $2, class_id = $3, spec_id = $4, name = $5, icon = $6, node_id = $7, display_row = $8, display_col = $9, stale = FALSE`
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
@@ -418,9 +418,8 @@ func addTalents(talents *[]talent) {
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted or updated %d talents", numInserted)
 
-	// TODO Avoid purging stale talents until Blizzard fixes talent tree endpoint
-	// const deleteStaleQuery string = `DELETE FROM talents WHERE stale=TRUE`
-	// execute(deleteStaleQuery)
+	const deleteStaleQuery string = `DELETE FROM talents WHERE stale=TRUE`
+	execute(deleteStaleQuery)
 }
 
 func addPvPTalents(pvpTalents *[]pvpTalent) {
@@ -443,9 +442,8 @@ func addPvPTalents(pvpTalents *[]pvpTalent) {
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Inserted %d PvP talents", numInserted)
 
-	// TODO Avoid purging stale talents until Blizzard fixes talent tree endpoint
-	// const deleteStaleQuery string = `DELETE FROM pvp_talents WHERE stale=TRUE`
-	// execute(deleteStaleQuery)
+	const deleteStaleQuery string = `DELETE FROM pvp_talents WHERE stale=TRUE`
+	execute(deleteStaleQuery)
 }
 
 func addAchievements(achievements *[]achievement) {
@@ -480,7 +478,7 @@ func getAchievementIds() map[int]bool {
 	return m
 }
 
-func getSpecIDForSolo(clazz string, spec string) int {
+func getSpecIDForClassSpec(clazz string, spec string) int {
 	// Can't simply lookup IDs via names because in the solo shuffle key
 	// they strip out spaces (i.e. without a placeholder)
 	rows, err := db.Query("SELECT specs.id AS id, classes.name AS c, specs.name AS s FROM specs JOIN classes ON specs.class_id=classes.id")

@@ -16,3 +16,4 @@ _testmain.go
 *.prof
 *.env
 updater
+.vscode/
