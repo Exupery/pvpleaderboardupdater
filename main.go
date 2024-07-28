@@ -659,22 +659,6 @@ func addItem(items map[int]item, itemToAdd item) {
 	items[itemToAdd.ID] = itemToAdd
 }
 
-func parseItemName(data *[]byte) string {
-	type Item struct {
-		Name string
-	}
-	var item Item
-	if data == nil {
-		return ""
-	}
-	err := safeUnmarshal(data, &item)
-	if err != nil {
-		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
-		return ""
-	}
-	return item.Name
-}
-
 func getPlayerAchievements(path string, pvpAchievements map[int]bool) []int {
 	type AchievementJSON struct {
 		ID                 int
@@ -715,7 +699,7 @@ func highestStat(a, b, c int) int {
 
 func safeUnmarshal(data *[]byte, v interface{}) error {
 	if data == nil {
-		return errors.New("Data is nil, nothing to unmarshal")
+		return errors.New("data is nil, nothing to unmarshal")
 	}
 
 	err := json.Unmarshal(*data, &v)

@@ -23,12 +23,6 @@ type race struct {
 	Name string
 }
 
-// faction : player faction
-type faction struct {
-	ID   int
-	Name string
-}
-
 // class : player class
 type class struct {
 	ID   int

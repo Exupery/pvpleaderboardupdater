@@ -164,20 +164,3 @@ type typedName struct {
 	Type string
 	Name string
 }
-
-// talentJSON : talent ID JSON
-type talentJSON struct {
-	ID int
-}
-
-// talentEntryJSON : talent JSON
-type talentEntryJSON struct {
-	Talent      talentJSON
-	ColumnIndex int `json:"column_index"`
-}
-
-// talentTierJSON : talent tier JSON
-type talentTierJSON struct {
-	Talents   []talentEntryJSON
-	TierIndex int `json:"tier_index"`
-}

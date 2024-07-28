@@ -36,20 +36,20 @@ func dbConnect() *sql.DB {
 
 // retrieving results isn't as easily abstracted as inserts/updates
 // so (for now) use this template as a base in appropriate methods
-func queryTemplate() {
-	rows, err := db.Query("")
-	if err != nil {
-		logger.Printf("%s %s", errPrefix, err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id int
-		err := rows.Scan(&id)
-		if err != nil {
-			logger.Printf("%s %s", errPrefix, err)
-		}
-	}
-}
+// func queryTemplate() {
+// 	rows, err := db.Query("")
+// 	if err != nil {
+// 		logger.Printf("%s %s", errPrefix, err)
+// 	}
+// 	defer rows.Close()
+// 	for rows.Next() {
+// 		var id int
+// 		err := rows.Scan(&id)
+// 		if err != nil {
+// 			logger.Printf("%s %s", errPrefix, err)
+// 		}
+// 	}
+// }
 
 func insert(qry query) int64 {
 	var numInserted int64 = 0
