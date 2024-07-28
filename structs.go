@@ -46,15 +46,17 @@ type spec struct {
 
 // talent : talent info
 type talent struct {
-	ID      int
-	SpellID int
-	ClassID int
-	SpecID  int
-	Name    string
-	Icon    string
-	NodeID  int
-	Row     int
-	Col     int
+	ID        int
+	SpellID   int
+	ClassID   int
+	SpecID    int
+	Name      string
+	Icon      string
+	NodeID    int
+	Row       int
+	Col       int
+	Cat       string
+	HeroSpecs []int
 }
 
 // pvpTalent : PvP talent info

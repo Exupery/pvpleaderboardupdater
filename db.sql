@@ -205,6 +205,13 @@ ALTER TABLE players_items DROP CONSTRAINT players_items_player_id_fkey,
   ADD CONSTRAINT players_items_player_id_fkey
   FOREIGN KEY ("player_id") REFERENCES players(id) ON DELETE CASCADE;
 
+-- The War Within schema changes
+CREATE TYPE talent_cat AS ENUM ('CLASS', 'SPEC', 'HERO');
+ALTER TABLE talents ADD COLUMN cat talent_cat;
+ALTER TABLE talents ADD COLUMN hero_specs INTEGER[] NOT NULL DEFAULT ARRAY[]::INTEGER[];
+CREATE INDEX ON talents (cat);
+CREATE INDEX ON talents (hero_specs);
+
 -- create a stored proc to remove players (and associated data) for those
 -- that are not currently on a leaderboard
 CREATE OR REPLACE FUNCTION purge_old_players()

@@ -406,12 +406,12 @@ func addTalents(talents *[]talent) {
 	execute(staleQuery)
 
 	const qry string = `INSERT INTO talents (id, spell_id, class_id, spec_id, name, icon,
-		node_id, display_row, display_col, stale) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE) ON
-		CONFLICT (id) DO UPDATE SET spell_id = $2, class_id = $3, spec_id = $4, name = $5, icon = $6, node_id = $7, display_row = $8, display_col = $9, stale = FALSE`
+		node_id, display_row, display_col, stale, cat, hero_specs) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, $10, $11) ON
+		CONFLICT (id) DO UPDATE SET spell_id = $2, class_id = $3, spec_id = $4, name = $5, icon = $6, node_id = $7, display_row = $8, display_col = $9, stale = FALSE, cat = $10, hero_specs = $11`
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
-		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name, talent.Icon, talent.NodeID, talent.Row, talent.Col}
+		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name, talent.Icon, talent.NodeID, talent.Row, talent.Col, talent.Cat, talent.HeroSpecs}
 		args = append(args, params)
 	}
 

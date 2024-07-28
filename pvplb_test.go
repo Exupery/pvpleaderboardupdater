@@ -89,6 +89,40 @@ func TestParseSpecs(t *testing.T) {
 	}
 }
 
+func TestGetBestPaths(t *testing.T) {
+	paths := map[string]string{
+		"talent-tree/3333/playable-specialization/11": "whatever",
+		"talent-tree/1111/playable-specialization/11": "whatever",
+		"talent-tree/2222/playable-specialization/12": "whatever",
+		"talent-tree/7777/playable-specialization/12": "whatever",
+		"talent-tree/3333/playable-specialization/12": "whatever",
+		"talent-tree/6666/playable-specialization/10": "whatever",
+	}
+
+	bestPaths := getBestPaths(paths)
+
+	if len(bestPaths) != 4 {
+		t.Errorf("Expected 4 best paths but found %v", len(bestPaths))
+	}
+
+	if bestPaths[0] != "talent-tree/3333/playable-specialization/11" {
+		t.Errorf("Incorrect path for element 0: %v", bestPaths[0])
+	}
+	if bestPaths[1] != "talent-tree/6666/playable-specialization/10" {
+		t.Errorf("Incorrect path for element 1: %v", bestPaths[1])
+	}
+	if bestPaths[2] != "talent-tree/7777/playable-specialization/12" {
+		t.Errorf("Incorrect path for element 2: %v", bestPaths[2])
+	}
+
+	// Temporary hardcode of spriest due to Blizzard API bug
+	if bestPaths[3] != "talent-tree/795/playable-specialization/258" {
+		t.Errorf("Incorrect path for element 2: %v", bestPaths[3])
+	}
+
+	t.Logf("Found %v talent tree paths", len(bestPaths))
+}
+
 func TestTalentTreePaths(t *testing.T) {
 	paths := getTalentTreePaths()
 

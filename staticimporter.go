@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -163,7 +165,7 @@ func getSpec(ch chan spec, specID int) {
 func importTalents() {
 	var paths = getTalentTreePaths()
 	talentMap := make(map[int]talent)
-	for path := range paths {
+	for _, path := range paths {
 		treeTalents := getTalentsFromTree(path)
 		for _, talent := range treeTalents {
 			talentMap[talent.ID] = talent
@@ -187,7 +189,9 @@ func importTalents() {
 				icon,
 				tal.NodeID,
 				tal.Row,
-				tal.Col}
+				tal.Col,
+				tal.Cat,
+				tal.HeroSpecs}
 			talents[i] = talentWithIcon
 		}(i, t)
 		i++
@@ -196,7 +200,7 @@ func importTalents() {
 	addTalents(&talents)
 }
 
-func getTalentTreePaths() map[string]string {
+func getTalentTreePaths() []string {
 	paths := make(map[string]string)
 	type TalentTreeJSON struct {
 		Key  key
@@ -205,13 +209,14 @@ func getTalentTreePaths() map[string]string {
 	type TalentTreesJSON struct {
 		SpecTalentTrees  []TalentTreeJSON `json:"spec_talent_trees"`
 		ClassTalentTrees []TalentTreeJSON `json:"class_talent_trees"`
+		HeroTalentTrees  []TalentTreeJSON `json:"hero_talent_trees"`
 	}
 	var talentTreesJSON *[]byte = getStatic(region, "talent-tree/index")
 	var talentTreePaths TalentTreesJSON
 	err := safeUnmarshal(talentTreesJSON, &talentTreePaths)
 	if err != nil {
 		logger.Printf("%s parsing talent trees failed: %s", warnPrefix, err)
-		return paths
+		return []string{}
 	}
 
 	for _, talentTree := range talentTreePaths.SpecTalentTrees {
@@ -221,7 +226,46 @@ func getTalentTreePaths() map[string]string {
 		}
 	}
 
-	return paths
+	return getBestPaths(paths)
+}
+
+func getBestPaths(paths map[string]string) []string {
+	sortedPaths := make([]string, 0, len(paths))
+	for k := range paths {
+		sortedPaths = append(sortedPaths, k)
+	}
+	sort.Strings(sortedPaths)
+
+	pathsBySpec := make(map[int]string)
+	for _, path := range sortedPaths {
+		pathParts := strings.Split(path, "/")
+		spec, err := strconv.Atoi(pathParts[3])
+		if err != nil {
+			continue
+		}
+		pathVersion, _ := strconv.Atoi(pathParts[1])
+		if _, exists := pathsBySpec[spec]; exists {
+			existingParts := strings.Split(pathsBySpec[spec], "/")
+			existingVersion, _ := strconv.Atoi(existingParts[1])
+			if pathVersion > existingVersion {
+				pathsBySpec[spec] = path
+			}
+		} else {
+			pathsBySpec[spec] = path
+		}
+
+	}
+	// Priest spec tree returned by Blizzard's API is
+	// bugged above v795 so we'll need to hardcode that
+	pathsBySpec[258] = "talent-tree/795/playable-specialization/258"
+
+	bestPaths := make([]string, 0, len(pathsBySpec))
+	for _, path := range pathsBySpec {
+		bestPaths = append(bestPaths, path)
+	}
+	sort.Strings(bestPaths)
+
+	return bestPaths
 }
 
 func parseSpecTalentTreePath(href string) string {
@@ -244,6 +288,7 @@ func getTalentsFromTree(path string) []talent {
 		Spec         keyedValue       `json:"playable_specialization"`
 		ClassTalents []TalentNodeJSON `json:"class_talent_nodes"`
 		SpecTalents  []TalentNodeJSON `json:"spec_talent_nodes"`
+		HeroTrees    []HeroTreeJSON   `json:"hero_talent_trees"`
 	}
 	var talentTreeJSON *[]byte = getStatic(region, path)
 	var talentTree TalentTreeJSON
@@ -258,16 +303,30 @@ func getTalentsFromTree(path string) []talent {
 		return talents
 	}
 
-	classTalents := parseTalents(talentTree.Class.ID, 0, talentTree.ClassTalents)
+	classTalents := parseTalents(talentTree.Class.ID, 0, "CLASS", []int{}, talentTree.ClassTalents)
 	talents = append(talents, classTalents...)
 
-	specTalents := parseTalents(talentTree.Class.ID, talentTree.Spec.ID, talentTree.SpecTalents)
+	specTalents := parseTalents(talentTree.Class.ID, talentTree.Spec.ID, "SPEC", []int{}, talentTree.SpecTalents)
 	talents = append(talents, specTalents...)
+
+	for _, tree := range talentTree.HeroTrees {
+		spec_ids := []int{}
+		for _, spec := range tree.Specs {
+			spec_ids = append(spec_ids, spec.ID)
+		}
+		heroTalents := parseTalents(talentTree.Class.ID, 0, "HERO", spec_ids, tree.HeroTalentNodes)
+		talents = append(talents, heroTalents...)
+	}
 
 	return talents
 }
 
-func parseTalents(classID int, specID int, talentNodes []TalentNodeJSON) []talent {
+func parseTalents(
+	classID int,
+	specID int,
+	category string,
+	heroSpecs []int,
+	talentNodes []TalentNodeJSON) []talent {
 	var talents []talent = make([]talent, 0)
 
 	for _, node := range talentNodes {
@@ -286,7 +345,9 @@ func parseTalents(classID int, specID int, talentNodes []TalentNodeJSON) []talen
 				"",
 				node.ID,
 				node.Row,
-				node.Col}
+				node.Col,
+				category,
+				heroSpecs}
 			talents = append(talents, talent)
 		}
 	}
@@ -438,4 +499,9 @@ type TalentNodeJSON struct {
 	Row   int `json:"display_row"`
 	Col   int `json:"display_col"`
 	Ranks []RankJSON
+}
+type HeroTreeJSON struct {
+	ID              int
+	HeroTalentNodes []TalentNodeJSON `json:"hero_talent_nodes"`
+	Specs           []keyedValue     `json:"playable_specializations"`
 }
