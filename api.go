@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,7 +11,7 @@ import (
 
 const baseURI string = "https://%s.api.blizzard.com/%s%s"
 const oauthURI string = "https://us.battle.net/oauth/token"
-const requiredParams string = "?locale=en_US&access_token=%s&namespace=%s"
+const requiredParams string = "?locale=en_US&namespace=%s"
 const rateLimitRetryWaitSeconds int = 2
 const maxRetryAttempts = 2
 
@@ -74,9 +74,16 @@ func get(region, namespace, path string) *[]byte {
 }
 
 func getWithRetry(region, namespace, path string, attempt int) *[]byte {
-	var params string = fmt.Sprintf(requiredParams, token, strings.ToLower(namespace))
+	var params string = fmt.Sprintf(requiredParams, strings.ToLower(namespace))
 	var url string = fmt.Sprintf(baseURI, strings.ToLower(region), path, params)
-	resp, err := http.Get(url)
+	var req, err = http.NewRequest("GET", url, nil)
+	if err != nil {
+		logger.Printf("%s Failed to create request for '%s': %s", errPrefix, path, err)
+		return nil
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		logger.Printf("%s GET '%s' failed: %s", errPrefix, path, err)
 		return nil
@@ -96,7 +103,7 @@ func getWithRetry(region, namespace, path string, attempt int) *[]byte {
 		return getWithRetry(region, namespace, path, attempt+1)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		logger.Printf("%s reading body of '%s' failed: %s", errPrefix, path, err)
@@ -110,31 +117,26 @@ func createToken() string {
 	d := url.Values{"grant_type": {"client_credentials"}}
 	req, err := http.NewRequest("POST", oauthURI, strings.NewReader(d.Encode()))
 	if err != nil {
-		logger.Printf("%s creating token failed: %s", errPrefix, err)
-		return ""
+		logger.Fatalf("%s creating token failed: %s", errPrefix, err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth(clienID, secret)
 	cli := &http.Client{}
 	resp, err := cli.Do(req)
 	if err != nil {
-		logger.Printf("%s creating token failed: %s", errPrefix, err)
-		return ""
+		logger.Fatalf("%s creating token failed: %s", errPrefix, err)
 	}
 	if resp.StatusCode != 200 {
-		logger.Printf("%s received %d creating token: %s", errPrefix, resp.StatusCode, resp.Body)
-		return ""
+		logger.Fatalf("%s received %d creating token: %s", errPrefix, resp.StatusCode, resp.Body)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Printf("%s reading token body failed: %s", errPrefix, err)
-		return ""
+		logger.Fatalf("%s reading token body failed: %s", errPrefix, err)
 	}
 	var accessTokenResponse = new(accessTokenResponse)
 	err = safeUnmarshal(&body, &accessTokenResponse)
 	if err != nil {
-		logger.Printf("%s unmarshalling token response failed: %s", errPrefix, err)
-		return ""
+		logger.Fatalf("%s unmarshalling token response failed: %s", errPrefix, err)
 	}
 
 	return accessTokenResponse.Token
