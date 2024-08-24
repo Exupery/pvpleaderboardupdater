@@ -415,14 +415,6 @@ func getProfileIdentifier(path string) string {
 }
 
 func getPlayerTalents(path string) playerTalents {
-	type Tooltip struct {
-		Talent keyedValue
-	}
-	type Talent struct {
-		ID      int
-		Rank    int
-		Tooltip Tooltip
-	}
 	type Selected struct {
 		Talent keyedValue
 	}
@@ -430,16 +422,18 @@ func getPlayerTalents(path string) playerTalents {
 		Selected Selected
 	}
 	type Loadout struct {
-		Active       bool     `json:"is_active"`
-		ClassTalents []Talent `json:"selected_class_talents"`
-		SpecTalents  []Talent `json:"selected_spec_talents"`
+		Active       bool            `json:"is_active"`
+		ClassTalents []loadoutTalent `json:"selected_class_talents"`
+		SpecTalents  []loadoutTalent `json:"selected_spec_talents"`
+		HeroTalents  []loadoutTalent `json:"selected_hero_talents"`
 	}
 	type Specialization struct {
 		Specialization keyedValue
 		Loadouts       []Loadout
-		PvPTalentSlots []PvPTalent `json:"pvp_talent_slots"`
-		ClassTalents   []Talent    `json:"selected_class_talents"`
-		SpecTalents    []Talent    `json:"selected_spec_talents"`
+		PvPTalentSlots []PvPTalent     `json:"pvp_talent_slots"`
+		ClassTalents   []loadoutTalent `json:"selected_class_talents"`
+		SpecTalents    []loadoutTalent `json:"selected_spec_talents"`
+		HeroTalents    []loadoutTalent `json:"selected_hero_talents"`
 	}
 	type Specializations struct {
 		Specializations      []Specialization
@@ -460,8 +454,9 @@ func getPlayerTalents(path string) playerTalents {
 	activeSpecID := specializations.ActiveSpecialization.ID
 	talents := make([]int, 0)
 	pvpTalents := make([]int, 0)
-	var classTalents []Talent
-	var specTalents []Talent
+	var classTalents []loadoutTalent
+	var specTalents []loadoutTalent
+	var heroTalents []loadoutTalent
 	for _, spec := range specializations.Specializations {
 		if spec.Specialization.ID != activeSpecID {
 			continue
@@ -474,6 +469,7 @@ func getPlayerTalents(path string) playerTalents {
 			}
 			classTalents = loadout.ClassTalents
 			specTalents = loadout.SpecTalents
+			heroTalents = loadout.HeroTalents
 			break
 		}
 		// Players not using loadouts have talents directly on the spec object
@@ -483,19 +479,13 @@ func getPlayerTalents(path string) playerTalents {
 		if len(spec.SpecTalents) > 0 {
 			specTalents = spec.SpecTalents
 		}
+		if len(spec.HeroTalents) > 0 {
+			heroTalents = spec.HeroTalents
+		}
 
-		for _, talent := range classTalents {
-			id := talent.Tooltip.Talent.ID
-			if id > 0 {
-				talents = append(talents, id)
-			}
-		}
-		for _, talent := range specTalents {
-			id := talent.Tooltip.Talent.ID
-			if id > 0 {
-				talents = append(talents, id)
-			}
-		}
+		talents = append(talents, talentIds(&classTalents)...)
+		talents = append(talents, talentIds(&specTalents)...)
+		talents = append(talents, talentIds(&heroTalents)...)
 
 		for _, pvpTalent := range spec.PvPTalentSlots {
 			id := pvpTalent.Selected.Talent.ID
@@ -507,6 +497,19 @@ func getPlayerTalents(path string) playerTalents {
 	}
 
 	return playerTalents{talents, pvpTalents}
+}
+
+func talentIds(toAdd *[]loadoutTalent) []int {
+	talents := make([]int, 0)
+
+	for _, talent := range *toAdd {
+		id := talent.Tooltip.Talent.ID
+		if id > 0 {
+			talents = append(talents, id)
+		}
+	}
+
+	return talents
 }
 
 func getPlayerStats(path string) stats {
@@ -714,4 +717,13 @@ func safeUnmarshal(data *[]byte, v interface{}) error {
 type playerTalents struct {
 	Talents    []int
 	PvPTalents []int
+}
+
+type talentTooltip struct {
+	Talent keyedValue
+}
+type loadoutTalent struct {
+	ID      int
+	Rank    int
+	Tooltip talentTooltip
 }
