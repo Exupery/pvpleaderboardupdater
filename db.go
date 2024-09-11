@@ -478,6 +478,24 @@ func getAchievementIds() map[int]bool {
 	return m
 }
 
+func getHeroTalentIds() map[int]bool {
+	var m map[int]bool = make(map[int]bool)
+	rows, err := db.Query("SELECT id FROM talents WHERE cat='HERO'")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+		}
+		m[id] = true
+	}
+	return m
+}
+
 func getSpecIDForClassSpec(clazz string, spec string) int {
 	// Can't simply lookup IDs via names because in the solo shuffle key
 	// they strip out spaces (i.e. without a placeholder)

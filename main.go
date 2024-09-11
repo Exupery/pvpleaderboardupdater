@@ -29,10 +29,14 @@ var loginStaleSeconds int64 = int64(getEnvVarOrDefault("LAST_LOGIN_STALE_HOURS",
 var region = "US"
 var regions = []string{"EU", "US"}
 
+var heroTalentIds map[int]bool
+
 func main() {
 	start := time.Now()
 	logger.Println("Updating PvPLeaderBoard DB")
 	importStaticData()
+	heroTalentIds = getHeroTalentIds()
+	logger.Printf("Cached %d hero talent IDs", len(heroTalentIds))
 	groupSize := getEnvVarOrDefault("GROUP_SIZE", defaultGroupSize)
 	season := getCurrentSeason()
 	foundPlayers := false
@@ -468,7 +472,7 @@ func getPlayerTalents(path string) playerTalents {
 				continue
 			}
 			classTalents = loadout.ClassTalents
-			specTalents = loadout.SpecTalents
+			specTalents = stripHero(loadout.SpecTalents)
 			heroTalents = loadout.HeroTalents
 			break
 		}
@@ -477,7 +481,7 @@ func getPlayerTalents(path string) playerTalents {
 			classTalents = spec.ClassTalents
 		}
 		if len(spec.SpecTalents) > 0 {
-			specTalents = spec.SpecTalents
+			specTalents = stripHero(spec.SpecTalents)
 		}
 		if len(spec.HeroTalents) > 0 {
 			heroTalents = spec.HeroTalents
@@ -497,6 +501,21 @@ func getPlayerTalents(path string) playerTalents {
 	}
 
 	return playerTalents{talents, pvpTalents}
+}
+
+// Blizz includes hero talents in both the spec tree and hero tree
+// so remove them from spec loadout to avoid double counting
+func stripHero(specTalents []loadoutTalent) []loadoutTalent {
+	specTree := make([]loadoutTalent, 0)
+
+	for _, talent := range specTalents {
+		if heroTalentIds[talent.Tooltip.Talent.ID] {
+			continue
+		}
+		specTree = append(specTree, talent)
+	}
+
+	return specTree
 }
 
 func talentIds(toAdd *[]loadoutTalent) []int {

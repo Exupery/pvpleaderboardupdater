@@ -95,10 +95,8 @@ func getWithRetry(region, namespace, path string, attempt int) *[]byte {
 	}
 	if resp.StatusCode != 200 {
 		if attempt > maxRetryAttempts {
-			logger.Printf("%s Received %d for '%s' %d times, NOT retrying", warnPrefix, resp.StatusCode, path, attempt)
 			return nil
 		}
-		logger.Printf("Received %d - retrying '%s'", resp.StatusCode, path)
 		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
 		return getWithRetry(region, namespace, path, attempt+1)
 	}
