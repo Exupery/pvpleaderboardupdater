@@ -22,8 +22,6 @@ const errPrefix string = "[ERROR]"
 const fatalPrefix string = "[FATAL]"
 const warnPrefix string = "[WARN]"
 
-const defaultGroupSize int = 100
-
 var loginStaleSeconds int64 = int64(getEnvVarOrDefault("LAST_LOGIN_STALE_HOURS", 999) * 60 * 60)
 
 var region = "US"
@@ -37,7 +35,7 @@ func main() {
 	importStaticData()
 	heroTalentIds = getHeroTalentIds()
 	logger.Printf("Cached %d hero talent IDs", len(heroTalentIds))
-	groupSize := getEnvVarOrDefault("GROUP_SIZE", defaultGroupSize)
+	maxConnections := getEnvVarOrDefault("MAX_DB_CONNECTIONS", defaultMaxDbConnections)
 	season := getCurrentSeason()
 	foundPlayers := false
 	markStalePlayerTalents()
@@ -85,6 +83,7 @@ func main() {
 		} else {
 			foundPlayers = true
 		}
+		groupSize := len(players) / maxConnections
 		groups := split(players, groupSize)
 		var waitGroup sync.WaitGroup
 		waitGroup.Add(len(groups))
