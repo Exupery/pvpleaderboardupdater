@@ -5,6 +5,7 @@ CREATE TABLE realms (
   region CHAR(2) NOT NULL,
   UNIQUE (slug, region)
 );
+CREATE INDEX ON realms (name);
 
 CREATE TABLE races (
   id INTEGER PRIMARY KEY,
@@ -219,6 +220,6 @@ RETURNS VOID LANGUAGE plpgsql AS $proc$
 BEGIN
   DELETE FROM players_pvp_talents WHERE stale=TRUE;
   DELETE FROM players_talents WHERE stale=TRUE;
-  DELETE FROM players WHERE DATE_PART('day', NOW() - players.last_update) > 30 AND id NOT IN (SELECT player_id FROM leaderboards);
-  DELETE FROM items WHERE DATE_PART('day', NOW() - items.last_update) > 30;
+  DELETE FROM players WHERE players.last_update < (NOW() - '14 days'::INTERVAL) AND players.id IN (SELECT players.id FROM players LEFT JOIN leaderboards ON players.id = leaderboards.player_id WHERE rating IS NULL);
+  DELETE FROM items WHERE items.last_update < (NOW() - '14 days'::INTERVAL);
 END; $proc$;
