@@ -109,18 +109,25 @@ func updateLeaderboard(bracket string, leaderboard []leaderboardEntry) {
 	const deleteQuery string = `DELETE FROM leaderboards WHERE region=$1 AND bracket=$2`
 	const qry string = `INSERT INTO leaderboards
 		(region, bracket, player_id, ranking, rating, season_wins, season_losses)
-		SELECT $1, $2, (SELECT id FROM players WHERE realm_id=$3 AND blizzard_id=$4), $5, $6, $7, $8
-		WHERE EXISTS (SELECT 1 FROM players WHERE realm_id=$3 AND blizzard_id=$4)`
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (region, bracket, player_id)
+		DO UPDATE SET ranking=$4, rating=$5, season_wins=$6, season_losses=$7`
 
 	deleteArgs := []interface{}{region, bracket}
 	args := make([][]interface{}, 0)
 
+	playerIDs := getPlayerIDsFromLeaderboard(leaderboard)
+
 	for _, entry := range leaderboard {
+		key := playerKey(entry.RealmID, entry.BlizzardID)
+		var playerID int = playerIDs[key]
+		if playerID <= 0 {
+			continue
+		}
 		params := []interface{}{
 			region,
 			bracket,
-			entry.RealmID,
-			entry.BlizzardID,
+			playerID,
 			entry.Rank,
 			entry.Rating,
 			entry.SeasonWins,
@@ -151,6 +158,36 @@ func addPlayers(players []*player) {
 
 	numInserted := insert(query{SQL: qry, Args: args})
 	logger.Printf("Added or updated %d players", numInserted)
+}
+
+func getPlayerIDsFromLeaderboard(leaderboard []leaderboardEntry) map[string]int {
+	var m map[string]int = make(map[string]int)
+	rows, err := db.Query("SELECT id, realm_id, blizzard_id FROM players")
+	if err != nil {
+		logger.Printf("%s %s", errPrefix, err)
+	}
+	defer rows.Close()
+	var t map[string]int = make(map[string]int)
+	for rows.Next() {
+		var id int
+		var realmID int
+		var blizzardID int
+		err := rows.Scan(&id, &realmID, &blizzardID)
+		if err != nil {
+			logger.Printf("%s %s", errPrefix, err)
+		}
+		key := playerKey(realmID, blizzardID)
+		t[key] = id
+	}
+
+	for _, entry := range leaderboard {
+		tKey := playerKey(entry.RealmID, entry.BlizzardID)
+		var id int = t[tKey]
+		if id > 0 {
+			m[tKey] = id
+		}
+	}
+	return m
 }
 
 func getPlayerIDs(players []*player) map[string]int {
