@@ -309,6 +309,7 @@ func playerKey(realmID, blizzardID int) string {
 
 func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *cmap.ConcurrentMap[string, items]) {
 	defer waitGroup.Done()
+	logger.Printf("Importing %d players", len(players))
 	for _, player := range players {
 		setPlayerDetails(player)
 	}
@@ -316,7 +317,6 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *c
 	nowish := time.Now().Unix()
 	for _, player := range players {
 		if player.ClassID == 0 {
-			logger.Printf("No details found for %s, skipping", player.Path)
 			continue
 		}
 		if (nowish - player.LastLogin) > loginStaleSeconds {
@@ -325,6 +325,7 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *c
 		foundPlayers = append(foundPlayers, player)
 	}
 
+	logger.Printf("Found %d of %d players", len(foundPlayers), len(players))
 	addPlayers(foundPlayers)
 	var playerIDs map[string]int = getPlayerIDs(foundPlayers)
 	var pvpAchievements map[int]bool = getAchievementIds()
