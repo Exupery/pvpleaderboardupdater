@@ -314,18 +314,20 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *c
 		setPlayerDetails(player)
 	}
 	foundPlayers := make([]*player, 0)
+	stalePlayers := 0
 	nowish := time.Now().Unix()
 	for _, player := range players {
 		if player.ClassID == 0 {
 			continue
 		}
 		if (nowish - player.LastLogin) > loginStaleSeconds {
+			stalePlayers++
 			continue
 		}
 		foundPlayers = append(foundPlayers, player)
 	}
 
-	logger.Printf("Found %d of %d players", len(foundPlayers), len(players))
+	logger.Printf("Found %d of %d players, including %d stale players", (len(foundPlayers) + len(foundPlayers)), len(players), stalePlayers)
 	addPlayers(foundPlayers)
 	var playerIDs map[string]int = getPlayerIDs(foundPlayers)
 	var pvpAchievements map[int]bool = getAchievementIds()
