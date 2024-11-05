@@ -83,7 +83,7 @@ func main() {
 		} else {
 			foundPlayers = true
 		}
-		groupSize := len(players) / maxConnections
+		groupSize := len(players) / (maxConnections / 2)
 		groups := split(players, groupSize)
 		var waitGroup sync.WaitGroup
 		waitGroup.Add(len(groups))
