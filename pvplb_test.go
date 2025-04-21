@@ -336,7 +336,7 @@ func TestHighestStat(t *testing.T) {
 		t.Errorf("Expected 3 as highest stat, not %d", ab)
 	}
 	max := math.MaxInt32
-	z := highestStat(max, max, max)
+	z := highestStat(float64(max), float64(max), float64(max))
 	if z != max {
 		t.Errorf("Expected %d as highest stat, not %d", max, z)
 	}

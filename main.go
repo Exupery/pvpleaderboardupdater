@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/url"
 	"os"
 	"strconv"
@@ -535,9 +536,9 @@ func talentIds(toAdd *[]loadoutTalent) []int {
 
 func getPlayerStats(path string) stats {
 	type RatedStat struct {
-		Rating      float64
-		RatingBonus float64 `json:"rating_bonus"`
-		Value       float64
+		RatingNormalized float64 `json:"rating_normalized"`
+		RatingBonus      float64 `json:"rating_bonus"`
+		Value            float64
 	}
 	type Stat struct {
 		Base      int
@@ -548,7 +549,7 @@ func getPlayerStats(path string) stats {
 		Agility     Stat
 		Intellect   Stat
 		Stamina     Stat
-		Versatility float64
+		Versatility float64 `json:"versatility_damage_done_bonus"`
 		Mastery     RatedStat
 		Lifesteal   RatedStat
 		Dodge       RatedStat
@@ -570,8 +571,16 @@ func getPlayerStats(path string) stats {
 		logger.Printf("%s json parsing failed: %s", warnPrefix, err)
 		return stats{}
 	}
-	crit := highestStat(int(s.MeleeCrit.Rating), int(s.RangedCrit.Rating), int(s.SpellCrit.Rating))
-	haste := highestStat(int(s.MeleeHaste.Rating), int(s.RangedHaste.Rating), int(s.SpellHaste.Rating))
+	crit := highestStat(s.MeleeCrit.Value, s.RangedCrit.Value, s.SpellCrit.Value)
+	haste := highestStat(s.MeleeHaste.Value, s.RangedHaste.Value, s.SpellHaste.Value)
+	dodge := s.Dodge.Value
+	if s.Dodge.RatingNormalized == 0 {
+		dodge = 0
+	}
+	parry := s.Parry.Value
+	if s.Parry.RatingNormalized == 0 {
+		parry = 0
+	}
 	return stats{
 		Strength:       int32(s.Strength.Effective),
 		Agility:        int32(s.Agility.Effective),
@@ -579,11 +588,11 @@ func getPlayerStats(path string) stats {
 		Stamina:        int32(s.Stamina.Effective),
 		CriticalStrike: int32(crit),
 		Haste:          int32(haste),
-		Versatility:    int32(s.Versatility),
-		Mastery:        int32(s.Mastery.Rating),
-		Leech:          int32(s.Lifesteal.Rating),
-		Dodge:          int32(s.Dodge.Rating),
-		Parry:          int32(s.Parry.Rating)}
+		Versatility:    int32(math.Round(s.Versatility)),
+		Mastery:        int32(math.Round(s.Mastery.Value)),
+		Leech:          int32(math.Round(s.Lifesteal.Value)),
+		Dodge:          int32(math.Round(dodge)),
+		Parry:          int32(math.Round(parry))}
 }
 
 func getPlayerItems(path string) items {
@@ -711,14 +720,14 @@ func getPlayerAchievements(path string, pvpAchievements map[int]bool) []int {
 	return achievedIDs
 }
 
-func highestStat(a, b, c int) int {
+func highestStat(a, b, c float64) int {
 	if a >= b && a >= c {
-		return a
+		return int(math.Round(a))
 	}
 	if b >= a && b >= c {
-		return b
+		return int(math.Round(b))
 	}
-	return c
+	return int(math.Round(c))
 }
 
 func safeUnmarshal(data *[]byte, v interface{}) error {
