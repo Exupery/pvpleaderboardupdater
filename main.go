@@ -328,7 +328,7 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *c
 		foundPlayers = append(foundPlayers, player)
 	}
 
-	logger.Printf("Found %d of %d players, including %d stale players", (len(foundPlayers) + len(foundPlayers)), len(players), stalePlayers)
+	logger.Printf("Found %d of %d players, including %d stale players", (len(foundPlayers) + stalePlayers), len(players), stalePlayers)
 	addPlayers(foundPlayers)
 	var playerIDs map[string]int = getPlayerIDs(foundPlayers)
 	var pvpAchievements map[int]bool = getAchievementIds()
