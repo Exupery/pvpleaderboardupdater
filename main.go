@@ -28,7 +28,7 @@ var loginStaleSeconds int64 = int64(getEnvVarOrDefault("LAST_LOGIN_STALE_HOURS",
 var region = "US"
 var regions = []string{"EU", "US"}
 
-var heroTalentIds map[int]bool
+var heroTalentIds map[int]string
 
 func main() {
 	start := time.Now()
@@ -490,6 +490,8 @@ func getPlayerTalents(path string) playerTalents {
 			heroTalents = spec.HeroTalents
 		}
 
+		heroTalents = stripOtherHeroTree(heroTalents)
+
 		talents = append(talents, talentIds(&classTalents)...)
 		talents = append(talents, talentIds(&specTalents)...)
 		talents = append(talents, talentIds(&heroTalents)...)
@@ -512,13 +514,53 @@ func stripHero(specTalents []loadoutTalent) []loadoutTalent {
 	specTree := make([]loadoutTalent, 0)
 
 	for _, talent := range specTalents {
-		if heroTalentIds[talent.Tooltip.Talent.ID] {
+		if _, ok := heroTalentIds[talent.Tooltip.Talent.ID]; ok {
 			continue
 		}
 		specTree = append(specTree, talent)
 	}
 
 	return specTree
+}
+
+// Blizz sometimes includes hero talents from both hero trees
+// (e.g. both keystones) even though they are mutually exclusive.
+// Keep only talents from the tree that has the most selections,
+// which is the tree the player actually chose.
+func stripOtherHeroTree(heroTalents []loadoutTalent) []loadoutTalent {
+	// Count how many talents the player has per hero_specs group
+	groupCounts := make(map[string]int)
+	for _, talent := range heroTalents {
+		id := talent.Tooltip.Talent.ID
+		if group, ok := heroTalentIds[id]; ok {
+			groupCounts[group]++
+		}
+	}
+
+	if len(groupCounts) <= 1 {
+		return heroTalents
+	}
+
+	// Find the group with the most talents — that's the chosen tree
+	chosenGroup := ""
+	maxCount := 0
+	for group, count := range groupCounts {
+		if count > maxCount {
+			maxCount = count
+			chosenGroup = group
+		}
+	}
+
+	// Keep only talents from the chosen tree
+	filtered := make([]loadoutTalent, 0)
+	for _, talent := range heroTalents {
+		id := talent.Tooltip.Talent.ID
+		if group, ok := heroTalentIds[id]; ok && group == chosenGroup {
+			filtered = append(filtered, talent)
+		}
+	}
+
+	return filtered
 }
 
 func talentIds(toAdd *[]loadoutTalent) []int {

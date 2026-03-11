@@ -515,20 +515,21 @@ func getAchievementIds() map[int]bool {
 	return m
 }
 
-func getHeroTalentIds() map[int]bool {
-	var m map[int]bool = make(map[int]bool)
-	rows, err := db.Query("SELECT id FROM talents WHERE cat='HERO'")
+func getHeroTalentIds() map[int]string {
+	var m map[int]string = make(map[int]string)
+	rows, err := db.Query("SELECT id, hero_specs FROM talents WHERE cat='HERO'")
 	if err != nil {
 		logger.Printf("%s %s", errPrefix, err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var id int
-		err := rows.Scan(&id)
+		var heroSpecs string
+		err := rows.Scan(&id, &heroSpecs)
 		if err != nil {
 			logger.Printf("%s %s", errPrefix, err)
 		}
-		m[id] = true
+		m[id] = heroSpecs
 	}
 	return m
 }
