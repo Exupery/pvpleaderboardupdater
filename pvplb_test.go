@@ -396,3 +396,180 @@ func TestDetermineAlt(t *testing.T) {
 	t.Logf("Main ID: %s", mainID)
 	t.Logf("Alt ID: %s", altID)
 }
+
+func makeTalent(id int) loadoutTalent {
+	return loadoutTalent{Tooltip: talentTooltip{Talent: keyedValue{ID: id}}}
+}
+
+func talentIDsFromSlice(talents []loadoutTalent) []int {
+	ids := make([]int, len(talents))
+	for i, t := range talents {
+		ids[i] = t.Tooltip.Talent.ID
+	}
+	return ids
+}
+
+func containsID(talents []loadoutTalent, id int) bool {
+	for _, t := range talents {
+		if t.Tooltip.Talent.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func TestStripHero(t *testing.T) {
+	origHeroTalentIds := heroTalentIds
+	defer func() { heroTalentIds = origHeroTalentIds }()
+
+	heroTalentIds = map[int]string{
+		100: "{256,258}", // Voidweaver keystone
+		101: "{256,258}", // Voidweaver talent
+		200: "{257,258}", // Archon keystone
+		201: "{257,258}", // Archon talent
+	}
+
+	talents := []loadoutTalent{
+		makeTalent(1),   // class talent
+		makeTalent(2),   // class talent
+		makeTalent(100), // hero talent (should be stripped)
+		makeTalent(200), // hero talent (should be stripped)
+	}
+
+	result := stripHero(talents)
+	if len(result) != 2 {
+		t.Fatalf("Expected 2 talents after stripHero, got %d", len(result))
+	}
+	if containsID(result, 100) || containsID(result, 200) {
+		t.Error("Hero talents should have been stripped")
+	}
+	if !containsID(result, 1) || !containsID(result, 2) {
+		t.Error("Non-hero talents should be preserved")
+	}
+}
+
+func TestStripOtherHeroTree(t *testing.T) {
+	origHeroTalentIds := heroTalentIds
+	defer func() { heroTalentIds = origHeroTalentIds }()
+
+	heroTalentIds = map[int]string{
+		100: "{256,258}", // Voidweaver keystone
+		101: "{256,258}",
+		102: "{256,258}",
+		200: "{257,258}", // Archon keystone
+		201: "{257,258}",
+	}
+
+	// Player chose Voidweaver (3 talents) but API also returned Archon keystone
+	heroTalents := []loadoutTalent{
+		makeTalent(100), // VW keystone
+		makeTalent(101), // VW talent
+		makeTalent(102), // VW talent
+		makeTalent(200), // AR keystone (should be stripped)
+	}
+
+	result := stripOtherHeroTree(heroTalents)
+	if len(result) != 3 {
+		t.Fatalf("Expected 3 talents after stripOtherHeroTree, got %d", len(result))
+	}
+	if containsID(result, 200) {
+		t.Error("Archon keystone should have been stripped")
+	}
+	if !containsID(result, 100) || !containsID(result, 101) || !containsID(result, 102) {
+		t.Error("Voidweaver talents should be preserved")
+	}
+}
+
+func TestStripOtherHeroTreeSingleTree(t *testing.T) {
+	origHeroTalentIds := heroTalentIds
+	defer func() { heroTalentIds = origHeroTalentIds }()
+
+	heroTalentIds = map[int]string{
+		100: "{256,258}",
+		101: "{256,258}",
+	}
+
+	// Normal case: all talents from one tree, should be returned unchanged
+	heroTalents := []loadoutTalent{
+		makeTalent(100),
+		makeTalent(101),
+	}
+
+	result := stripOtherHeroTree(heroTalents)
+	if len(result) != 2 {
+		t.Fatalf("Expected 2 talents for single-tree case, got %d", len(result))
+	}
+}
+
+func TestClassTalentsHeroKeystonesStripped(t *testing.T) {
+	origHeroTalentIds := heroTalentIds
+	defer func() { heroTalentIds = origHeroTalentIds }()
+
+	// Simulate real Priest data:
+	// Voidweaver talents (hero_specs = Disc + Shadow)
+	// Archon talents (hero_specs = Holy + Shadow)
+	heroTalentIds = map[int]string{
+		122299: "{256,258}", // Void Torrent (Voidweaver keystone)
+		122283: "{256,258}", // Devour Matter (Voidweaver)
+		122284: "{256,258}", // Void Infusion (Voidweaver)
+		122312: "{257,258}", // Halo (Archon keystone)
+		122291: "{257,258}", // Resonant Energy (Archon)
+	}
+
+	// Simulate a Voidweaver player's API response:
+	// class_talents includes the unchosen Archon keystone (Halo)
+	classTalents := []loadoutTalent{
+		makeTalent(1),      // regular class talent
+		makeTalent(2),      // regular class talent
+		makeTalent(122312), // Halo - leaked into class talents by Blizzard API
+	}
+
+	// spec_talents may also have hero talents
+	specTalents := []loadoutTalent{
+		makeTalent(10), // spec talent
+		makeTalent(11), // spec talent
+	}
+
+	// hero_talents only from chosen tree (Voidweaver)
+	heroTalents := []loadoutTalent{
+		makeTalent(122299), // Void Torrent (VW keystone)
+		makeTalent(122283), // Devour Matter
+		makeTalent(122284), // Void Infusion
+	}
+
+	// Apply the same processing as getPlayerTalents
+	classTalents = stripHero(classTalents)
+	specTalents = stripHero(specTalents)
+	heroTalents = stripOtherHeroTree(heroTalents)
+
+	allTalents := make([]int, 0)
+	allTalents = append(allTalents, talentIDsFromSlice(classTalents)...)
+	allTalents = append(allTalents, talentIDsFromSlice(specTalents)...)
+	allTalents = append(allTalents, talentIDsFromSlice(heroTalents)...)
+
+	// Halo (122312) should NOT be in the final talent list
+	for _, id := range allTalents {
+		if id == 122312 {
+			t.Error("Halo (unchosen Archon keystone) should not be in final talents - it leaked through class talents")
+		}
+	}
+
+	// Void Torrent (122299) SHOULD be in the final talent list (from hero talents)
+	found := false
+	for _, id := range allTalents {
+		if id == 122299 {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Void Torrent (chosen Voidweaver keystone) should be in final talents")
+	}
+
+	// Regular class/spec talents should remain
+	if len(classTalents) != 2 {
+		t.Errorf("Expected 2 class talents after stripping, got %d", len(classTalents))
+	}
+	if len(specTalents) != 2 {
+		t.Errorf("Expected 2 spec talents after stripping, got %d", len(specTalents))
+	}
+}

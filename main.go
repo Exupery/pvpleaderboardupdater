@@ -474,14 +474,14 @@ func getPlayerTalents(path string) playerTalents {
 			if !loadout.Active {
 				continue
 			}
-			classTalents = loadout.ClassTalents
+			classTalents = stripHero(loadout.ClassTalents)
 			specTalents = stripHero(loadout.SpecTalents)
 			heroTalents = loadout.HeroTalents
 			break
 		}
 		// Players not using loadouts have talents directly on the spec object
 		if len(spec.ClassTalents) > 0 {
-			classTalents = spec.ClassTalents
+			classTalents = stripHero(spec.ClassTalents)
 		}
 		if len(spec.SpecTalents) > 0 {
 			specTalents = stripHero(spec.SpecTalents)
