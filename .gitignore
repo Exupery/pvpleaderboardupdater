@@ -17,3 +17,4 @@ _testmain.go
 *.env
 updater
 .vscode/
+.claude/
