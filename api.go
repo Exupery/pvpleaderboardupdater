@@ -14,6 +14,7 @@ const oauthURI string = "https://us.battle.net/oauth/token"
 const requiredParams string = "?locale=en_US&namespace=%s"
 const rateLimitRetryWaitSeconds int = 2
 const maxRetryAttempts = 2
+const maxRateLimitRetryAttempts = 5
 
 var clienID string = getEnvVar("BATTLE_NET_CLIENT_ID")
 var secret string = getEnvVar("BATTLE_NET_SECRET")
@@ -90,8 +91,15 @@ func getWithRetry(region, namespace, path string, attempt int) *[]byte {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 429 {
-		time.Sleep(time.Duration(rateLimitRetryWaitSeconds) * time.Second)
-		return get(region, namespace, path)
+		// Back off linearly so a burst of concurrent callers doesn't
+		// retry in lockstep and immediately get throttled again
+		if attempt > maxRateLimitRetryAttempts {
+			logger.Printf("%s '%s' still rate limited after %d attempts, giving up",
+				warnPrefix, path, attempt)
+			return nil
+		}
+		time.Sleep(time.Duration(rateLimitRetryWaitSeconds*attempt) * time.Second)
+		return getWithRetry(region, namespace, path, attempt+1)
 	}
 	if resp.StatusCode != 200 {
 		if attempt > maxRetryAttempts {
@@ -102,7 +110,6 @@ func getWithRetry(region, namespace, path string, attempt int) *[]byte {
 	}
 
 	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
 	if err != nil {
 		logger.Printf("%s reading body of '%s' failed: %s", errPrefix, path, err)
 		return nil

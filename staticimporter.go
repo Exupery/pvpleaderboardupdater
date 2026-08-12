@@ -11,6 +11,11 @@ import (
 
 const pvpFeatsOfStrengthCategory int = 15270
 
+// Talent icons are fetched one request per talent, so cap how many
+// are in flight at once to avoid opening thousands of sockets and
+// getting rate limited by Blizzard
+const maxConcurrentIconRequests int = 50
+
 var achievementIDs = []int{
 	// 2v2
 	399, 400, 401, 1159,
@@ -174,11 +179,14 @@ func importTalents() {
 
 	talents := make([]talent, len(talentMap))
 	var waitGroup sync.WaitGroup
+	var inFlight chan struct{} = make(chan struct{}, maxConcurrentIconRequests)
 	i := 0
 	for _, t := range talentMap {
 		waitGroup.Add(1)
+		inFlight <- struct{}{}
 		go func(i int, tal talent) {
 			defer waitGroup.Done()
+			defer func() { <-inFlight }()
 			icon := getIcon(region, fmt.Sprintf("spell/%d", tal.SpellID))
 			talentWithIcon := talent{
 				tal.ID,

@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
@@ -29,6 +30,49 @@ var region = "US"
 var regions = []string{"EU", "US"}
 
 var heroTalentIds map[int]string
+
+const progressInterval time.Duration = 120 * time.Second
+
+// progress tallies player import counts across all of the concurrent
+// import groups so a single goroutine can report a running total
+// rather than each group logging its own progress
+type progress struct {
+	region   string
+	total    int
+	profiles atomic.Int64
+	found    atomic.Int64
+	detailed atomic.Int64
+}
+
+func newProgress(region string, total int) *progress {
+	return &progress{region: region, total: total}
+}
+
+// report logs a running total every progressInterval until stop is
+// closed, so a long import doesn't look like a hang
+func (p *progress) report(stop <-chan struct{}) {
+	ticker := time.NewTicker(progressInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-stop:
+			return
+		case <-ticker.C:
+			profiles := p.profiles.Load()
+			detailed := p.detailed.Load()
+			// Groups reach the details phase independently, so omit
+			// that half until one of them gets there rather than
+			// reporting a meaningless 0/0
+			if detailed == 0 {
+				logger.Printf("%s progress: %d/%d profiles fetched",
+					p.region, profiles, p.total)
+				continue
+			}
+			logger.Printf("%s progress: %d/%d profiles fetched, %d/%d players detailed",
+				p.region, profiles, p.total, detailed, p.found.Load())
+		}
+	}
+}
 
 func main() {
 	start := time.Now()
@@ -94,10 +138,15 @@ func main() {
 		// are minimized and happen only once per update.
 		playersItems := cmap.New[items]()
 
+		prog := newProgress(region, len(players))
+		stopProgress := make(chan struct{})
+		go prog.report(stopProgress)
+
 		for _, group := range groups {
-			go importPlayers(group, &waitGroup, &playersItems)
+			go importPlayers(group, &waitGroup, &playersItems, prog)
 		}
 		waitGroup.Wait()
+		close(stopProgress)
 
 		addItems(squashItems(&playersItems))
 		addPlayerItems(&playersItems)
@@ -308,11 +357,12 @@ func playerKey(realmID, blizzardID int) string {
 	return fmt.Sprintf("%d-%d", realmID, blizzardID)
 }
 
-func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *cmap.ConcurrentMap[string, items]) {
+func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *cmap.ConcurrentMap[string, items], prog *progress) {
 	defer waitGroup.Done()
 	logger.Printf("Importing %d players", len(players))
 	for _, player := range players {
 		setPlayerDetails(player)
+		prog.profiles.Add(1)
 	}
 	foundPlayers := make([]*player, 0)
 	stalePlayers := 0
@@ -336,7 +386,9 @@ func importPlayers(players []*player, waitGroup *sync.WaitGroup, playersItems *c
 	var playersTalents map[int]playerTalents = make(map[int]playerTalents, 0)
 	var playersStats map[int]stats = make(map[int]stats, 0)
 	var playersAchievements map[int][]int = make(map[int][]int, 0)
+	prog.found.Add(int64(len(playerIDs)))
 	for profilePath, dbID := range playerIDs {
+		prog.detailed.Add(1)
 		playerTalents := getPlayerTalents(profilePath)
 		// If we couldn't get the player's talents don't bother attempting other data
 		if len(playerTalents.Talents) == 0 {
