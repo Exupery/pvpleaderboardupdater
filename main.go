@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"math"
@@ -75,9 +76,23 @@ func (p *progress) report(stop <-chan struct{}) {
 }
 
 func main() {
+	staticOnly := flag.Bool("static", false,
+		"import only static data and skip all player updates")
+	flag.Parse()
+
 	start := time.Now()
 	logger.Println("Updating PvPLeaderBoard DB")
 	importStaticData()
+	if *staticOnly {
+		logger.Println("Static data only, skipping players")
+	} else {
+		updatePlayers()
+	}
+	end := time.Now()
+	logger.Printf("Updating PvPLeaderBoard Complete after %v", end.Sub(start))
+}
+
+func updatePlayers() {
 	heroTalentIds = getHeroTalentIds()
 	logger.Printf("Cached %d hero talent IDs", len(heroTalentIds))
 	maxConnections := getEnvVarOrDefault("MAX_DB_CONNECTIONS", defaultMaxDbConnections)
@@ -160,8 +175,6 @@ func main() {
 		purgeStalePlayers()
 		setUpdateTime()
 	}
-	end := time.Now()
-	logger.Printf("Updating PvPLeaderBoard Complete after %v", end.Sub(start))
 }
 
 func getEnvVar(envVar string) string {
