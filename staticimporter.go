@@ -172,8 +172,13 @@ func importTalents() {
 	talentMap := make(map[int]talent)
 	for _, path := range paths {
 		treeTalents := getTalentsFromTree(path)
-		for _, talent := range treeTalents {
-			talentMap[talent.ID] = talent
+		for _, t := range treeTalents {
+			// The same talent shows up in every tree that offers it, so
+			// merge the spec lists instead of letting the last tree win
+			if existing, found := talentMap[t.ID]; found {
+				t.Specs = mergeSpecs(existing.Specs, t.Specs)
+			}
+			talentMap[t.ID] = t
 		}
 	}
 
@@ -199,7 +204,7 @@ func importTalents() {
 				tal.Row,
 				tal.Col,
 				tal.Cat,
-				tal.HeroSpecs}
+				tal.Specs}
 			talents[i] = talentWithIcon
 		}(i, t)
 		i++
@@ -311,10 +316,16 @@ func getTalentsFromTree(path string) []talent {
 		return talents
 	}
 
-	classTalents := parseTalents(talentTree.Class.ID, 0, "CLASS", []int{}, talentTree.ClassTalents)
+	// Blizzard returns a per-spec view of the class tree - a talent only
+	// this spec can take is absent from its sibling specs' trees - so tag
+	// each class talent with the spec whose tree it came from
+	classNodes := excludeHeroNodes(talentTree.ClassTalents, talentTree.HeroTrees)
+	classTalents := parseTalents(talentTree.Class.ID, 0, "CLASS",
+		[]int{talentTree.Spec.ID}, classNodes)
 	talents = append(talents, classTalents...)
 
-	specTalents := parseTalents(talentTree.Class.ID, talentTree.Spec.ID, "SPEC", []int{}, talentTree.SpecTalents)
+	specNodes := excludeHeroNodes(talentTree.SpecTalents, talentTree.HeroTrees)
+	specTalents := parseTalents(talentTree.Class.ID, talentTree.Spec.ID, "SPEC", []int{}, specNodes)
 	talents = append(talents, specTalents...)
 
 	for _, tree := range talentTree.HeroTrees {
@@ -329,11 +340,49 @@ func getTalentsFromTree(path string) []talent {
 	return talents
 }
 
+// excludeHeroNodes drops the hero talent nodes Blizzard repeats inside a
+// tree's class_talent_nodes and spec_talent_nodes so the hero trees stay
+// the only source of HERO talents and a node can't be categorised as both
+func excludeHeroNodes(treeNodes []TalentNodeJSON, heroTrees []HeroTreeJSON) []TalentNodeJSON {
+	heroNodes := make(map[int]bool)
+	for _, tree := range heroTrees {
+		for _, node := range tree.HeroTalentNodes {
+			heroNodes[node.ID] = true
+		}
+	}
+
+	nodes := make([]TalentNodeJSON, 0, len(treeNodes))
+	for _, node := range treeNodes {
+		if !heroNodes[node.ID] {
+			nodes = append(nodes, node)
+		}
+	}
+	return nodes
+}
+
+// mergeSpecs unions two spec ID lists, keeping the result sorted so a
+// talent's specs don't churn between runs
+func mergeSpecs(a []int, b []int) []int {
+	seen := make(map[int]bool, len(a)+len(b))
+	merged := make([]int, 0, len(a)+len(b))
+	for _, specs := range [][]int{a, b} {
+		for _, id := range specs {
+			if seen[id] {
+				continue
+			}
+			seen[id] = true
+			merged = append(merged, id)
+		}
+	}
+	sort.Ints(merged)
+	return merged
+}
+
 func parseTalents(
 	classID int,
 	specID int,
 	category string,
-	heroSpecs []int,
+	specs []int,
 	talentNodes []TalentNodeJSON) []talent {
 	var talents []talent = make([]talent, 0)
 
@@ -355,7 +404,7 @@ func parseTalents(
 				node.Row,
 				node.Col,
 				category,
-				heroSpecs}
+				specs}
 			talents = append(talents, talent)
 		}
 	}

@@ -167,6 +167,73 @@ func TestGetTalentsFromTree(t *testing.T) {
 	t.Logf("Found and parsed %v talents", len(talents))
 }
 
+func TestClassTalentsAreTaggedWithTheirSpec(t *testing.T) {
+	const mistweaver int = 270
+	talents := getTalentsFromTree("talent-tree/1000/playable-specialization/270")
+
+	classTalents := 0
+	for _, talent := range talents {
+		if talent.Cat != "CLASS" {
+			continue
+		}
+		classTalents++
+		if len(talent.Specs) != 1 || talent.Specs[0] != mistweaver {
+			t.Errorf("Class talent '%s' (%d) has specs %v, expected [%d]",
+				talent.Name, talent.ID, talent.Specs, mistweaver)
+		}
+	}
+
+	if classTalents == 0 {
+		t.Error("No class talents parsed from the Mistweaver tree")
+	}
+	t.Logf("Parsed %d class talents", classTalents)
+}
+
+func TestTalentsHaveOneCategory(t *testing.T) {
+	// Blizzard repeats hero talent nodes inside spec_talent_nodes, and
+	// occasionally inside class_talent_nodes, so make sure a talent only
+	// ever comes back as HERO
+	talents := getTalentsFromTree("talent-tree/1000/playable-specialization/270")
+
+	cats := make(map[int]string)
+	for _, talent := range talents {
+		if existing, found := cats[talent.ID]; found && existing != talent.Cat {
+			t.Errorf("Talent '%s' (%d) parsed as both %s and %s",
+				talent.Name, talent.ID, existing, talent.Cat)
+		}
+		cats[talent.ID] = talent.Cat
+	}
+}
+
+func TestMergeSpecs(t *testing.T) {
+	var cases = []struct {
+		a        []int
+		b        []int
+		expected []int
+	}{
+		{[]int{}, []int{}, []int{}},
+		{[]int{270}, []int{}, []int{270}},
+		{[]int{}, []int{270}, []int{270}},
+		{[]int{270}, []int{270}, []int{270}},
+		{[]int{269}, []int{268}, []int{268, 269}},
+		{[]int{269, 270}, []int{268, 270}, []int{268, 269, 270}},
+	}
+
+	for _, c := range cases {
+		actual := mergeSpecs(c.a, c.b)
+		if len(actual) != len(c.expected) {
+			t.Errorf("mergeSpecs(%v, %v) returned %v, expected %v", c.a, c.b, actual, c.expected)
+			continue
+		}
+		for i, id := range c.expected {
+			if actual[i] != id {
+				t.Errorf("mergeSpecs(%v, %v) returned %v, expected %v", c.a, c.b, actual, c.expected)
+				break
+			}
+		}
+	}
+}
+
 func TestParsePvPTalents(t *testing.T) {
 	var talentsJSON *[]byte = getStatic(region, "pvp-talent/index")
 	var pvpTalents []pvpTalent = parsePvPTalents(talentsJSON)

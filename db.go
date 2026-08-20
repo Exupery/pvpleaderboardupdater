@@ -448,7 +448,7 @@ func addTalents(talents *[]talent) {
 	args := make([][]interface{}, 0)
 
 	for _, talent := range *talents {
-		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name, talent.Icon, talent.NodeID, talent.Row, talent.Col, talent.Cat, talent.HeroSpecs}
+		params := []interface{}{talent.ID, talent.SpellID, talent.ClassID, talent.SpecID, talent.Name, talent.Icon, talent.NodeID, talent.Row, talent.Col, talent.Cat, talent.Specs}
 		args = append(args, params)
 	}
 

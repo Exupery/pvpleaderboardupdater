@@ -40,17 +40,21 @@ type spec struct {
 
 // talent : talent info
 type talent struct {
-	ID        int
-	SpellID   int
-	ClassID   int
-	SpecID    int
-	Name      string
-	Icon      string
-	NodeID    int
-	Row       int
-	Col       int
-	Cat       string
-	HeroSpecs []int
+	ID      int
+	SpellID int
+	ClassID int
+	SpecID  int
+	Name    string
+	Icon    string
+	NodeID  int
+	Row     int
+	Col     int
+	Cat     string
+	// Specs is the set of specs the talent belongs to: the hero tree's
+	// specs for HERO talents, the specs whose class tree lists it for
+	// CLASS talents, and empty for SPEC talents (SpecID covers those).
+	// Stored in the hero_specs column.
+	Specs []int
 }
 
 // pvpTalent : PvP talent info
